@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 by [release-please](https://github.com/googleapis/release-please) from
 [Conventional Commits](https://www.conventionalcommits.org/) on `main`.
 
+## [1.1.3](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.1.2...v1.1.3) (2026-10-20)
+
+
+### Bug fixes
+
+* **cli:** keep install notices off stdout so 'where' prints only the path ([4f7c7f6](https://github.com/jonsoku-dev/agentic-sdd/commit/4f7c7f644b67084ba2c5304ff574098adc60b289))
+
 ## [1.1.2](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.1.1...v1.1.2) (2026-10-20)
 
 
