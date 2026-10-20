@@ -28,7 +28,7 @@ const USAGE = `agentic-sdd ${VERSION}
   npx agentic-sdd uninstall [--project DIR] [--purge-deps --yes]
   npx agentic-sdd where           print the skill directory the hosts load
 
-Requires python3 and git on PATH. Docs: https://github.com/jonsoku-dev/agentic-sdd
+Requires python3 and bash on PATH (git only for a git checkout). Docs: https://github.com/jonsoku-dev/agentic-sdd
 `;
 
 function have(cmd) {
@@ -37,6 +37,7 @@ function have(cmd) {
 }
 
 function isGitCheckout(dir) {
+  if (!have("git")) return fs.existsSync(path.join(dir, ".git"));
   try {
     execFileSync("git", ["-C", dir, "rev-parse", "--is-inside-work-tree"], { stdio: "ignore" });
     return fs.existsSync(path.join(dir, ".git"));
@@ -80,7 +81,8 @@ function main(argv) {
     console.log(VERSION);
     return 0;
   }
-  for (const tool of ["python3", "git", "bash"]) {
+  // git is only used to recognise an existing checkout; python3 and bash run the installer
+  for (const tool of ["python3", "bash"]) {
     if (!have(tool)) {
       console.error(`agentic-sdd needs ${tool} on PATH`);
       return 2;
