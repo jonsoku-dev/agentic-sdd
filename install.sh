@@ -12,7 +12,9 @@
 #   ./install.sh --deps                  # install/update Spec Kit, pstack (Claude/Codex/Grok), rea-agents pins to latest, then relink (scripts/deps.py update --yes)
 #   ./install.sh --check-deps            # report installed vs latest for every dependency and exit 1 when something is behind
 #   ./install.sh --cursor-cli-skills     # link the Cursor pstack plugin's skills into ~/.cursor/skills for the Cursor Agent CLI
-#   ./install.sh --uninstall             # remove the symlinks, Grok links, and Cursor continuation hooks this script creates
+#   ./install.sh --uninstall             # remove everything this script created under $HOME (symlinks, Grok rule/agents, Codex mandate block, Cursor links/hooks)
+#   ./install.sh --uninstall --project DIR       # also remove DIR/.agents/playbooks/agentic-sdd.md and DIR/.cursor/rules/agentic-sdd.mdc
+#   ./install.sh --uninstall --purge-deps --yes  # also uninstall pstack (Claude/Codex/Grok) and the Spec Kit CLI; rea MCP entries and pstack sheets stay
 
 set -euo pipefail
 
@@ -25,6 +27,8 @@ GROK_MANDATE=0
 CODEX_MANDATE=0
 DEPS=0
 CHECK_DEPS=0
+PURGE_DEPS=0
+YES=0
 CURSOR_CLI_SKILLS=0
 UNINSTALL=0
 
@@ -39,7 +43,9 @@ while [ $# -gt 0 ]; do
     --check-deps) CHECK_DEPS=1; shift ;;
     --cursor-cli-skills) CURSOR_CLI_SKILLS=1; shift ;;
     --uninstall) UNINSTALL=1; shift ;;
-    -h|--help) sed -n '2,15p' "$0"; exit 0 ;;
+    --purge-deps) PURGE_DEPS=1; shift ;;
+    --yes) YES=1; shift ;;
+    -h|--help) sed -n '2,17p' "$0"; exit 0 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
@@ -115,6 +121,33 @@ if changed:
     print(f"removed agentic-sdd Cursor hooks from {dst}")
 EOF
   fi
+  if [ -n "$PROJECT" ]; then
+    for f in "$PROJECT/.agents/playbooks/$NAME.md" "$PROJECT/.cursor/rules/$NAME.mdc"; do
+      if [ -f "$f" ]; then rm "$f"; echo "removed $f"; fi
+    done
+    rmdir "$PROJECT/.agents/playbooks" "$PROJECT/.agents" "$PROJECT/.cursor/rules" 2>/dev/null || true
+  fi
+  if [ "$PURGE_DEPS" = 1 ]; then
+    if [ "$YES" != 1 ]; then
+      echo "--purge-deps removes pstack from Claude Code, Codex, and Grok and the Spec Kit CLI; rerun with --yes to confirm" >&2
+    else
+      command -v claude >/dev/null && claude plugin uninstall pstack@pstack-claude 2>&1 | tail -1
+      command -v codex >/dev/null && codex plugin remove pstack 2>&1 | tail -1
+      if command -v grok >/dev/null; then
+        for n in $(grok plugin list 2>/dev/null | awk -F: '/^  pstack-/{print $1}'); do grok plugin uninstall "$n" 2>&1 | tail -1; done
+      fi
+      command -v uv >/dev/null && uv tool uninstall specify-cli 2>&1 | tail -1
+      echo "purged pstack plugins and the Spec Kit CLI; remove Cursor's pstack from the IDE (Settings > Plugins)"
+    fi
+  fi
+  cat <<KEPT
+kept on purpose (remove by hand if you want them gone):
+  rea MCP entries in ~/.claude.json, ~/.cursor/mcp.json, ~/.codex/config.toml, ~/.grok/config.toml (this script only repins their version)
+  pstack model sheets: ~/.claude/pstack-models.md, ~/.codex/pstack-models.md, ~/.cursor/rules/pstack-models.mdc, ~/.grok/pstack-models.md
+  backups this script wrote: ~/.cursor/hooks.json.bak-*, <config>.bak-rea-<version>
+  your projects' .specify/, specs/, progress.md
+  this checkout: rm -rf "$SRC"
+KEPT
   exit 0
 fi
 

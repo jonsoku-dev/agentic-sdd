@@ -1,133 +1,341 @@
 # agentic-sdd
 
-Spec Kit–first Spec-Driven Development for **Claude Code, Codex, Cursor, and
-Grok Build**, with [pstack](https://github.com/cursor/plugins/tree/main/pstack)
-as the execution engine inside every phase and a mandatory REA closeout.
+Spec-Driven Development that finishes. One skill that drives
+[GitHub Spec Kit](https://github.com/github/spec-kit) end to end on
+**Claude Code, Codex, Cursor, and Grok Build**, runs
+[pstack](https://github.com/cursor/plugins/tree/main/pstack) inside every phase
+for rigor, and refuses to call a feature done without
+[REA](https://github.com/morluto/rea) runtime evidence.
 
 ```text
-specify → plan → tasks → implement → converge → REA closeout
+specify → plan → tasks → implement → converge (once) → REA closeout → next spec
 ```
 
-- **Spec Kit** owns the sequence and artifacts (`.specify/`, `specs/`).
-- **agentic-sdd** owns the Final Goal, phase contracts, recovery, continuity
-  (`progress.md`), and the closeout.
-- **pstack** owns *how* a phase executes: `architect` / `arena` at plan,
-  poteto non-negotiables and `poteto-agent` leaves at implement,
-  `blast-radius` + `interrogate` at converge, `pause-safely` before a handoff.
-- **Seven harness layers** (workspace facts, procedure, source access, action
-  rules, reviewer evidence, effort, completion goal) are mapped per host in
-  [`references/harness-layers.md`](references/harness-layers.md); the split
-  follows @beamnxw's harness-engineering post (X, 2026-10-07).
+| Layer | Owner | What it contributes |
+|---|---|---|
+| Phase order and artifacts | Spec Kit | `.specify/`, `specs/NNN-*/{spec,plan,tasks,converge}.md` |
+| Goal, contracts, continuity | agentic-sdd | Final Goal pinning, phase contracts, `progress.md` breadcrumbs, recovery, one converge per spec, small specs |
+| How a phase executes | pstack | `sharpen`/`how` on entry, `architect`/`arena` at plan, poteto non-negotiables and `poteto-agent` leaves at implement, `blast-radius` + `no-comments` + `interrogate` at converge |
+| Proof | REA | `capture_process_scenario` and friends; a feature closes on an Evidence id, not a claim |
+| Resilience | seven harness layers | workspace facts, procedure, source access, action rules, reviewer evidence, effort, completion goal, probed per host by `scripts/harness_probe.py` |
 
-Unattended by default: `/agentic-sdd` advances every phase and remaining
-numbered feature without a phase quiz. Hard boundaries (destructive ops,
-secrets, scope changes, plugin installs) still ask once.
+Unattended by default: `/agentic-sdd` advances every phase and every remaining
+numbered feature without a phase quiz. It asks once only at hard boundaries
+(destructive operations, secrets, scope beyond the Final Goal, plugin installs).
 
-## Install
+## Contents
+
+- [Quick start](#quick-start)
+- [How a run looks](#how-a-run-looks)
+- [Per host: Claude Code](#claude-code)
+- [Per host: Codex](#codex)
+- [Per host: Cursor](#cursor)
+- [Per host: Grok Build](#grok-build)
+- [Keeping dependencies current](#keeping-dependencies-current)
+- [Uninstall](#uninstall)
+- [Evidence that it works](#evidence-that-it-works)
+- [Repository layout](#repository-layout)
+- [License and third-party notices](#license-and-third-party-notices)
+
+## Quick start
+
+Requirements: Python 3.11+, Node 20+ (for `npx` and REA), `uv` (for the Spec
+Kit CLI), `git`, and at least one of the four host CLIs. `bun` is needed only
+by pstack's own playbook checker.
 
 ```sh
 git clone https://github.com/jonsoku-dev/agentic-sdd ~/.agents/skills/agentic-sdd
-~/.agents/skills/agentic-sdd/install.sh --deps                     # optional: install/update Spec Kit, pstack, REA pins first
-~/.agents/skills/agentic-sdd/install.sh            # symlinks into ~/.claude ~/.codex ~/.cursor ~/.grok skills
-~/.agents/skills/agentic-sdd/install.sh --project /path/to/repo   # + pstack project playbook (port) and .cursor/rules/agentic-sdd.mdc (Cursor)
-~/.agents/skills/agentic-sdd/install.sh --apply-cursor-hooks      # + Cursor stop-hook continuation
-~/.agents/skills/agentic-sdd/install.sh --codex-mandate           # pstack mandate into ~/.codex/AGENTS.md (Codex never runs untrusted plugin hooks)
-~/.agents/skills/agentic-sdd/install.sh --grok-mandate --grok-agents   # Grok home rule (mandate + Spec Kit handoffs) and poteto-agent link
-~/.agents/skills/agentic-sdd/install.sh --cursor-cli-skills       # link the Cursor pstack plugin's skills for the Cursor Agent CLI
+cd ~/.agents/skills/agentic-sdd
+./install.sh --deps            # install or update Spec Kit, pstack (Claude/Codex/Grok), REA pins; then link the skill into every host
+./install.sh --check-deps      # later: what is behind, with the exact update command per row
 ```
 
-Keep every dependency current from one place:
+`install.sh` with no flags symlinks this checkout into `~/.agents/skills`,
+`~/.claude/skills`, `~/.codex/skills`, `~/.cursor/skills`, and `~/.grok/skills`.
+It is idempotent; rerun it after a `git pull`. Host-specific flags are listed in
+each host section below and in `./install.sh --help`.
+
+Then, in a repository that already has Spec Kit (`specify init` is the
+`setup-speckit-multi-agent` skill's job, not this one):
 
 ```sh
-~/.agents/skills/agentic-sdd/install.sh --check-deps   # installed vs latest: Spec Kit, pstack per host, rea-agents pins, host CLIs; exit 1 when behind
-~/.agents/skills/agentic-sdd/install.sh --deps         # update what can be updated unattended, then relink mandates/agents/skills
-python3 scripts/deps.py update --yes --hosts           # additionally run claude/codex/grok/agent self-update
+~/.agents/skills/agentic-sdd/install.sh --project /path/to/repo   # project playbook (pstack port) + Cursor rule
+python3 ~/.agents/skills/agentic-sdd/scripts/harness_probe.py --host claude --project /path/to/repo
 ```
 
-`deps.py` updates Spec Kit (`uv tool install --force … specify-cli`), pstack on
-Claude Code (`claude plugin marketplace update` + `plugin update`), Codex
-(`codex plugin marketplace upgrade` + `plugin add`), Grok (`grok plugin update`),
-and rewrites the `rea-agents@<version>` pin in every host MCP config (with a
-`.bak-rea-<version>` copy) before warming the npx cache. Cursor's pstack is
-updated from the IDE; the script reports it. Hosts must restart after a pin
-change so each MCP server respawns.
+The probe prints the pstack version it found, missing core skills, the model
+sheet, one `ok`/`gap` line per harness layer, and two breadcrumb lines to paste
+into `progress.md`. Start the run by asking the host for the Final Goal in
+plain words, or type the skill's name (`/agentic-sdd`, `$agentic-sdd`,
+`/skill agentic-sdd` depending on the host).
 
-How each host reaches pstack's `poteto-mode` (and why Cursor needs the rule)
-is in `references/poteto-mode-anatomy.md`. Headless drivers used by the evals:
-`claude -p --output-format stream-json --verbose --dangerously-skip-permissions`,
-`codex exec --json -m <a slug spawn_agent lists> --dangerously-bypass-approvals-and-sandbox "…" < /dev/null`,
-`agent -p --output-format stream-json --force "…"`,
-`grok --output-format json --always-approve -p "…" < /dev/null`.
+## How a run looks
 
-Then install pstack once per host:
+1. **Enter.** Resolve the nearest `.specify/`, the active numbered feature, and
+   its phase from the artifacts and `progress.md`. Load
+   `references/pstack-integration.md` and `references/harness-layers.md`, run
+   the probe, record the breadcrumbs. `O-sharpen` pins the Final Goal and the
+   acceptance criteria; nobody is quizzed.
+2. **Specify, plan, tasks.** Spec Kit commands write the artifacts; the
+   obligations run beside them: `technical-writing` + `unslop` on the spec,
+   `how` for brownfield evidence, `architect` (or `arena` when shapes compete)
+   when code crosses a function boundary, `principle-sequence-verifiable-units`
+   so every task ends in a check. Tasks beyond about twelve mean a smaller spec.
+3. **Implement.** The host's poteto agent takes one admitted task packet at a
+   time, in its own worktree, with the model and effort the pstack sheet names.
+   The lead reviews every diff and never claims a dispatch it did not observe.
+4. **Converge, once.** `blast-radius`, `no-comments`, then a two-to-four model
+   `interrogate` panel. Act-on findings are appended to `tasks.md` and
+   implemented in one bounded fix round. There is no second converge: gaps
+   that survive become the next, smaller spec (`closed-carryover`).
+5. **REA closeout.** Run the real artifact under REA and record the Evidence
+   id in `converge.md` and `progress.md`. Disposition is `pass`,
+   `not-applicable`, or `blocked-limitation`; only `pass` closes the feature.
+6. **Next spec or stop.** `progress.md` ends with `Final Goal status` and a
+   `Next action` line a cold session can resume from.
 
-| Host | pstack | Invoke | Leaves |
-|------|--------|--------|--------|
-| Claude Code | `claude plugin install pstack --marketplace michael-denyer/pstack-claude --scope user` | `/pstack:<skill>` | `pstack:poteto-agent[-<level>]` |
-| Codex | `codex plugin marketplace add michael-denyer/pstack-claude && codex plugin add pstack@pstack-claude` | skill by name | `spawn_agent` + `reasoning_effort` |
-| Cursor | `/add-plugin pstack` | `/<skill>` | `poteto-agent` |
-| Grok Build | `grok plugin marketplace add michael-denyer/pstack-claude && grok plugin install pstack@pstack-claude --trust` (or Claude compat scan) | skill by name | `spawn_subagent` |
+Every obligation leaves one line in `progress.md`, for example
+`pstack: O-interrogate|claude|2x pstack:effort-low (opus, haiku) -> 1 act-on -> T004 appended`,
+plus `ROUTING:` lines that record requested versus observed model and effort.
+The full phase → obligation map is in `references/pstack-integration.md`.
 
-Project Spec Kit setup (`specify init`, integrations, inspect, activate)
-belongs to the `setup-speckit-multi-agent` skill, not this one.
+## Claude Code
 
-Check readiness on any host:
+**Install pstack** (the `pstack-claude` port of the Cursor plugin):
 
 ```sh
-python3 scripts/harness_probe.py --host claude --project /path/to/repo \
-  --check-map references/pstack-integration.md
+claude plugin marketplace add michael-denyer/pstack-claude
+claude plugin install pstack@pstack-claude --scope user
 ```
 
-It prints pstack version, missing common-core skills, the model sheet, one
-line per harness layer, and the two breadcrumbs to paste into `progress.md`.
+**What this skill adds.** Nothing beyond the symlink is required: the plugin's
+`SessionStart` hook injects the poteto-mode mandate ("invoke `pstack:poteto-mode`
+for multi-file, design, or unknown-cause work"), and `/agentic-sdd` satisfies
+that mandate from inside the Spec Kit phases instead of opening a free-standing
+playbook. The project playbook from `install.sh --project` anchors three
+handoffs on the port's Feature and Bug fix steps so a plain request in a Spec
+Kit repo still resolves the phase first.
 
-## REA closeout
+**Dispatch.** Implement leaves are `subagent_type: "pstack:poteto-agent"`, or
+`pstack:poteto-agent-<level>` when the sheet names an effort. Review panels use
+`pstack:effort-<level>` with the `model` family (`opus`, `fable`, `sonnet`,
+`haiku`) from `~/.claude/pstack-models.md`, written by `/pstack:setup-pstack`.
+Delegates run in their own worktree.
 
-Mandatory after a clean converge. Only in delivery/repair closeout, if MCP and
-`rea` are both missing: `npm install -g rea-agents@6.7.0` and
-`rea setup --yes --client <cursor|claude_code|codex|grok_build>` (one id). No
-`curl|bash`, no `--all-detected`. See `references/rea-closeout.md`.
+**Completion.** `/goal` is Claude Code's own stop-hook goal; agentic-sdd's
+Final Goal in `progress.md` is the durable copy a resumed session reads.
 
-## Model and effort
+**Headless.** `claude -p --output-format stream-json --verbose --dangerously-skip-permissions "<Final Goal>"`
+exposes every `Skill` and `Agent` call for measurement.
 
-The parent model is the user's. Children come from the pstack sheet
-(`pstack-models.md` / `.mdc` written by `/setup-pstack`), then pstack skill
-defaults, then the parent. No external advisor. See
-`references/model-routing.md`.
+**Known limits.** A plugin update needs a Claude Code restart to load; the
+sandbox has no `CLAUDE.md`, so the probe reports L1 as a gap until you add one.
 
-## Structure
+## Codex
+
+**Install pstack:**
+
+```sh
+codex plugin marketplace add michael-denyer/pstack-claude
+codex plugin add pstack@pstack-claude
+# ~/.codex/config.toml: [features] multi_agent = true   (spawn_agent)
+~/.agents/skills/agentic-sdd/install.sh --codex-mandate
+```
+
+**Why `--codex-mandate` exists.** Codex runs a plugin's `SessionStart` hook
+only after you trust it in `/hooks`, and `codex exec` never trusts hooks. So
+the mandate text goes into `~/.codex/AGENTS.md` between
+`<!-- pstack-mandate:start -->` and `<!-- pstack-mandate:end -->`; the installer
+writes and replaces that block only.
+
+**Dispatch.** `spawn_agent` with instructions to read `poteto-mode/SKILL.md`
+first. Pass `model` as a slug the tool actually lists; omitting it makes the
+host inject the parent slug, which a ChatGPT account may reject
+(`gpt-6.1-sol` on the machine this was built on). Effort goes through
+`reasoning_effort`. The sheet is `~/.codex/pstack-models.md`; the one shipped
+in the evals pins every role to `gpt-6-luna` and forbids `gpt-5.6-*`.
+
+**Breadcrumbs.** Write the line form (`pstack: …`, `ROUTING: …`) at column 1.
+Codex tends to write prose bullets instead, and the probe and the eval
+measurers only count the line form.
+
+**Headless.** `codex exec --json --skip-git-repo-check -m gpt-6-luna --dangerously-bypass-approvals-and-sandbox "<Final Goal>" < /dev/null`.
+`--full-auto` does not exist in codex-cli 0.162; the stdin redirect matters
+when the command runs in the background.
+
+**Known limits.** Codex may rewrite `config.toml` (`model`, reasoning effort)
+during a session; check it after a run that behaved unexpectedly.
+
+## Cursor
+
+**Install pstack** from the IDE: `/add-plugin pstack` (official plugin by
+Lauren Tan). Then:
+
+```sh
+~/.agents/skills/agentic-sdd/install.sh --project /path/to/repo   # writes .cursor/rules/agentic-sdd.mdc
+~/.agents/skills/agentic-sdd/install.sh --apply-cursor-hooks      # sdd-continue stop hook (dated backup of ~/.cursor/hooks.json)
+~/.agents/skills/agentic-sdd/install.sh --cursor-cli-skills       # expose the plugin's skills to the Cursor Agent CLI
+```
+
+**Why Cursor needs the rule.** The official plugin has no hooks, no project
+playbooks, and marks `poteto-mode` `disable-model-invocation: true`: the model
+cannot open it on its own, only you can with `/poteto-mode`. Without a project
+rule the Agent CLI routed bug and design prompts to whatever other skill packs
+were installed. `.cursor/rules/agentic-sdd.mdc` (always applied) carries the
+same three Spec Kit handoffs as the project playbook, plus a one-file exemption
+so a typo fix does not open the whole cycle. The skill reads
+`poteto-mode/SKILL.md` as a reference for the non-negotiables instead of
+invoking it.
+
+**Dispatch.** Native `subagent_type: "poteto-agent"` (the plugin's agent,
+`is_background: true`). Model lines come from
+`~/.cursor/rules/pstack-models.mdc` when `/setup-pstack` wrote one. When the
+account's usage limit blocks a non-default model seat, the lead implements the
+leaf itself and records `observed: unavailable|usage-limit`; review seats are
+recorded as `inherit`.
+
+**Continuation.** The `sdd-continue` stop hook re-prompts the agent with the
+`Next action` line from `progress.md` until the Final Goal is met
+(`references/cursor-continuation.md`).
+
+**Headless.** `agent -p --output-format stream-json --force "<Final Goal>"`.
+Plan-shaped prompts can switch the agent into Cursor's plan mode, which a
+headless run cannot answer.
+
+**Known limits.** The plugin cache path
+`~/.cursor/plugins/cache/cursor-public/pstack/<hash>/` changes on every plugin
+update, which silently breaks the `~/.cursor/skills` links; rerun
+`install.sh --cursor-cli-skills` (it prunes the dead links first).
+
+## Grok Build
+
+**Install pstack** (the same port, through Grok's marketplace; Grok can also
+read the Claude plugin cache through `[compat.claude]`):
+
+```sh
+grok plugin marketplace add michael-denyer/pstack-claude
+grok plugin install pstack@pstack-claude --trust
+~/.agents/skills/agentic-sdd/install.sh --grok-mandate --grok-agents
+```
+
+**Why the two flags exist.** Grok runs `SessionStart` hooks but never injects
+their stdout, so `--grok-mandate` writes the mandate plus the three Spec Kit
+handoffs as a home rule, `~/.grok/rules/pstack-mandate.md`, which Grok always
+loads. Plugin agents are not in the `spawn_subagent` enum, so `--grok-agents`
+links the port's `poteto-agent.md` and `comment-sicko.md` into
+`~/.grok/agents/`, where they are.
+
+**Dispatch.** `spawn_subagent` with `subagent_type: "poteto-agent"`; the
+subagent reads `poteto-mode/SKILL.md` before working. `[subagents.models]` in
+`~/.grok/config.toml` pins a model when you want one; without a sheet the
+`ROUTING:` lines read `model unpinned, observed unknown`.
+
+**MCP.** Grok loads `~/.cursor/mcp.json` through `[compat.cursor]`, so REA
+configured for Cursor is already visible to Grok.
+
+**Headless.** `grok --output-format json --always-approve -p "<Final Goal>" < /dev/null`.
+Put `-p` last: `grok -p --output-format json` reads `--output-format` as the
+prompt.
+
+**Known limits.** Grok is the slowest host on the same brief (roughly four
+times Claude's wall time on the three-spec eval) because every spec pays the
+full phase overhead and the context grows to ~180k tokens; keep its specs
+small.
+
+## Keeping dependencies current
+
+```sh
+./install.sh --check-deps              # table: installed vs latest; exit 1 when anything is behind
+./install.sh --deps                    # update unattended, then relink mandates, agents, and skill links
+python3 scripts/deps.py update --yes --hosts   # also run claude/codex/grok/agent self-update
+python3 scripts/deps.py check --json   # machine-readable
+```
+
+| Component | How it is read | How it is updated |
+|---|---|---|
+| Spec Kit CLI (`specify`) | `uv tool list` | `uv tool install --force --from git+https://github.com/github/spec-kit.git specify-cli` |
+| pstack on Claude Code | plugin cache manifest | `claude plugin marketplace update pstack-claude && claude plugin update pstack@pstack-claude` (restart to load) |
+| pstack on Codex | plugin cache manifest | `codex plugin marketplace upgrade && codex plugin add pstack@pstack-claude` |
+| pstack on Grok | installed-plugins manifest | `grok plugin marketplace update pstack-claude && grok plugin update` |
+| pstack on Cursor | plugin cache manifest | IDE only; reported, then `--cursor-cli-skills` relinks |
+| `rea-agents` pins | every host MCP config (`~/.claude.json`, `~/.cursor/mcp.json`, `~/.codex/config.toml`, `~/.grok/config.toml`, Claude desktop, Antigravity, Hermes) | pins rewritten to the npm latest with a `.bak-rea-<version>` copy, npx cache warmed; restart hosts so MCP servers respawn |
+| Host CLIs | `--version` | `claude update`, `codex update`, `grok update`, `agent update` (only with `--hosts`) |
+
+Pin REA at **6.7.0 or newer**: older releases fail every process capture whenever
+an unrelated restricted process (a browser renderer) starts mid-capture.
+
+## Uninstall
+
+`install.sh` only ever creates symlinks, a few files it owns, and marked blocks
+inside files you own. Uninstall is the exact inverse.
+
+```sh
+~/.agents/skills/agentic-sdd/install.sh --uninstall                          # everything under $HOME this script created
+~/.agents/skills/agentic-sdd/install.sh --uninstall --project /path/to/repo   # + the two project files
+~/.agents/skills/agentic-sdd/install.sh --uninstall --purge-deps --yes        # + pstack plugins and the Spec Kit CLI
+rm -rf ~/.agents/skills/agentic-sdd                                           # finally, the checkout itself
+```
+
+| Removed by `--uninstall` | Detail |
+|---|---|
+| Skill symlinks | `agentic-sdd` in `~/.agents/skills`, `~/.claude/skills`, `~/.codex/skills`, `~/.cursor/skills`, `~/.grok/skills` (only when they are symlinks) |
+| Grok files | `~/.grok/agents/poteto-agent.md`, `~/.grok/agents/comment-sicko.md`, `~/.grok/rules/pstack-mandate.md`, `~/.grok/hooks/pstack-session-start.json` |
+| Codex block | the `<!-- pstack-mandate:start … end -->` block in `~/.codex/AGENTS.md`; the rest of the file is untouched |
+| Cursor CLI links | every `~/.cursor/skills/*` symlink that points into a pstack plugin cache |
+| Cursor hooks | `~/.cursor/hooks/agentic-sdd-continue/` and the `agentic-sdd-continue` entries in `~/.cursor/hooks.json`; other hooks stay |
+| With `--project DIR` | `DIR/.agents/playbooks/agentic-sdd.md`, `DIR/.cursor/rules/agentic-sdd.mdc`, and the directories if they became empty |
+| With `--purge-deps --yes` | `claude plugin uninstall pstack@pstack-claude`, `codex plugin remove pstack`, `grok plugin uninstall pstack-*`, `uv tool uninstall specify-cli`. Cursor's plugin is removed from the IDE. Without `--yes` it only prints what it would do. |
+
+Kept on purpose, and printed at the end of every uninstall so you can remove
+them by hand:
+
+- the `rea` MCP server entries in each host config (this script only repins
+  their version; you added the servers),
+- the pstack model sheets (`pstack-models.md` / `.mdc`),
+- backups the script wrote (`~/.cursor/hooks.json.bak-*`, `<config>.bak-rea-<version>`),
+- your projects' `.specify/`, `specs/`, and `progress.md`.
+
+Nothing is deleted from a project except the two files above, and nothing is
+deleted from a host config except the marked block and the named hook entries.
+
+## Evidence that it works
+
+`docs/evals/` keeps the records; raw headless transcripts are gitignored.
+
+- `2026-10-19-sandbox-ab/`: Spec Kit alone versus this stack on the same brief.
+  The stack caught three shipped defects, left a resumable `progress.md`, and
+  cost roughly ten times as much on a 60-line feature.
+- `2026-10-20-host-matrix/`: four hosts × (routing prompts, a real feature, a
+  three-part goal with the split rule). All four hosts delivered the feature
+  with a black-box pass, exactly one converge, and a REA Evidence id; the
+  trivial prompt invoked nothing on any host; the complex goal was split into
+  two or three small specs with no reconverge and no carryover. Claude $7.49
+  and $12.07; Grok $7.15 and $17.65; Codex and Cursor on subscriptions.
+  `result.md` lists every confound.
+
+## Repository layout
 
 | Path | Role |
-|------|------|
-| `SKILL.md` | Entrypoint |
-| `references/` | Phase contracts, pstack map, harness layers, recovery, hosts, REA |
-| `scripts/` | `harness_probe.py`, verification guards, criterion gate, scaffold helpers |
-| `templates/playbooks/` | pstack project playbook (`.agents/playbooks/agentic-sdd.md`) |
-| `hosts/cursor/` | Cursor continuation hooks + `hooks.json` snippet |
-| `visualizer/` | Optional Kanban over Spec Kit artifacts |
-| `personas/` | Provider personas (load only when needed) |
+|---|---|
+| `SKILL.md` | Entrypoint the hosts load |
+| `references/` | Phase contracts, pstack map, harness layers, poteto-mode anatomy, model routing, recovery, REA closeout, per-host guides |
+| `scripts/` | `harness_probe.py`, `deps.py`, verification evidence and guards, criterion gate, scaffold helpers |
+| `templates/playbooks/` | pstack project playbook (port hosts) |
+| `templates/cursor-rules/` | Cursor project rule |
+| `hosts/cursor/` | `sdd-continue` hooks and the `hooks.json` snippet |
+| `install.sh` | Link, configure, update, and uninstall per host |
+| `tests/` | `python3 -m unittest discover -s tests -p 'test_*.py'` |
+| `evals/` | Behavioral eval cases |
+| `personas/` | Provider personas, loaded only when a host asks for one |
 | `agents/openai.yaml` | Codex skill metadata |
-| `tests/` | `pytest -q tests` |
-| `evals/` | Behavioral evals |
-
-## Hosts
-
-Start with `references/host-guide-greenfield-brownfield.md`, then
-`references/starting-tool-considerations.md` and
-`references/agent-compatibility.md`. Cursor resumes through
-`references/cursor-continuation.md`.
-
-## Kanban
-
-```sh
-python3 visualizer/server.py --project /path/to/repo   # http://localhost:8765
-```
+| `visualizer/` | Optional Kanban over Spec Kit artifacts: `python3 visualizer/server.py --project /path/to/repo` |
+| `docs/evals/` | Measured runs and their artifacts |
 
 ## License and third-party notices
 
 This repository is MIT (`LICENSE`). Everything here is original to this
-project; it integrates, but does not bundle, the tools below. Install each
-from its own source under its own license.
+project; it integrates, but does not bundle, the tools below. Install each from
+its own source under its own license.
 
 | Component | Role here | Author / license |
 |---|---|---|
@@ -138,10 +346,6 @@ from its own source under its own license.
 | @beamnxw, "Make Opus 5.5 Finish Long Tasks: A Reusable Harness Engineering Setup" (X, 2026-10-07) | the seven-layer model in `references/harness-layers.md` | idea credited; no text reproduced |
 
 `templates/playbooks/agentic-sdd.md` quotes a few words of pstack playbook step
-text only as anchors, as the pstack project-playbook format requires. The Cursor
-plugin cache path (`~/.cursor/plugins/cache/cursor-public/pstack/<hash>/`)
-changes on every plugin update; rerun `install.sh --cursor-cli-skills` after
-updating pstack in Cursor so the Agent CLI links resolve again.
-
-Evaluation records under `docs/evals/` are from the maintainers' own runs on
-their machine; raw headless transcripts are not committed.
+text only as anchors, as the pstack project-playbook format requires.
+Evaluation records under `docs/evals/` come from the maintainers' own runs on
+their machine.
