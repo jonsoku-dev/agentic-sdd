@@ -6,6 +6,18 @@ All notable changes to this project are documented here. The format follows
 by [release-please](https://github.com/googleapis/release-please) from
 [Conventional Commits](https://www.conventionalcommits.org/) on `main`.
 
+## [1.1.5](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.1.4...v1.1.5) (2026-10-20)
+
+
+### Bug fixes
+
+* keep Python bytecode out of the npm tarball, trusted publishing only ([1b85b8d](https://github.com/jonsoku-dev/agentic-sdd/commit/1b85b8d50a3e95b0875da0ec2f9d4f88747b1041))
+
+
+### Documentation
+
+* release pull request CI needs a one-time run approval ([cd831a0](https://github.com/jonsoku-dev/agentic-sdd/commit/cd831a0f79da902b72700c13b0280700fd1cd488))
+
 ## [1.1.4](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.1.3...v1.1.4) (2026-10-20)
 
 
