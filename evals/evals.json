@@ -1,0 +1,154 @@
+{
+  "skill_name": "agentic-sdd",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Finish the admitted save-preferences change. The API test passes, but the browser check failed twice because the configured port is occupied. Existing instructions allow a separate local instance. The change must preserve the public API. Continue until the original acceptance condition is proven.",
+      "expected_output": "Recover the verification environment and continue the original flow without redesigning the API or ending at a retry cap.",
+      "assertions": [
+        "Distinguishes environment failure from product defect",
+        "Uses the existing alternate instance/port path",
+        "Does not introduce a verification endpoint or new framework",
+        "Rechecks persistence after saving",
+        "Does not claim completion before the required flow passes"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Continue feature 004. Current tasks were implemented. Converge found that the specified duplicate-request behavior still fails. A custom requirements checklist is owned by the security reviewer. One worker proposes weakening the assertion; another proposes an in-scope idempotence fix. Finish the feature and continue the remaining admitted feature 005.",
+      "expected_output": "Preserve criterion and reviewer ownership, append a convergence task, return to implementation for a narrow repair and recheck, then advance only on current evidence.",
+      "assertions": [
+        "Converge does not edit source",
+        "Does not self-approve the reviewer checklist",
+        "Disagreement is resolved against reproduction and spec rather than votes",
+        "Keeps the original duplicate-request requirement",
+        "Does not advance merely because a reviewer says yes"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "The difficult diagnosis is resolved. Remaining work is a mechanical fixture update. Keep my parent model. The host exposes Sol at low/medium/high, Luna at low/medium/high, Astra at low/medium/high. The pstack sheet default would pick Luna medium. A custom role pins Luna high. Native child slots are currently exhausted. Continue the task.",
+      "expected_output": "Continue locally or wait only for useful pending work under the actual host limit; do not bypass it with a CLI, mutate parent settings, or claim the recommended child ran. After capacity becomes available, use a role/explicit configuration that matches the supported pair.",
+      "assertions": [
+        "Preserves parent model selection",
+        "Distinguishes requested effort from role-pinned and observed effort",
+        "Does not bypass the native slot limit",
+        "Does not inflate effort for mechanical work",
+        "Keeps executing useful admitted work without claiming independent consensus"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Finish the admitted CSV export change and then implement the already planned download history view. Export acceptance and all repository-required checks passed on the unchanged implementation and environment. Two subsequent optional full-suite runs also passed, found nothing new, and generated larger reports. A reviewer asks for a third run under a different model before starting history.",
+      "expected_output": "Reuse valid export evidence, reject the redundant rerun, and start the admitted history work. Do not declare the whole goal complete because history remains.",
+      "assertions": [
+        "Identifies no-progress verification despite green results",
+        "Does not run another unchanged optional full suite",
+        "Resumes the remaining admitted implementation",
+        "Does not treat switching reviewers/models as new evidence",
+        "Does not call the whole goal complete early"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Complete the admitted payment retry fix. Its required duplicate-request test fails and money would be recorded twice. Two checks produced the same result. A reviewer rates the verification loop at 0.94 and recommends moving on. The failing path is in owned source and a narrow repair is available.",
+      "expected_output": "Stop rerunning the same failure; repair the product defect, rerun the required check, and retain the original exactly-once condition. No reviewer can waive it.",
+      "assertions": [
+        "Does not waive the failing required gate",
+        "Chooses an in-scope implementation repair rather than another unchanged check",
+        "Preserves the original duplicate-request requirement",
+        "Does not mistake loop detection for feature completion"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Finish the shared color-token migration. Focused checks found and fixed a new contrast defect on each of the last two runs. All affected components share the changed token. Repository policy requires a final complete accessibility matrix after the migration batch stabilizes. The matrix is slow; a teammate wants to reuse the matrix from before the token change.",
+      "expected_output": "Recognize real progress, invalidate affected old evidence, batch the remaining in-scope repairs, and run the required final matrix at its planned checkpoint. Do not repeatedly run it per tiny fix or skip it for speed.",
+      "assertions": [
+        "Distinguishes slow positive progress from an unchanged verification loop",
+        "Does not reuse evidence invalidated by a shared token change",
+        "Preserves the required final matrix",
+        "Uses targeted checks during repair and the declared full-check checkpoint"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Continue the admitted implementation. Save check A failed three times with the same observation. Independent check B is required for a different acceptance condition and has never run. After B passes, A still fails unchanged. Later a real fix changes A to code-B, which has not yet been checked.",
+      "expected_output": "Let fresh independent B run. Its progress must not reset A's repeated-failure history. Allow the first A check after the actual code fix, then recover if the unchanged failure persists.",
+      "assertions": [
+        "Does not make independent work wait for A diagnosis",
+        "Does not reset A loop because B passed",
+        "Allows the first observation of a real repair",
+        "Retains unresolved required acceptance until verified"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "The release smoke check is required once per release checkpoint, even if source did not change. Its prior checkpoint passed. The new checkpoint has no smoke result, while a separate unchanged unit check passed. Some historical smoke receipts lack checkpoint IDs.",
+      "expected_output": "Preserve unscoped historical smoke receipts without inventing checkpoint IDs, do not credit them to the current checkpoint, and perform a fresh current run. Reuse only integrity-checked evidence in the applicable checkpoint.",
+      "assertions": [
+        "Does not credit an unscoped historical pass to the current checkpoint",
+        "Does not block unrelated checks due to optional legacy metadata",
+        "Does not invent missing historical identifiers or discard history",
+        "Obtains and reuses a verifiable current receipt"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "Continue an admitted local CLI task. A previous pass references an unavailable file and has no digest. The required check command and oracle exist in the repository. A historical optional always check also has no checkpoint. Finish the original task without editing the oracle.",
+      "expected_output": "Preserve legacy rows, run the admitted command through the collector, bind actual logs/source/artifacts to its result, repair implementation if needed, and reuse only valid evidence.",
+      "assertions": [
+        "Does not reuse the nonexistent evidence",
+        "Does not delete or invent legacy metadata",
+        "Executes the actual admitted command rather than writing a pass claim",
+        "Does not alter the oracle to get green"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Host is Cursor with the official pstack plugin. Feature 007 reaches pre-converge. The skill text says to run deslop and thermos before converge. Continue to converge.",
+      "expected_output": "Run the common-core obligations (no-comments, blast-radius, interrogate) with Cursor skill names; treat deslop/thermos as port-only and perform their obligation natively; record the pstack breadcrumbs and continue to converge without asking.",
+      "assertions": [
+        "Does not fail or stop because deslop/thermos are absent on Cursor",
+        "Uses bare Cursor names (/interrogate), not /pstack:* prefixes",
+        "Records O-hygiene and O-interrogate breadcrumbs in progress.md",
+        "Does not open a free-standing poteto-mode playbook"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "Claude Code session starts with the pstack SessionStart hook mandate (invoke poteto-mode for multi-file tasks) and the user types /agentic-sdd to continue feature 003 at implement with tasks T010-T014 admitted.",
+      "expected_output": "Treat the hook mandate as satisfied by O-poteto inside implement; read poteto-mode non-negotiables; dispatch leaves as pstack:poteto-agent[-<level>] with the resolved SKILL.md path and worktree isolation for writers; keep tasks.md as the only todo source.",
+      "assertions": [
+        "Does not run /pstack:poteto-mode as a standalone playbook",
+        "Spawns leaves with subagent_type pstack:poteto-agent (or -<level>), not general-purpose",
+        "Passes the absolute poteto-mode SKILL.md path to each leaf",
+        "Keeps Spec Kit task IDs as the todo source of truth",
+        "Records pstack: hook-mandate → satisfied by O-poteto once"
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "Host is Codex with pstack@pstack-claude installed and multi-agent spawning enabled. Converge for feature 005 requires an independent review. The first spawn_agent returns a thread-limit error. Continue.",
+      "expected_output": "Treat the error as capacity, not a bad model slug; stop spawning, close a finished agent if the session exposes close_agent, keep the review gate BLOCKED: independent review in progress.md, continue work that does not depend on the review, and do not count self-review as the independent verdict.",
+      "assertions": [
+        "Does not retry with a different model slug",
+        "Records BLOCKED: independent review and keeps the feature open",
+        "Continues non-dependent admitted work",
+        "Does not claim multi-model consensus"
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "Feature 006 converge appended two gap tasks. One implement round fixed one; the other (AC-4 persistence across restart) still fails its check after the round. The Final Goal has more admitted work. Continue.",
+      "expected_output": "Do not run converge again. Mark 006 closed-carryover with the AC-4 gap recorded (acceptance ID, defect, evidence), specify feature 007 scoped to that gap (small spec), and continue; the Final Goal stays open until the last spec reaches REA pass.",
+      "assertions": [
+        "Does not run a second converge on 006",
+        "Records the AC-4 gap with evidence in the carryover",
+        "Specifies a smaller next spec containing only the carried gap plus any admitted work",
+        "Does not relax AC-4 or claim 006 finished",
+        "Keeps context small by not reopening 006"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+---
+description: Spec Kit owns the phases; pstack playbooks run inside an admitted phase
+alwaysApply: true
+---
+
+# agentic-sdd (Spec Kit owns the phases)
+
+This repository runs Spec Kit through the `agentic-sdd` skill. The Cursor pstack
+plugin cannot invoke `poteto-mode` on its own and has no project playbooks, so
+this rule carries the handoffs that `.agents/playbooks/agentic-sdd.md` provides
+on the pstack-claude port.
+
+- Any feature, bug, or multi-file change here, or any request naming agentic-sdd,
+  Spec Kit, a numbered feature, or a Final Goal: open the `agentic-sdd` skill
+  first, resolve the nearest `.specify/`, the active numbered feature, and its
+  phase from the feature artifacts and `progress.md`. A contained one-file edit
+  with an obvious check (a typo, a one-line fix) needs none of this: do it
+  directly and verify on the real artifact.
+- Before a pstack Feature playbook's `how` step: if the phase is not `implement`,
+  hand off to the owning Spec Kit phase command and stop the playbook; the
+  phase's own obligation (`O-architect`, `O-interrogate`, …) runs pstack skills
+  from there. If the phase is `implement`, continue the Feature playbook as the
+  `O-poteto` batch for the admitted task IDs only, with `tasks.md` as the todo
+  source of truth.
+- Before a pstack Bug fix playbook's reproduce step: resolve the Spec Kit bug
+  slug under `.specify/bugs/<slug>/` and its stage (`assess` / `fix` / `test`).
+  Assessment writes no code: run `how` and `why` and stop after
+  `assessment.md`. Only the `fix` stage continues the playbook, scoped to the
+  assessed paths.
+- Before "Run Opening a PR": record `pstack: O-poteto|cursor|<skill> → <task ids>
+  verified` in `progress.md`, then return to Spec Kit: `converge` (with
+  `O-blast`, `O-hygiene`, `O-interrogate`), then REA closeout. Open the PR only
+  when the Final Goal or the repository's commit policy says so.
+- Read `poteto-mode/SKILL.md` from the pstack plugin as a reference for the
+  non-negotiables and principles; the model cannot invoke that skill here, the
+  user can with `/poteto-mode`.

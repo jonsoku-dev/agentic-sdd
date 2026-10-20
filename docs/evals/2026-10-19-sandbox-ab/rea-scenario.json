@@ -1,0 +1,9 @@
+{
+  "executable": "/bin/sh",
+  "arguments": ["-c", "rm -f _rea_todo.json; ./todo add 'buy milk'; ./todo add 'write report'; ./todo list; ./todo done 1; echo rc=$?; ./todo list; ./todo done 99; echo rc=$?; cat _rea_todo.json; rm -f _rea_todo.json"],
+  "working_directory": "<scratchpad>/sdd-ab/B",
+  "environment": {"TODO_FILE": "_rea_todo.json"},
+  "timeout_ms": 30000,
+  "finalization_ms": 1500,
+  "settle_ms": 300
+}

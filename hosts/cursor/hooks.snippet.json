@@ -1,0 +1,29 @@
+{
+  "hooks": {
+    "beforeSubmitPrompt": [
+      {
+        "command": "./hooks/agentic-sdd-continue/prompt.sh",
+        "timeout": 5
+      }
+    ],
+    "stop": [
+      {
+        "command": "./hooks/agentic-sdd-continue/stop.sh",
+        "timeout": 15,
+        "loop_limit": null
+      }
+    ],
+    "afterAgentResponse": [
+      {
+        "command": "./hooks/agentic-sdd-continue/after-response.sh",
+        "timeout": 5
+      }
+    ],
+    "sessionStart": [
+      {
+        "command": "./hooks/agentic-sdd-continue/session-start.sh",
+        "timeout": 5
+      }
+    ]
+  }
+}

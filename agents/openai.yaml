@@ -1,0 +1,7 @@
+interface:
+  display_name: "Agentic SDD"
+  short_description: "Spec Kit delivery with REA closeout and pstack execution"
+  default_prompt: "Use $agentic-sdd to finish the Final Goal via Spec Kit (specify → plan → tasks → implement → converge → REA closeout). Finish only on REA pass or not-applicable. In delivery/repair closeout only, if MCP and rea are missing, install rea-agents@6.7.0 and rea setup --yes --client one of cursor|claude_code|codex|grok_build. No curl|bash, no --all-detected. Scoped verification, recovery, and live model routing. With pstack installed, apply the phase map in references/pstack-integration.md (poteto non-negotiables inside implement, interrogate at converge, pause-safely before handoff); never open a free-standing poteto-mode playbook."
+
+policy:
+  allow_implicit_invocation: true

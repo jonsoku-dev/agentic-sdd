@@ -1,0 +1,5 @@
+__pycache__/
+.pytest_cache/
+*.pyc
+docs/evals/**/*.jsonl
+docs/evals/**/*.err
