@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 by [release-please](https://github.com/googleapis/release-please) from
 [Conventional Commits](https://www.conventionalcommits.org/) on `main`.
 
+## [1.1.0](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.0.0...v1.1.0) (2026-10-20)
+
+
+### Features
+
+* npx agentic-sdd installer package, weekly upstream watch, CI hardening ([33f4c3f](https://github.com/jonsoku-dev/agentic-sdd/commit/33f4c3f9999946fd9964ec6937b8e2196c387589))
+
 ## [1.0.0](https://github.com/jonsoku-dev/agentic-sdd/releases/tag/v1.0.0) (2026-10-20)
 
 First public release.

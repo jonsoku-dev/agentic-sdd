@@ -1,6 +1,6 @@
 {
   "name": "agentic-sdd",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Spec-Driven Development that finishes: GitHub Spec Kit end to end on Claude Code, Codex, Cursor, and Grok Build, with pstack inside every phase and REA closeout evidence.",
   "license": "MIT",
   "repository": {
@@ -9,7 +9,16 @@
   },
   "homepage": "https://github.com/jonsoku-dev/agentic-sdd#readme",
   "bugs": "https://github.com/jonsoku-dev/agentic-sdd/issues",
-  "keywords": ["spec-kit", "spec-driven-development", "claude-code", "codex", "cursor", "grok", "pstack", "agent-skills"],
+  "keywords": [
+    "spec-kit",
+    "spec-driven-development",
+    "claude-code",
+    "codex",
+    "cursor",
+    "grok",
+    "pstack",
+    "agent-skills"
+  ],
   "bin": {
     "agentic-sdd": "bin/agentic-sdd.js"
   },
@@ -35,7 +44,10 @@
   "engines": {
     "node": ">=20"
   },
-  "os": ["darwin", "linux"],
+  "os": [
+    "darwin",
+    "linux"
+  ],
   "scripts": {
     "test": "python3 -m unittest discover -s tests -p 'test_*.py'",
     "setup": "node bin/agentic-sdd.js",
