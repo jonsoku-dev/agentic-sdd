@@ -26,7 +26,8 @@ secrets, scope changes, plugin installs) still ask once.
 ## Install
 
 ```sh
-git clone <this repo> ~/.agents/skills/agentic-sdd
+git clone https://github.com/jonsoku-dev/agentic-sdd ~/.agents/skills/agentic-sdd
+~/.agents/skills/agentic-sdd/install.sh --deps                     # optional: install/update Spec Kit, pstack, REA pins first
 ~/.agents/skills/agentic-sdd/install.sh            # symlinks into ~/.claude ~/.codex ~/.cursor ~/.grok skills
 ~/.agents/skills/agentic-sdd/install.sh --project /path/to/repo   # + pstack project playbook (port) and .cursor/rules/agentic-sdd.mdc (Cursor)
 ~/.agents/skills/agentic-sdd/install.sh --apply-cursor-hooks      # + Cursor stop-hook continuation
