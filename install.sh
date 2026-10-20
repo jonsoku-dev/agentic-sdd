@@ -21,7 +21,7 @@
 
 set -euo pipefail
 
-SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 NAME="agentic-sdd"
 PROJECT=""
 APPLY_CURSOR_HOOKS=0
