@@ -23,7 +23,7 @@ class ReleaseMetadataTests(unittest.TestCase):
             self.assertTrue((ROOT / rel.rstrip("/")).exists(), rel)
 
     def test_workflows_present(self):
-        for name in ("ci.yml", "release-please.yml", "publish.yml", "upstream.yml"):
+        for name in ("ci.yml", "release-please.yml", "publish.yml", "upstream.yml", "dependabot-automerge.yml"):
             self.assertTrue((ROOT / ".github/workflows" / name).is_file(), name)
 
     def test_cli_help_and_version(self):

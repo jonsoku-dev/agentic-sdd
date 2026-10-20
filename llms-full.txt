@@ -439,7 +439,7 @@ Current version: `package.json`; history: `CHANGELOG.md`.
 | Release pull request with version bump and changelog | `.github/workflows/release-please.yml` | every push to `main` |
 | npm publish with provenance | `.github/workflows/publish.yml` | when a GitHub release is published |
 | Upstream watch: pstack, Spec Kit, rea-agents latest vs `pins.json`; bumps every `rea-agents@X.Y.Z` pin and opens `fix(deps)` pull request | `.github/workflows/upstream.yml`, `scripts/upstream_watch.py` | weekly (Monday) and on demand |
-| GitHub Actions version bumps | `.github/dependabot.yml` | weekly |
+| GitHub Actions version bumps, auto-merged when minor/patch and CI is green | `.github/dependabot.yml`, `.github/workflows/dependabot-automerge.yml` | weekly |
 | Contributor hooks: regenerate `llms.txt` and run the tests before each commit | `scripts/dev-setup.sh` → `scripts/githooks/pre-commit` | on every local commit |
 | Dependency freshness on your machine | `npx agentic-sdd check-deps` / `deps` | whenever you run it |
 
