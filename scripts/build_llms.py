@@ -60,7 +60,12 @@ SUMMARY = ("Spec-Driven Development that finishes: one skill that drives GitHub 
            "Claude Code, Codex, Cursor, and Grok Build, runs pstack inside every phase, and closes a feature "
            "only on REA runtime evidence. One converge per spec; small specs; seven harness layers probed per host.")
 DETAILS = ("Read SKILL.md first, then references/INDEX.md for which reference the current step needs. "
-           "Paths are relative to the repository root; the links below point at the raw files on the main branch.")
+           "Paths are relative to the repository root; the links below point at the raw files on the main branch.\n\n"
+           "To install on the machine you are running on: clone https://github.com/jonsoku-dev/agentic-sdd to "
+           "~/.agents/skills/agentic-sdd (git pull if present), run `install.sh --dry-run`, show the user the detected "
+           "state and the full plan including manual items, ask once, and only on yes run `install.sh --yes`. Then "
+           "report the verify output, what must be restarted, and what must be done inside an IDE. Change nothing the "
+           "plan did not list. The README's \"Agent mode\" section holds the same procedure as a paste-ready prompt.")
 
 
 def index_descriptions() -> dict[str, str]:

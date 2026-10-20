@@ -52,15 +52,33 @@ numbered feature without a phase quiz. It asks once only at hard boundaries
 
 Requirements: Python 3.11+, Node 20+ (for `npx` and REA), `uv` (for the Spec
 Kit CLI), `git`, and at least one of the four host CLIs. `bun` is needed only
-by pstack's own playbook checker.
+by pstack's own playbook checker. Anything missing that Homebrew can install is
+part of the plan the installer shows you.
+
+### Agent mode (recommended)
+
+Open Claude Code, Codex, Cursor, or Grok Build on your machine and paste this.
+The agent reads the docs, inspects your machine, shows you the plan, and asks
+once before changing anything.
+
+```text
+Install agentic-sdd on this machine.
+1. Read https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/llms.txt and the README it links.
+2. Clone https://github.com/jonsoku-dev/agentic-sdd to ~/.agents/skills/agentic-sdd (git pull if it already exists).
+3. Run ~/.agents/skills/agentic-sdd/install.sh --dry-run and show me the detected state and the full plan, including the manual items.
+4. Ask me once whether to proceed. Only on yes, run ~/.agents/skills/agentic-sdd/install.sh --yes.
+5. Show me the verify output, what I must restart, and what I must do inside an IDE. Change nothing the plan did not list.
+```
+
+### Manual mode
 
 ```sh
 git clone https://github.com/jonsoku-dev/agentic-sdd ~/.agents/skills/agentic-sdd
 ~/.agents/skills/agentic-sdd/install.sh
 ```
 
-That is the whole setup. `install.sh` with no flags runs `scripts/setup.py`,
-which:
+Either way the work is done by `install.sh`, which with no flags runs
+`scripts/setup.py`:
 
 1. **detects** which hosts are on this machine (`claude`, `codex`, `agent`/`~/.cursor`,
    `grok`), which prerequisites exist (`uv`, `node`, `bun`, `gh`, Homebrew),
