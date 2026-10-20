@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 by [release-please](https://github.com/googleapis/release-please) from
 [Conventional Commits](https://www.conventionalcommits.org/) on `main`.
 
+## [1.1.6](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.1.5...v1.1.6) (2026-10-20)
+
+
+### Documentation
+
+* CONTRIBUTING.md and SECURITY.md ([c95a5c7](https://github.com/jonsoku-dev/agentic-sdd/commit/c95a5c741f17c6eb9a53a64f31986cc9c8c2d037))
+
 ## [1.1.5](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.1.4...v1.1.5) (2026-10-20)
 
 
