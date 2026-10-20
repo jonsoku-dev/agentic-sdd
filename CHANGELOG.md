@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 by [release-please](https://github.com/googleapis/release-please) from
 [Conventional Commits](https://www.conventionalcommits.org/) on `main`.
 
+## [1.1.1](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.1.0...v1.1.1) (2026-10-20)
+
+
+### Documentation
+
+* npx-first documentation; publish job chained after release-please ([ad45921](https://github.com/jonsoku-dev/agentic-sdd/commit/ad4592156eadffd1e67d0a4ff29f7fb75dd2cba2))
+
 ## [1.1.0](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.0.0...v1.1.0) (2026-10-20)
 
 
