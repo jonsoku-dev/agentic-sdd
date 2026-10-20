@@ -117,6 +117,10 @@ def latest_versions() -> dict[str, str | None]:
     out["pstack-cursor"] = (cu or {}).get("version")
     npm = fetch_json("https://registry.npmjs.org/rea-agents/latest")
     out["rea-agents"] = (npm or {}).get("version")
+    if not out["rea-agents"] and shutil.which("npm"):
+        rc, text = run(["npm", "view", "rea-agents", "version"], timeout=60)
+        m = re.search(r"(\d+\.\d+\.\d+)", text)
+        out["rea-agents"] = m.group(1) if rc == 0 and m else None
     return out
 
 

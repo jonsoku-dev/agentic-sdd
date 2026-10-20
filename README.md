@@ -45,15 +45,42 @@ by pstack's own playbook checker.
 
 ```sh
 git clone https://github.com/jonsoku-dev/agentic-sdd ~/.agents/skills/agentic-sdd
-cd ~/.agents/skills/agentic-sdd
-./install.sh --deps            # install or update Spec Kit, pstack (Claude/Codex/Grok), REA pins; then link the skill into every host
-./install.sh --check-deps      # later: what is behind, with the exact update command per row
+~/.agents/skills/agentic-sdd/install.sh
 ```
 
-`install.sh` with no flags symlinks this checkout into `~/.agents/skills`,
-`~/.claude/skills`, `~/.codex/skills`, `~/.cursor/skills`, and `~/.grok/skills`.
-It is idempotent; rerun it after a `git pull`. Host-specific flags are listed in
-each host section below and in `./install.sh --help`.
+That is the whole setup. `install.sh` with no flags runs `scripts/setup.py`,
+which:
+
+1. **detects** which hosts are on this machine (`claude`, `codex`, `agent`/`~/.cursor`,
+   `grok`), which prerequisites exist (`uv`, `node`, `bun`, `gh`, Homebrew),
+   what pstack, Spec Kit, and REA versions are installed, which MCP entries,
+   mandates, hooks, links, and model sheets are already in place;
+2. **prints the plan**: every command it is about to run, in order, plus the
+   few things only you can do (install pstack in the Cursor IDE, run
+   `/setup-pstack` once per host to pin models);
+3. **asks once** (`Proceed? [y/N]`), then applies: Homebrew prerequisites,
+   the Spec Kit CLI, pstack on Claude Code / Codex / Grok through the
+   `pstack-claude` marketplace, REA MCP registration via `rea setup --client`,
+   the skill symlinks, the Codex `AGENTS.md` mandate block, the Grok home rule
+   and agent links, the Cursor Agent CLI skill links and `sdd-continue` hook;
+4. **verifies** with `deps.py check` and the harness probe for each host and
+   tells you what to restart.
+
+It touches only hosts it found, writes only marked blocks and named entries in
+files you own, and is idempotent: rerun it after a `git pull` or whenever the
+plan shows something missing.
+
+```sh
+./install.sh --dry-run        # detect and plan, change nothing
+./install.sh --yes            # no prompt (CI, dotfiles)
+./install.sh --check-deps     # later: what is behind, with the update command per row
+./install.sh --deps           # update everything that can be updated unattended
+./install.sh --link-only      # only the symlinks (the old default)
+```
+
+Every host-specific step is also available as its own flag (listed in each
+host section and in `./install.sh --help`) for people who prefer to apply them
+one at a time.
 
 Then, in a repository that already has Spec Kit (`specify init` is the
 `setup-speckit-multi-agent` skill's job, not this one):
@@ -101,6 +128,8 @@ The full phase → obligation map is in `references/pstack-integration.md`.
 
 ## Claude Code
 
+`install.sh` does all of this when it finds `claude`. The manual equivalents:
+
 **Install pstack** (the `pstack-claude` port of the Cursor plugin):
 
 ```sh
@@ -132,6 +161,8 @@ exposes every `Skill` and `Agent` call for measurement.
 sandbox has no `CLAUDE.md`, so the probe reports L1 as a gap until you add one.
 
 ## Codex
+
+`install.sh` does all of this when it finds `codex`. The manual equivalents:
 
 **Install pstack:**
 
@@ -167,6 +198,8 @@ when the command runs in the background.
 during a session; check it after a run that behaved unexpectedly.
 
 ## Cursor
+
+`install.sh` does everything below except the IDE plugin install, which Cursor only offers inside the editor. The manual equivalents:
 
 **Install pstack** from the IDE: `/add-plugin pstack` (official plugin by
 Lauren Tan). Then:
@@ -208,6 +241,8 @@ update, which silently breaks the `~/.cursor/skills` links; rerun
 `install.sh --cursor-cli-skills` (it prunes the dead links first).
 
 ## Grok Build
+
+`install.sh` does all of this when it finds `grok`. The manual equivalents:
 
 **Install pstack** (the same port, through Grok's marketplace; Grok can also
 read the Claude plugin cache through `[compat.claude]`):

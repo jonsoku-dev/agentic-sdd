@@ -3,7 +3,10 @@
 # install the Cursor continuation hooks and a project playbook.
 #
 # Usage:
-#   ./install.sh                         # symlink into ~/.agents, ~/.claude, ~/.codex, ~/.cursor, ~/.grok
+#   ./install.sh                         # one-shot: detect this machine, show the plan, ask once, install/configure every host found, verify
+#   ./install.sh --dry-run               # detect and show the plan only
+#   ./install.sh --yes                   # one-shot without the prompt
+#   ./install.sh --link-only             # just symlink into ~/.agents, ~/.claude, ~/.codex, ~/.cursor, ~/.grok
 #   ./install.sh --project DIR           # also copy templates/playbooks/agentic-sdd.md into DIR/.agents/playbooks/
 #   ./install.sh --apply-cursor-hooks    # also install hosts/cursor/hooks into ~/.cursor (dated backup of hooks.json)
 #   ./install.sh --grok-agents           # expose pstack's poteto-agent/comment-sicko to Grok's spawn_subagent enum
@@ -29,6 +32,8 @@ DEPS=0
 CHECK_DEPS=0
 PURGE_DEPS=0
 YES=0
+LINK_ONLY=0
+DRY_RUN=0
 CURSOR_CLI_SKILLS=0
 UNINSTALL=0
 
@@ -45,13 +50,22 @@ while [ $# -gt 0 ]; do
     --uninstall) UNINSTALL=1; shift ;;
     --purge-deps) PURGE_DEPS=1; shift ;;
     --yes) YES=1; shift ;;
-    -h|--help) sed -n '2,17p' "$0"; exit 0 ;;
+    --link-only) LINK_ONLY=1; shift ;;
+    --dry-run) DRY_RUN=1; shift ;;
+    -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
 
 if [ "$CHECK_DEPS" = 1 ]; then
   exec python3 "$SRC/scripts/deps.py" check
+fi
+if [ "$LINK_ONLY" = 0 ] && [ "$UNINSTALL" = 0 ] && [ "$DEPS" = 0 ] && [ -z "$PROJECT" ] && [ "$APPLY_CURSOR_HOOKS$GROK_AGENTS$GROK_MANDATE$CODEX_MANDATE$CURSOR_CLI_SKILLS" = 00000 ]; then
+  args=""
+  [ "$YES" = 1 ] && args="$args --yes"
+  [ "$DRY_RUN" = 1 ] && args="$args --dry-run"
+  # shellcheck disable=SC2086
+  exec python3 "$SRC/scripts/setup.py" $args
 fi
 if [ "$DEPS" = 1 ] && [ "$UNINSTALL" = 0 ]; then
   python3 "$SRC/scripts/deps.py" update --yes || echo "deps: some updates failed; see above" >&2
