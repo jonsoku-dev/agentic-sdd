@@ -35,6 +35,22 @@ git clone <this repo> ~/.agents/skills/agentic-sdd
 ~/.agents/skills/agentic-sdd/install.sh --cursor-cli-skills       # link the Cursor pstack plugin's skills for the Cursor Agent CLI
 ```
 
+Keep every dependency current from one place:
+
+```sh
+~/.agents/skills/agentic-sdd/install.sh --check-deps   # installed vs latest: Spec Kit, pstack per host, rea-agents pins, host CLIs; exit 1 when behind
+~/.agents/skills/agentic-sdd/install.sh --deps         # update what can be updated unattended, then relink mandates/agents/skills
+python3 scripts/deps.py update --yes --hosts           # additionally run claude/codex/grok/agent self-update
+```
+
+`deps.py` updates Spec Kit (`uv tool install --force … specify-cli`), pstack on
+Claude Code (`claude plugin marketplace update` + `plugin update`), Codex
+(`codex plugin marketplace upgrade` + `plugin add`), Grok (`grok plugin update`),
+and rewrites the `rea-agents@<version>` pin in every host MCP config (with a
+`.bak-rea-<version>` copy) before warming the npx cache. Cursor's pstack is
+updated from the IDE; the script reports it. Hosts must restart after a pin
+change so each MCP server respawns.
+
 How each host reaches pstack's `poteto-mode` (and why Cursor needs the rule)
 is in `references/poteto-mode-anatomy.md`. Headless drivers used by the evals:
 `claude -p --output-format stream-json --verbose --dangerously-skip-permissions`,

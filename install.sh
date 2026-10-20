@@ -9,6 +9,8 @@
 #   ./install.sh --grok-agents           # expose pstack's poteto-agent/comment-sicko to Grok's spawn_subagent enum
 #   ./install.sh --grok-mandate          # write the pstack poteto-mode mandate + Spec Kit handoffs as a Grok home rule (~/.grok/rules/pstack-mandate.md)
 #   ./install.sh --codex-mandate         # write the pstack poteto-mode mandate into ~/.codex/AGENTS.md (Codex never runs untrusted plugin hooks)
+#   ./install.sh --deps                  # install/update Spec Kit, pstack (Claude/Codex/Grok), rea-agents pins to latest, then relink (scripts/deps.py update --yes)
+#   ./install.sh --check-deps            # report installed vs latest for every dependency and exit 1 when something is behind
 #   ./install.sh --cursor-cli-skills     # link the Cursor pstack plugin's skills into ~/.cursor/skills for the Cursor Agent CLI
 #   ./install.sh --uninstall             # remove the symlinks, Grok links, and Cursor continuation hooks this script creates
 
@@ -21,6 +23,8 @@ APPLY_CURSOR_HOOKS=0
 GROK_AGENTS=0
 GROK_MANDATE=0
 CODEX_MANDATE=0
+DEPS=0
+CHECK_DEPS=0
 CURSOR_CLI_SKILLS=0
 UNINSTALL=0
 
@@ -31,12 +35,21 @@ while [ $# -gt 0 ]; do
     --grok-agents) GROK_AGENTS=1; shift ;;
     --grok-mandate) GROK_MANDATE=1; shift ;;
     --codex-mandate) CODEX_MANDATE=1; shift ;;
+    --deps) DEPS=1; shift ;;
+    --check-deps) CHECK_DEPS=1; shift ;;
     --cursor-cli-skills) CURSOR_CLI_SKILLS=1; shift ;;
     --uninstall) UNINSTALL=1; shift ;;
-    -h|--help) sed -n '2,13p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,15p' "$0"; exit 0 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
+
+if [ "$CHECK_DEPS" = 1 ]; then
+  exec python3 "$SRC/scripts/deps.py" check
+fi
+if [ "$DEPS" = 1 ] && [ "$UNINSTALL" = 0 ]; then
+  python3 "$SRC/scripts/deps.py" update --yes || echo "deps: some updates failed; see above" >&2
+fi
 
 link_into() {
   local dir="$1"
