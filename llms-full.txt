@@ -67,7 +67,7 @@ The package is published from this repository's GitHub releases with
 `npm audit signatures` can verify that the tarball was built by the `publish`
 workflow from the tagged commit. It copies the skill into
 `~/.agents/skills/agentic-sdd` (or uses a git checkout already there) and runs
-the same `install.sh` as the other modes. Later: `npx agentic-sdd@latest` to
+the same `npx agentic-sdd` as the other modes. Later: `npx agentic-sdd@latest` to
 update, `npx agentic-sdd check-deps`, `npx agentic-sdd uninstall`.
 
 ### Agent mode
@@ -88,7 +88,7 @@ Install agentic-sdd on this machine.
 
 ```sh
 git clone https://github.com/jonsoku-dev/agentic-sdd ~/.agents/skills/agentic-sdd
-~/.agents/skills/agentic-sdd/install.sh
+npx agentic-sdd
 ```
 
 Either way the work is done by `install.sh`, which with no flags runs
@@ -114,10 +114,10 @@ files you own, and is idempotent: rerun it after a `git pull` or whenever the
 plan shows something missing.
 
 ```sh
-./install.sh --dry-run        # detect and plan, change nothing
-./install.sh --yes            # no prompt (CI, dotfiles)
-./install.sh --check-deps     # later: what is behind, with the update command per row
-./install.sh --deps           # update everything that can be updated unattended
+npx agentic-sdd --dry-run      # detect and plan, change nothing
+npx agentic-sdd --yes          # no prompt (CI, dotfiles)
+npx agentic-sdd check-deps   # later: what is behind, with the update command per row
+npx agentic-sdd deps         # update everything that can be updated unattended
 ./install.sh --link-only      # only the symlinks (the old default)
 ```
 
@@ -129,7 +129,7 @@ Then, in a repository that already has Spec Kit (`specify init` is the
 `setup-speckit-multi-agent` skill's job, not this one):
 
 ```sh
-~/.agents/skills/agentic-sdd/install.sh --project /path/to/repo   # project playbook (pstack port) + Cursor rule
+npx agentic-sdd --project /path/to/repo   # project playbook (pstack port) + Cursor rule
 python3 ~/.agents/skills/agentic-sdd/scripts/harness_probe.py --host claude --project /path/to/repo
 ```
 
@@ -171,7 +171,7 @@ The full phase → obligation map is in `references/pstack-integration.md`.
 
 ## Claude Code
 
-`install.sh` does all of this when it finds `claude`. The manual equivalents:
+`npx agentic-sdd` does all of this when it finds `claude`. The manual equivalents:
 
 **Install pstack** (the `pstack-claude` port of the Cursor plugin):
 
@@ -184,7 +184,7 @@ claude plugin install pstack@pstack-claude --scope user
 `SessionStart` hook injects the poteto-mode mandate ("invoke `pstack:poteto-mode`
 for multi-file, design, or unknown-cause work"), and `/agentic-sdd` satisfies
 that mandate from inside the Spec Kit phases instead of opening a free-standing
-playbook. The project playbook from `install.sh --project` anchors three
+playbook. The project playbook from `npx agentic-sdd --project` anchors three
 handoffs on the port's Feature and Bug fix steps so a plain request in a Spec
 Kit repo still resolves the phase first.
 
@@ -205,7 +205,7 @@ sandbox has no `CLAUDE.md`, so the probe reports L1 as a gap until you add one.
 
 ## Codex
 
-`install.sh` does all of this when it finds `codex`. The manual equivalents:
+`npx agentic-sdd` does all of this when it finds `codex`. The manual equivalents:
 
 **Install pstack:**
 
@@ -213,7 +213,7 @@ sandbox has no `CLAUDE.md`, so the probe reports L1 as a gap until you add one.
 codex plugin marketplace add michael-denyer/pstack-claude
 codex plugin add pstack@pstack-claude
 # ~/.codex/config.toml: [features] multi_agent = true   (spawn_agent)
-~/.agents/skills/agentic-sdd/install.sh --codex-mandate
+npx agentic-sdd setup --codex-mandate
 ```
 
 **Why `--codex-mandate` exists.** Codex runs a plugin's `SessionStart` hook
@@ -242,15 +242,15 @@ during a session; check it after a run that behaved unexpectedly.
 
 ## Cursor
 
-`install.sh` does everything below except the IDE plugin install, which Cursor only offers inside the editor. The manual equivalents:
+`npx agentic-sdd` does everything below except the IDE plugin install, which Cursor only offers inside the editor. The manual equivalents:
 
 **Install pstack** from the IDE: `/add-plugin pstack` (official plugin by
 Lauren Tan). Then:
 
 ```sh
-~/.agents/skills/agentic-sdd/install.sh --project /path/to/repo   # writes .cursor/rules/agentic-sdd.mdc
-~/.agents/skills/agentic-sdd/install.sh --apply-cursor-hooks      # sdd-continue stop hook (dated backup of ~/.cursor/hooks.json)
-~/.agents/skills/agentic-sdd/install.sh --cursor-cli-skills       # expose the plugin's skills to the Cursor Agent CLI
+npx agentic-sdd --project /path/to/repo   # writes .cursor/rules/agentic-sdd.mdc
+npx agentic-sdd setup --apply-cursor-hooks    # sdd-continue stop hook (dated backup of ~/.cursor/hooks.json)
+npx agentic-sdd setup --cursor-cli-skills     # expose the plugin's skills to the Cursor Agent CLI
 ```
 
 **Why Cursor needs the rule.** The official plugin has no hooks, no project
@@ -281,11 +281,11 @@ headless run cannot answer.
 **Known limits.** The plugin cache path
 `~/.cursor/plugins/cache/cursor-public/pstack/<hash>/` changes on every plugin
 update, which silently breaks the `~/.cursor/skills` links; rerun
-`install.sh --cursor-cli-skills` (it prunes the dead links first).
+`npx agentic-sdd setup --cursor-cli-skills` (it prunes the dead links first).
 
 ## Grok Build
 
-`install.sh` does all of this when it finds `grok`. The manual equivalents:
+`npx agentic-sdd` does all of this when it finds `grok`. The manual equivalents:
 
 **Install pstack** (the same port, through Grok's marketplace; Grok can also
 read the Claude plugin cache through `[compat.claude]`):
@@ -293,7 +293,7 @@ read the Claude plugin cache through `[compat.claude]`):
 ```sh
 grok plugin marketplace add michael-denyer/pstack-claude
 grok plugin install pstack@pstack-claude --trust
-~/.agents/skills/agentic-sdd/install.sh --grok-mandate --grok-agents
+npx agentic-sdd setup --grok-mandate --grok-agents
 ```
 
 **Why the two flags exist.** Grok runs `SessionStart` hooks but never injects
@@ -323,8 +323,8 @@ small.
 ## Keeping dependencies current
 
 ```sh
-./install.sh --check-deps              # table: installed vs latest; exit 1 when anything is behind
-./install.sh --deps                    # update unattended, then relink mandates, agents, and skill links
+npx agentic-sdd check-deps            # table: installed vs latest; exit 1 when anything is behind
+npx agentic-sdd deps                  # update unattended, then relink mandates, agents, and skill links
 python3 scripts/deps.py update --yes --hosts   # also run claude/codex/grok/agent self-update
 python3 scripts/deps.py check --json   # machine-readable
 ```
@@ -344,13 +344,13 @@ an unrelated restricted process (a browser renderer) starts mid-capture.
 
 ## Uninstall
 
-`install.sh` only ever creates symlinks, a few files it owns, and marked blocks
+`npx agentic-sdd` only ever creates symlinks, a few files it owns, and marked blocks
 inside files you own. Uninstall is the exact inverse.
 
 ```sh
-~/.agents/skills/agentic-sdd/install.sh --uninstall                          # everything under $HOME this script created
-~/.agents/skills/agentic-sdd/install.sh --uninstall --project /path/to/repo   # + the two project files
-~/.agents/skills/agentic-sdd/install.sh --uninstall --purge-deps --yes        # + pstack plugins and the Spec Kit CLI
+npx agentic-sdd uninstall                        # everything under $HOME this script created
+npx agentic-sdd uninstall --project /path/to/repo   # + the two project files
+npx agentic-sdd uninstall --purge-deps --yes        # + pstack plugins and the Spec Kit CLI
 rm -rf ~/.agents/skills/agentic-sdd                                           # finally, the checkout itself
 ```
 
@@ -404,7 +404,7 @@ every Spec Kit gate, result comparisons, and the A/B against plain Spec Kit.
 | `templates/playbooks/` | pstack project playbook (port hosts) |
 | `templates/cursor-rules/` | Cursor project rule |
 | `hosts/cursor/` | `sdd-continue` hooks and the `hooks.json` snippet |
-| `install.sh` | Link, configure, update, and uninstall per host |
+| `npx agentic-sdd` | Link, configure, update, and uninstall per host |
 | `tests/` | `python3 -m unittest discover -s tests -p 'test_*.py'` |
 | `evals/` | Behavioral eval cases |
 | `personas/` | Provider personas, loaded only when a host asks for one |
@@ -1105,7 +1105,7 @@ Do not invent a second evidence format.
 | Claude Code | `Agent` with `pstack:poteto-agent[-<level>]`, `pstack:effort-<level>` readers; `.claude/agents/*.md` custom reviewers with `tools:` + `effort:` |
 | Codex | `spawn_agent` + `reasoning_effort`; model-diverse panel from configured Codex models |
 | Cursor | `poteto-agent` / Task; panels per `pstack-models.mdc` |
-| Grok Build | `spawn_subagent` with user agent `poteto-agent` after `install.sh --grok-agents` (`pstack:poteto-agent` is not in the enum); else `general-purpose` + read poteto-mode first. SessionStart stdout is not injected, so the mandate is `~/.grok/rules/pstack-mandate.md` (`install.sh --grok-mandate`). Personas carry `reasoning_effort` |
+| Grok Build | `spawn_subagent` with user agent `poteto-agent` after `npx agentic-sdd setup --grok-agents` (`pstack:poteto-agent` is not in the enum); else `general-purpose` + read poteto-mode first. SessionStart stdout is not injected, so the mandate is `~/.grok/rules/pstack-mandate.md` (`npx agentic-sdd setup --grok-mandate`). Personas carry `reasoning_effort` |
 
 **Rule:** a confident report still needs opened evidence behind each verdict.
 `unresolved` names the missing evidence. Recheck adjacent claims after a
@@ -1380,13 +1380,13 @@ phases (neither `/poteto-mode` on Cursor nor `/pstack:poteto-mode` on Claude,
 nor the native `poteto-mode` skill on Codex).
 
 On the pstack-claude port, install `templates/playbooks/agentic-sdd.md` as
-`.agents/playbooks/agentic-sdd.md` (`install.sh --project DIR`); a poteto-mode
+`.agents/playbooks/agentic-sdd.md` (`npx agentic-sdd --project DIR`); a poteto-mode
 run then resolves the Spec Kit phase first and stops where Spec Kit takes over.
 Validate with the plugin's `check-playbooks.mjs` after a pstack upgrade.
 
 On Cursor the official plugin (0.15.28) has no project playbooks and marks
 `poteto-mode` `disable-model-invocation: true`, so the model can never open it
-by itself; only the user's `/poteto-mode` does. `install.sh --project DIR` also
+by itself; only the user's `/poteto-mode` does. `npx agentic-sdd --project DIR` also
 writes `.cursor/rules/agentic-sdd.mdc` (from `templates/cursor-rules/`) with the
 same three handoffs as an always-applied rule, and the agentic-sdd skill reads
 `poteto-mode/SKILL.md` as a reference for the non-negotiables instead of
@@ -1426,9 +1426,9 @@ data shape, acceptance check, return format). Rules that hold everywhere:
 | Host | Dispatch | Effort level | Notes |
 |------|----------|--------------|-------|
 | **Claude Code** | `Agent` with `subagent_type: "pstack:poteto-agent"`, `run_in_background: true`, `isolation: "worktree"` for writers; put the resolved absolute `skills/poteto-mode/SKILL.md` path in the prompt | `subagent_type: "pstack:poteto-agent-<level>"` (`low`…`max`); panels/readers use `pstack:effort-<level>` | Bare `poteto-agent` errors. Verified live on this machine. |
-| **Cursor** | Native `poteto-agent` subagent (plugin `agents/poteto-agent.md`); own worktree for writers | Model line from `~/.cursor/rules/pstack-models.mdc` when present | `/architect`, `/arena`, `/swarm` spawn their own panels. The **Cursor Agent CLI** (`agent -p`) lists `poteto-agent` and `/goal`, and does not put marketplace plugin skills in the session catalog. `install.sh --cursor-cli-skills` links them into `~/.cursor/skills`. On 2026-10-19 an `agent -p --mode ask` session reported `poteto-mode` and `architect` absent from that catalog, then opened the linked `~/.cursor/skills/poteto-mode/SKILL.md` by path (heading `# Poteto mode`). |
+| **Cursor** | Native `poteto-agent` subagent (plugin `agents/poteto-agent.md`); own worktree for writers | Model line from `~/.cursor/rules/pstack-models.mdc` when present | `/architect`, `/arena`, `/swarm` spawn their own panels. The **Cursor Agent CLI** (`agent -p`) lists `poteto-agent` and `/goal`, and does not put marketplace plugin skills in the session catalog. `npx agentic-sdd setup --cursor-cli-skills` links them into `~/.cursor/skills`. On 2026-10-19 an `agent -p --mode ask` session reported `poteto-mode` and `architect` absent from that catalog, then opened the linked `~/.cursor/skills/poteto-mode/SKILL.md` by path (heading `# Poteto mode`). |
 | **Codex** | The session's spawn tool (`spawn_agent` under the configured namespace, e.g. `agents`) with instructions to read `poteto-mode/SKILL.md` in full first; `wait_agent` / `close_agent` to drain | Pass the level as `reasoning_effort`; `session` passes none | No `poteto-agent` type exists. **Always pass a model the spawn tool lists**: omitting `model` makes the host inject the parent slug, which `spawn_agent` can reject (`Unknown model gpt-6.1-sol`, verified live 2026-10-19). Listed that day: `gpt-6-luna`, `gpt-5.6-terra`, `gpt-5.6-luna`. The same day, `spawn_agent` with `model=gpt-6-luna` and `reasoning_effort=low` started and the child replied OK. `inherit-parent` in the Codex sheet is therefore unsafe — write explicit host-listed slugs. A thread-limit error is capacity, not a bad slug: stop spawning, close a finished agent, continue locally. See the port's `references/codex-tools.md`. |
-| **Grok Build** | `spawn_subagent` with `subagent_type: "poteto-agent"` after `install.sh --grok-agents` (links the port's `poteto-agent.md` / `comment-sicko.md` into `~/.grok/agents/`; plugin agents such as `pstack:poteto-agent` are **not** in the enum). Without that link: `general-purpose` + read `poteto-mode/SKILL.md` first. `isolation: worktree` for writers | Persona `reasoning_effort`, `[subagents.models]` pins, `/effort low|medium|high|xhigh` | Verified live: the linked `poteto-agent` spawns and reads the plugin's SKILL.md. Grok runs SessionStart hooks but never injects their stdout, so the pstack mandate is installed as a home rule by `install.sh --grok-mandate` (`~/.grok/rules/pstack-mandate.md`), verified loaded. On 2026-10-19 a `grok -p` debug log loaded the pstack hooks file (1 hook, 0 warnings) and did not execute `session-start.sh` (`session_start=0`; `CLAUDE_PLUGIN_ROOT` unset). That script exits 1 with `CLAUDE_PLUGIN_ROOT: unbound variable` when the variable is missing, and prints the mandate when it is set. Scope precedence keeps the Claude marketplace copy (0.9.92) over the installed Grok copy (0.9.93); `harness_probe` still reports the highest version on disk. `grok models` while logged in listed `grok-4.7` (default), `grok-4.7-build-fast`, `grok-4.6`, `grok-4.5`. |
+| **Grok Build** | `spawn_subagent` with `subagent_type: "poteto-agent"` after `npx agentic-sdd setup --grok-agents` (links the port's `poteto-agent.md` / `comment-sicko.md` into `~/.grok/agents/`; plugin agents such as `pstack:poteto-agent` are **not** in the enum). Without that link: `general-purpose` + read `poteto-mode/SKILL.md` first. `isolation: worktree` for writers | Persona `reasoning_effort`, `[subagents.models]` pins, `/effort low|medium|high|xhigh` | Verified live: the linked `poteto-agent` spawns and reads the plugin's SKILL.md. Grok runs SessionStart hooks but never injects their stdout, so the pstack mandate is installed as a home rule by `npx agentic-sdd setup --grok-mandate` (`~/.grok/rules/pstack-mandate.md`), verified loaded. On 2026-10-19 a `grok -p` debug log loaded the pstack hooks file (1 hook, 0 warnings) and did not execute `session-start.sh` (`session_start=0`; `CLAUDE_PLUGIN_ROOT` unset). That script exits 1 with `CLAUDE_PLUGIN_ROOT: unbound variable` when the variable is missing, and prints the mandate when it is set. Scope precedence keeps the Claude marketplace copy (0.9.92) over the installed Grok copy (0.9.93); `harness_probe` still reports the highest version on disk. `grok models` while logged in listed `grok-4.7` (default), `grok-4.7-build-fast`, `grok-4.6`, `grok-4.5`. |
 
 ### Review gate (converge)
 
@@ -1533,7 +1533,7 @@ When it runs it does four things, in this order:
 |------|------------------------------|----------------|---------------|--------------|
 | Claude Code | Plugin `SessionStart` hook (`hooks/hooks.json` → `session-start.sh claude`) prints `session-start-context.md`: "You have pstack. Invoke `pstack:poteto-mode` when a task touches more than one file / is a design choice / is an unknown bug or perf issue." | Model via the `Skill` tool, or user `/pstack:poteto-mode` | `subagent_type: "pstack:poteto-agent[-<level>]"` | Headless `claude -p` quoted "You have pstack." |
 | Codex | `~/.codex/AGENTS.md` block `<!-- pstack-mandate:start -->` carrying the same text. The plugin's `codex-hooks.json` `SessionStart` hook exists but runs only after the user trusts it in `/hooks`; `codex exec` never trusts it, so the AGENTS.md block is the reliable path. | Native skill load (`$poteto-mode`), or the mandate | `spawn_agent` with a prompt that reads `poteto-mode/SKILL.md` first; `model` must be a slug the tool lists (`gpt-6-luna` here) | Headless `codex exec -m gpt-6-luna` quoted the three conditions after the AGENTS.md block was added; before that, only AGENTS.md routing text was seen |
-| Grok Build | `~/.grok/rules/pstack-mandate.md` (written by `install.sh --grok-mandate`). Grok never injects hook stdout, so the rule is the only path. Skills come through `[compat.claude]` from the Claude plugin cache. | Model, or user `/poteto-mode` | `spawn_subagent` `subagent_type: "poteto-agent"` via `~/.grok/agents/poteto-agent.md` link (`install.sh --grok-agents`); plugin agents are not in the enum | Headless `grok -p` quoted "You have pstack." and listed `poteto-agent` |
+| Grok Build | `~/.grok/rules/pstack-mandate.md` (written by `npx agentic-sdd setup --grok-mandate`). Grok never injects hook stdout, so the rule is the only path. Skills come through `[compat.claude]` from the Claude plugin cache. | Model, or user `/poteto-mode` | `spawn_subagent` `subagent_type: "poteto-agent"` via `~/.grok/agents/poteto-agent.md` link (`npx agentic-sdd setup --grok-agents`); plugin agents are not in the enum | Headless `grok -p` quoted "You have pstack." and listed `poteto-agent` |
 | Cursor | **Nothing automatic.** The official plugin has no hooks, and `poteto-mode`'s frontmatter sets `disable-model-invocation: true`, so the model cannot open it on its own. | User `/poteto-mode` only. Other pstack skills (`architect`, `how`, `interrogate`, …) stay model-invocable. | Native `subagent_type: "poteto-agent"` (plugin `agents/poteto-agent.md`, `is_background: true`) | Plugin files read on disk; `agent -p` headless answers `ok`; invocation under quota not yet exercised |
 
 Consequence for agentic-sdd: on Claude, Codex, and Grok a plain multi-file
@@ -1586,7 +1586,7 @@ skill; the user can still type `/poteto-mode`. `pstack-integration.md`
 
 `templates/playbooks/agentic-sdd.md` quotes the port's step text, so it applies
 on the port only. On Cursor, use `templates/cursor-rules/agentic-sdd.mdc`
-(installed by `install.sh --project DIR`), which carries the same three
+(installed by `npx agentic-sdd --project DIR`), which carries the same three
 handoffs as an always-applied project rule.
 
 ## 5. Checklist agentic-sdd runs against this
@@ -1654,7 +1654,7 @@ choices. GPT-5.6 remains excluded on this machine.
 | Claude Code | `model` on the `Agent` call (family name: `opus`, `fable`, `sonnet`, `haiku`) | `subagent_type: "pstack:poteto-agent-<level>"` for code leaves, `pstack:effort-<level>` for readers/panels |
 | Codex | `spawn_agent` `model` set to a slug the tool lists (never omitted: the host substitutes the parent slug and may reject it) | `reasoning_effort: <level>` |
 | Cursor | Native `poteto-agent` with the sheet's role model | Host-native effort when exposed; otherwise record `unknown` |
-| Grok Build | `spawn_subagent` with `subagent_type: "poteto-agent"` (user-level link from `install.sh --grok-agents`); `[subagents.models]` pins the model | Persona `reasoning_effort`; `/effort` for the session |
+| Grok Build | `spawn_subagent` with `subagent_type: "poteto-agent"` (user-level link from `npx agentic-sdd setup --grok-agents`); `[subagents.models]` pins the model | Persona `reasoning_effort`; `/effort` for the session |
 
 If dispatch is unavailable or its slots are exhausted, continue locally; do not
 substitute another CLI to bypass a native-agent limit. A thread-limit error is

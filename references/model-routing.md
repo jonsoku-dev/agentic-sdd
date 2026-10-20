@@ -46,7 +46,7 @@ choices. GPT-5.6 remains excluded on this machine.
 | Claude Code | `model` on the `Agent` call (family name: `opus`, `fable`, `sonnet`, `haiku`) | `subagent_type: "pstack:poteto-agent-<level>"` for code leaves, `pstack:effort-<level>` for readers/panels |
 | Codex | `spawn_agent` `model` set to a slug the tool lists (never omitted: the host substitutes the parent slug and may reject it) | `reasoning_effort: <level>` |
 | Cursor | Native `poteto-agent` with the sheet's role model | Host-native effort when exposed; otherwise record `unknown` |
-| Grok Build | `spawn_subagent` with `subagent_type: "poteto-agent"` (user-level link from `install.sh --grok-agents`); `[subagents.models]` pins the model | Persona `reasoning_effort`; `/effort` for the session |
+| Grok Build | `spawn_subagent` with `subagent_type: "poteto-agent"` (user-level link from `npx agentic-sdd setup --grok-agents`); `[subagents.models]` pins the model | Persona `reasoning_effort`; `/effort` for the session |
 
 If dispatch is unavailable or its slots are exhausted, continue locally; do not
 substitute another CLI to bypass a native-agent limit. A thread-limit error is

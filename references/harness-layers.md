@@ -142,7 +142,7 @@ Do not invent a second evidence format.
 | Claude Code | `Agent` with `pstack:poteto-agent[-<level>]`, `pstack:effort-<level>` readers; `.claude/agents/*.md` custom reviewers with `tools:` + `effort:` |
 | Codex | `spawn_agent` + `reasoning_effort`; model-diverse panel from configured Codex models |
 | Cursor | `poteto-agent` / Task; panels per `pstack-models.mdc` |
-| Grok Build | `spawn_subagent` with user agent `poteto-agent` after `install.sh --grok-agents` (`pstack:poteto-agent` is not in the enum); else `general-purpose` + read poteto-mode first. SessionStart stdout is not injected, so the mandate is `~/.grok/rules/pstack-mandate.md` (`install.sh --grok-mandate`). Personas carry `reasoning_effort` |
+| Grok Build | `spawn_subagent` with user agent `poteto-agent` after `npx agentic-sdd setup --grok-agents` (`pstack:poteto-agent` is not in the enum); else `general-purpose` + read poteto-mode first. SessionStart stdout is not injected, so the mandate is `~/.grok/rules/pstack-mandate.md` (`npx agentic-sdd setup --grok-mandate`). Personas carry `reasoning_effort` |
 
 **Rule:** a confident report still needs opened evidence behind each verdict.
 `unresolved` names the missing evidence. Recheck adjacent claims after a

@@ -56,7 +56,7 @@ The package is published from this repository's GitHub releases with
 `npm audit signatures` can verify that the tarball was built by the `publish`
 workflow from the tagged commit. It copies the skill into
 `~/.agents/skills/agentic-sdd` (or uses a git checkout already there) and runs
-the same `install.sh` as the other modes. Later: `npx agentic-sdd@latest` to
+the same `npx agentic-sdd` as the other modes. Later: `npx agentic-sdd@latest` to
 update, `npx agentic-sdd check-deps`, `npx agentic-sdd uninstall`.
 
 ### Agent mode
@@ -77,7 +77,7 @@ Install agentic-sdd on this machine.
 
 ```sh
 git clone https://github.com/jonsoku-dev/agentic-sdd ~/.agents/skills/agentic-sdd
-~/.agents/skills/agentic-sdd/install.sh
+npx agentic-sdd
 ```
 
 Either way the work is done by `install.sh`, which with no flags runs
@@ -103,10 +103,10 @@ files you own, and is idempotent: rerun it after a `git pull` or whenever the
 plan shows something missing.
 
 ```sh
-./install.sh --dry-run        # detect and plan, change nothing
-./install.sh --yes            # no prompt (CI, dotfiles)
-./install.sh --check-deps     # later: what is behind, with the update command per row
-./install.sh --deps           # update everything that can be updated unattended
+npx agentic-sdd --dry-run      # detect and plan, change nothing
+npx agentic-sdd --yes          # no prompt (CI, dotfiles)
+npx agentic-sdd check-deps   # later: what is behind, with the update command per row
+npx agentic-sdd deps         # update everything that can be updated unattended
 ./install.sh --link-only      # only the symlinks (the old default)
 ```
 
@@ -118,7 +118,7 @@ Then, in a repository that already has Spec Kit (`specify init` is the
 `setup-speckit-multi-agent` skill's job, not this one):
 
 ```sh
-~/.agents/skills/agentic-sdd/install.sh --project /path/to/repo   # project playbook (pstack port) + Cursor rule
+npx agentic-sdd --project /path/to/repo   # project playbook (pstack port) + Cursor rule
 python3 ~/.agents/skills/agentic-sdd/scripts/harness_probe.py --host claude --project /path/to/repo
 ```
 
@@ -160,7 +160,7 @@ The full phase → obligation map is in `references/pstack-integration.md`.
 
 ## Claude Code
 
-`install.sh` does all of this when it finds `claude`. The manual equivalents:
+`npx agentic-sdd` does all of this when it finds `claude`. The manual equivalents:
 
 **Install pstack** (the `pstack-claude` port of the Cursor plugin):
 
@@ -173,7 +173,7 @@ claude plugin install pstack@pstack-claude --scope user
 `SessionStart` hook injects the poteto-mode mandate ("invoke `pstack:poteto-mode`
 for multi-file, design, or unknown-cause work"), and `/agentic-sdd` satisfies
 that mandate from inside the Spec Kit phases instead of opening a free-standing
-playbook. The project playbook from `install.sh --project` anchors three
+playbook. The project playbook from `npx agentic-sdd --project` anchors three
 handoffs on the port's Feature and Bug fix steps so a plain request in a Spec
 Kit repo still resolves the phase first.
 
@@ -194,7 +194,7 @@ sandbox has no `CLAUDE.md`, so the probe reports L1 as a gap until you add one.
 
 ## Codex
 
-`install.sh` does all of this when it finds `codex`. The manual equivalents:
+`npx agentic-sdd` does all of this when it finds `codex`. The manual equivalents:
 
 **Install pstack:**
 
@@ -202,7 +202,7 @@ sandbox has no `CLAUDE.md`, so the probe reports L1 as a gap until you add one.
 codex plugin marketplace add michael-denyer/pstack-claude
 codex plugin add pstack@pstack-claude
 # ~/.codex/config.toml: [features] multi_agent = true   (spawn_agent)
-~/.agents/skills/agentic-sdd/install.sh --codex-mandate
+npx agentic-sdd setup --codex-mandate
 ```
 
 **Why `--codex-mandate` exists.** Codex runs a plugin's `SessionStart` hook
@@ -231,15 +231,15 @@ during a session; check it after a run that behaved unexpectedly.
 
 ## Cursor
 
-`install.sh` does everything below except the IDE plugin install, which Cursor only offers inside the editor. The manual equivalents:
+`npx agentic-sdd` does everything below except the IDE plugin install, which Cursor only offers inside the editor. The manual equivalents:
 
 **Install pstack** from the IDE: `/add-plugin pstack` (official plugin by
 Lauren Tan). Then:
 
 ```sh
-~/.agents/skills/agentic-sdd/install.sh --project /path/to/repo   # writes .cursor/rules/agentic-sdd.mdc
-~/.agents/skills/agentic-sdd/install.sh --apply-cursor-hooks      # sdd-continue stop hook (dated backup of ~/.cursor/hooks.json)
-~/.agents/skills/agentic-sdd/install.sh --cursor-cli-skills       # expose the plugin's skills to the Cursor Agent CLI
+npx agentic-sdd --project /path/to/repo   # writes .cursor/rules/agentic-sdd.mdc
+npx agentic-sdd setup --apply-cursor-hooks    # sdd-continue stop hook (dated backup of ~/.cursor/hooks.json)
+npx agentic-sdd setup --cursor-cli-skills     # expose the plugin's skills to the Cursor Agent CLI
 ```
 
 **Why Cursor needs the rule.** The official plugin has no hooks, no project
@@ -270,11 +270,11 @@ headless run cannot answer.
 **Known limits.** The plugin cache path
 `~/.cursor/plugins/cache/cursor-public/pstack/<hash>/` changes on every plugin
 update, which silently breaks the `~/.cursor/skills` links; rerun
-`install.sh --cursor-cli-skills` (it prunes the dead links first).
+`npx agentic-sdd setup --cursor-cli-skills` (it prunes the dead links first).
 
 ## Grok Build
 
-`install.sh` does all of this when it finds `grok`. The manual equivalents:
+`npx agentic-sdd` does all of this when it finds `grok`. The manual equivalents:
 
 **Install pstack** (the same port, through Grok's marketplace; Grok can also
 read the Claude plugin cache through `[compat.claude]`):
@@ -282,7 +282,7 @@ read the Claude plugin cache through `[compat.claude]`):
 ```sh
 grok plugin marketplace add michael-denyer/pstack-claude
 grok plugin install pstack@pstack-claude --trust
-~/.agents/skills/agentic-sdd/install.sh --grok-mandate --grok-agents
+npx agentic-sdd setup --grok-mandate --grok-agents
 ```
 
 **Why the two flags exist.** Grok runs `SessionStart` hooks but never injects
@@ -312,8 +312,8 @@ small.
 ## Keeping dependencies current
 
 ```sh
-./install.sh --check-deps              # table: installed vs latest; exit 1 when anything is behind
-./install.sh --deps                    # update unattended, then relink mandates, agents, and skill links
+npx agentic-sdd check-deps            # table: installed vs latest; exit 1 when anything is behind
+npx agentic-sdd deps                  # update unattended, then relink mandates, agents, and skill links
 python3 scripts/deps.py update --yes --hosts   # also run claude/codex/grok/agent self-update
 python3 scripts/deps.py check --json   # machine-readable
 ```
@@ -333,13 +333,13 @@ an unrelated restricted process (a browser renderer) starts mid-capture.
 
 ## Uninstall
 
-`install.sh` only ever creates symlinks, a few files it owns, and marked blocks
+`npx agentic-sdd` only ever creates symlinks, a few files it owns, and marked blocks
 inside files you own. Uninstall is the exact inverse.
 
 ```sh
-~/.agents/skills/agentic-sdd/install.sh --uninstall                          # everything under $HOME this script created
-~/.agents/skills/agentic-sdd/install.sh --uninstall --project /path/to/repo   # + the two project files
-~/.agents/skills/agentic-sdd/install.sh --uninstall --purge-deps --yes        # + pstack plugins and the Spec Kit CLI
+npx agentic-sdd uninstall                        # everything under $HOME this script created
+npx agentic-sdd uninstall --project /path/to/repo   # + the two project files
+npx agentic-sdd uninstall --purge-deps --yes        # + pstack plugins and the Spec Kit CLI
 rm -rf ~/.agents/skills/agentic-sdd                                           # finally, the checkout itself
 ```
 
@@ -393,7 +393,7 @@ every Spec Kit gate, result comparisons, and the A/B against plain Spec Kit.
 | `templates/playbooks/` | pstack project playbook (port hosts) |
 | `templates/cursor-rules/` | Cursor project rule |
 | `hosts/cursor/` | `sdd-continue` hooks and the `hooks.json` snippet |
-| `install.sh` | Link, configure, update, and uninstall per host |
+| `npx agentic-sdd` | Link, configure, update, and uninstall per host |
 | `tests/` | `python3 -m unittest discover -s tests -p 'test_*.py'` |
 | `evals/` | Behavioral eval cases |
 | `personas/` | Provider personas, loaded only when a host asks for one |

@@ -40,7 +40,7 @@ When it runs it does four things, in this order:
 |------|------------------------------|----------------|---------------|--------------|
 | Claude Code | Plugin `SessionStart` hook (`hooks/hooks.json` → `session-start.sh claude`) prints `session-start-context.md`: "You have pstack. Invoke `pstack:poteto-mode` when a task touches more than one file / is a design choice / is an unknown bug or perf issue." | Model via the `Skill` tool, or user `/pstack:poteto-mode` | `subagent_type: "pstack:poteto-agent[-<level>]"` | Headless `claude -p` quoted "You have pstack." |
 | Codex | `~/.codex/AGENTS.md` block `<!-- pstack-mandate:start -->` carrying the same text. The plugin's `codex-hooks.json` `SessionStart` hook exists but runs only after the user trusts it in `/hooks`; `codex exec` never trusts it, so the AGENTS.md block is the reliable path. | Native skill load (`$poteto-mode`), or the mandate | `spawn_agent` with a prompt that reads `poteto-mode/SKILL.md` first; `model` must be a slug the tool lists (`gpt-6-luna` here) | Headless `codex exec -m gpt-6-luna` quoted the three conditions after the AGENTS.md block was added; before that, only AGENTS.md routing text was seen |
-| Grok Build | `~/.grok/rules/pstack-mandate.md` (written by `install.sh --grok-mandate`). Grok never injects hook stdout, so the rule is the only path. Skills come through `[compat.claude]` from the Claude plugin cache. | Model, or user `/poteto-mode` | `spawn_subagent` `subagent_type: "poteto-agent"` via `~/.grok/agents/poteto-agent.md` link (`install.sh --grok-agents`); plugin agents are not in the enum | Headless `grok -p` quoted "You have pstack." and listed `poteto-agent` |
+| Grok Build | `~/.grok/rules/pstack-mandate.md` (written by `npx agentic-sdd setup --grok-mandate`). Grok never injects hook stdout, so the rule is the only path. Skills come through `[compat.claude]` from the Claude plugin cache. | Model, or user `/poteto-mode` | `spawn_subagent` `subagent_type: "poteto-agent"` via `~/.grok/agents/poteto-agent.md` link (`npx agentic-sdd setup --grok-agents`); plugin agents are not in the enum | Headless `grok -p` quoted "You have pstack." and listed `poteto-agent` |
 | Cursor | **Nothing automatic.** The official plugin has no hooks, and `poteto-mode`'s frontmatter sets `disable-model-invocation: true`, so the model cannot open it on its own. | User `/poteto-mode` only. Other pstack skills (`architect`, `how`, `interrogate`, …) stay model-invocable. | Native `subagent_type: "poteto-agent"` (plugin `agents/poteto-agent.md`, `is_background: true`) | Plugin files read on disk; `agent -p` headless answers `ok`; invocation under quota not yet exercised |
 
 Consequence for agentic-sdd: on Claude, Codex, and Grok a plain multi-file
@@ -93,7 +93,7 @@ skill; the user can still type `/poteto-mode`. `pstack-integration.md`
 
 `templates/playbooks/agentic-sdd.md` quotes the port's step text, so it applies
 on the port only. On Cursor, use `templates/cursor-rules/agentic-sdd.mdc`
-(installed by `install.sh --project DIR`), which carries the same three
+(installed by `npx agentic-sdd --project DIR`), which carries the same three
 handoffs as an always-applied project rule.
 
 ## 5. Checklist agentic-sdd runs against this
