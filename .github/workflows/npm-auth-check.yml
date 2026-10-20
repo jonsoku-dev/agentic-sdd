@@ -1,0 +1,21 @@
+name: npm-auth-check
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 6 * * 1"   # weekly, so an expired or revoked token is noticed before a release needs it
+permissions:
+  contents: read
+jobs:
+  whoami:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+          registry-url: https://registry.npmjs.org
+      - name: Token is valid and can see the package
+        run: |
+          npm whoami
+          npm access list packages 2>/dev/null | grep -q '^agentic-sdd' || npm view agentic-sdd version
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

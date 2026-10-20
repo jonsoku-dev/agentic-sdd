@@ -23,7 +23,7 @@ class ReleaseMetadataTests(unittest.TestCase):
             self.assertTrue((ROOT / rel.rstrip("/")).exists(), rel)
 
     def test_workflows_present(self):
-        for name in ("ci.yml", "release-please.yml", "publish.yml", "upstream.yml", "dependabot-automerge.yml"):
+        for name in ("ci.yml", "release-please.yml", "publish.yml", "upstream.yml", "dependabot-automerge.yml", "npm-auth-check.yml"):
             self.assertTrue((ROOT / ".github/workflows" / name).is_file(), name)
 
     def test_cli_copies_itself_when_installed_under_node_modules(self):
