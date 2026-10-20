@@ -28,6 +28,8 @@
     "README.md",
     "CHANGELOG.md",
     "LICENSE",
+    "SECURITY.md",
+    "CONTRIBUTING.md",
     "llms.txt",
     "pins.json",
     "install.sh",

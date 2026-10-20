@@ -47,6 +47,7 @@ numbered feature without a phase quiz. It asks once only at hard boundaries
 - [Evidence that it works](#evidence-that-it-works)
 - [Repository layout](#repository-layout)
 - [License and third-party notices](#license-and-third-party-notices)
+- [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md)
 
 ## Quick start
 
