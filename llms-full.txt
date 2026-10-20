@@ -423,6 +423,10 @@ on `main` and automated with [release-please](https://github.com/googleapis/rele
 2. On every push to `main`, the `release-please` workflow opens or updates a
    release pull request that bumps `package.json`, rewrites `CHANGELOG.md`
    from the commits, and shows the next version.
+   GitHub holds the pull request's own CI run for approval because the
+   author is `github-actions[bot]`; approve it from the Actions tab or with
+   `gh api -X POST repos/<owner>/<repo>/actions/runs/<id>/approve` (the same
+   commits are already tested on `main`, and the publish job tests again).
 3. Merging that pull request creates the git tag `vX.Y.Z` and the GitHub
    release; the same workflow then runs tests and `npm publish --provenance`.
    Authentication is npm **trusted publishing** only (OIDC from this
