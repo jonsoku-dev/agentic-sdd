@@ -37,7 +37,18 @@ jobs:
           python-version: "3.12"
       - name: Tests
         run: python3 -m unittest discover -s tests -p 'test_*.py'
-      - name: Publish with provenance
+      - name: npm CLI that supports trusted publishing (OIDC needs npm >= 11.5.1)
+        run: npm install -g npm@latest && npm --version
+      # Trusted publishing: configured on npmjs.com for this repository and
+      # workflow file; no secret needed. Used whenever NPM_TOKEN is absent.
+      - name: Publish with provenance (trusted publishing)
+        if: env.NPM_TOKEN_SET == ''
         run: npm publish --provenance --access public
         env:
+          NPM_TOKEN_SET: ${{ secrets.NPM_TOKEN }}
+      - name: Publish with provenance (token)
+        if: env.NPM_TOKEN_SET != ''
+        run: npm publish --provenance --access public
+        env:
+          NPM_TOKEN_SET: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
