@@ -1,0 +1,37 @@
+name: upstream
+on:
+  schedule:
+    - cron: "17 6 * * 1"   # Mondays 06:17 UTC
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compare pins with upstream and bump
+        id: bump
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 scripts/upstream_watch.py --markdown --bump | tee /tmp/upstream.md
+          python3 scripts/build_llms.py
+          echo "changed=$(git status --porcelain | wc -l | tr -d ' ')" >> "$GITHUB_OUTPUT"
+      - name: Tests still pass with the new pins
+        if: steps.bump.outputs.changed != '0'
+        run: python3 -m unittest discover -s tests -p 'test_*.py'
+      - name: Open or update the pull request
+        if: steps.bump.outputs.changed != '0'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: chore/upstream-pins
+          commit-message: "fix(deps): bump upstream pins to the latest releases"
+          title: "fix(deps): bump upstream pins"
+          body-path: /tmp/upstream.md
+          labels: dependencies
+          delete-branch: true

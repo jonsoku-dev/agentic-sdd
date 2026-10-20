@@ -44,7 +44,22 @@ Kit CLI), `git`, and at least one of the four host CLIs. `bun` is needed only
 by pstack's own playbook checker. Anything missing that Homebrew can install is
 part of the plan the installer shows you.
 
-### Agent mode (recommended)
+### npm mode (one command)
+
+```sh
+npx agentic-sdd            # detect → plan → "Proceed? [y/N]" → install and configure every host found → verify
+npx agentic-sdd --dry-run  # plan only
+```
+
+The package is published from this repository's GitHub releases with
+[npm provenance](https://docs.npmjs.com/generating-provenance-statements), so
+`npm audit signatures` can verify that the tarball was built by the `publish`
+workflow from the tagged commit. It copies the skill into
+`~/.agents/skills/agentic-sdd` (or uses a git checkout already there) and runs
+the same `install.sh` as the other modes. Later: `npx agentic-sdd@latest` to
+update, `npx agentic-sdd check-deps`, `npx agentic-sdd uninstall`.
+
+### Agent mode
 
 Open Claude Code, Codex, Cursor, or Grok Build on your machine and paste this.
 The agent reads the docs, inspects your machine, shows you the plan, and asks
@@ -53,10 +68,9 @@ once before changing anything.
 ```text
 Install agentic-sdd on this machine.
 1. Read https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/llms.txt and the README it links.
-2. Clone https://github.com/jonsoku-dev/agentic-sdd to ~/.agents/skills/agentic-sdd (git pull if it already exists).
-3. Run ~/.agents/skills/agentic-sdd/install.sh --dry-run and show me the detected state and the full plan, including the manual items.
-4. Ask me once whether to proceed. Only on yes, run ~/.agents/skills/agentic-sdd/install.sh --yes.
-5. Show me the verify output, what I must restart, and what I must do inside an IDE. Change nothing the plan did not list.
+2. Run `npx agentic-sdd --dry-run` and show me the detected state and the full plan, including the manual items.
+3. Ask me once whether to proceed. Only on yes, run `npx agentic-sdd --yes`.
+4. Show me the verify output, what I must restart, and what I must do inside an IDE. Change nothing the plan did not list.
 ```
 
 ### Manual mode
@@ -399,12 +413,24 @@ on `main` and automated with [release-please](https://github.com/googleapis/rele
    release pull request that bumps `version.txt`, rewrites `CHANGELOG.md`
    from the commits, and shows the next version.
 3. Merging that pull request creates the git tag `vX.Y.Z` and the GitHub
-   release. Nothing is published to a package registry; a release is the tag
-   plus the changelog section.
+   release, which triggers the `publish` workflow: tests, `npm pack`, then
+   `npm publish --provenance` to npmjs.org (needs the `NPM_TOKEN` repository
+   secret, or npm trusted publishing).
 
-The `ci` workflow runs shell syntax checks, the unit tests, and the
-`llms.txt` freshness check on every push and pull request. Current version:
-`version.txt`; history: `CHANGELOG.md`.
+Current version: `package.json`; history: `CHANGELOG.md`.
+
+## Automation
+
+| What | Where | When |
+|---|---|---|
+| Shell syntax + shellcheck, Python compile, unit tests | `.github/workflows/ci.yml` | every push and pull request |
+| `llms.txt` / `llms-full.txt` regenerated and committed when stale | `ci.yml` (push to `main`); fails a pull request instead | every push |
+| Release pull request with version bump and changelog | `.github/workflows/release-please.yml` | every push to `main` |
+| npm publish with provenance | `.github/workflows/publish.yml` | when a GitHub release is published |
+| Upstream watch: pstack, Spec Kit, rea-agents latest vs `pins.json`; bumps every `rea-agents@X.Y.Z` pin and opens `fix(deps)` pull request | `.github/workflows/upstream.yml`, `scripts/upstream_watch.py` | weekly (Monday) and on demand |
+| GitHub Actions version bumps | `.github/dependabot.yml` | weekly |
+| Contributor hooks: regenerate `llms.txt` and run the tests before each commit | `scripts/dev-setup.sh` → `scripts/githooks/pre-commit` | on every local commit |
+| Dependency freshness on your machine | `npx agentic-sdd check-deps` / `deps` | whenever you run it |
 
 ## License and third-party notices
 

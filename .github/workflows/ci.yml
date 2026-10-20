@@ -3,17 +3,39 @@ on:
   push:
     branches: [main]
   pull_request:
+permissions:
+  contents: write
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ github.token }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Shell syntax
-        run: bash -n install.sh && for f in hosts/cursor/hooks/agentic-sdd-continue/*.sh scripts/*.sh; do bash -n "$f"; done
+      - name: Shell syntax and shellcheck
+        run: |
+          sudo apt-get install -y -q shellcheck >/dev/null
+          files="install.sh $(ls scripts/*.sh hosts/cursor/hooks/agentic-sdd-continue/*.sh)"
+          for f in $files; do bash -n "$f"; done
+          shellcheck -S error $files
+      - name: Python compiles
+        run: python3 -m compileall -q scripts visualizer tests
       - name: Unit tests
         run: python3 -m unittest discover -s tests -p 'test_*.py'
-      - name: llms.txt is current
+      - name: Regenerate llms.txt when stale (main only)
+        if: github.event_name == 'push'
+        run: |
+          if ! python3 scripts/build_llms.py --check; then
+            python3 scripts/build_llms.py
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add llms.txt llms-full.txt
+            git commit -m "chore: regenerate llms.txt [skip ci]"
+            git push
+          fi
+      - name: llms.txt is current (pull requests)
+        if: github.event_name == 'pull_request'
         run: python3 scripts/build_llms.py --check

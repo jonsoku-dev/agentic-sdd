@@ -1,0 +1,15 @@
+{
+  "rea-agents": {
+    "min": "6.7.0",
+    "reason": "6.4.0 fails every process capture when an unrelated CS_RESTRICT process starts mid-capture; 6.7.0 records it as restricted_process_environment_withheld"
+  },
+  "pstack-claude": {
+    "tested": "0.9.94"
+  },
+  "pstack-cursor": {
+    "tested": "0.15.28"
+  },
+  "spec-kit": {
+    "tested": "1.2.3"
+  }
+}

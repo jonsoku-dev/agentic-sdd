@@ -1,0 +1,10 @@
+#!/bin/sh
+# Regenerate llms.txt when docs changed and run the fast test suite.
+set -e
+root="$(git rev-parse --show-toplevel)"
+cd "$root"
+if git diff --cached --name-only | grep -q -E '\.(md|mdc)$|^scripts/build_llms\.py$'; then
+  python3 scripts/build_llms.py >/dev/null
+  git add llms.txt llms-full.txt
+fi
+python3 -m unittest discover -s tests -p 'test_*.py' >/dev/null 2>&1 || { echo "pre-commit: tests failed; run python3 -m unittest discover -s tests" >&2; exit 1; }
