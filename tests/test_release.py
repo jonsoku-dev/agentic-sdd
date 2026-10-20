@@ -26,6 +26,23 @@ class ReleaseMetadataTests(unittest.TestCase):
         for name in ("ci.yml", "release-please.yml", "publish.yml", "upstream.yml", "dependabot-automerge.yml"):
             self.assertTrue((ROOT / ".github/workflows" / name).is_file(), name)
 
+    def test_cli_copies_itself_when_installed_under_node_modules(self):
+        import os
+        import shutil
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            pkg = Path(tmp) / "cache" / "node_modules" / "agentic-sdd"   # where npx puts the package
+            shutil.copytree(ROOT, pkg, ignore=shutil.ignore_patterns(".git", "docs", "tests", ".github"))
+            home = Path(tmp) / "home"
+            env = dict(os.environ, AGENTIC_SDD_HOME=str(home))
+            p = subprocess.run(["node", str(pkg / "bin/agentic-sdd.js"), "where"], capture_output=True, text=True, timeout=60, env=env)
+            self.assertEqual(p.returncode, 0, p.stderr)
+            target = home / ".agents/skills/agentic-sdd"
+            self.assertTrue((target / "SKILL.md").is_file())
+            self.assertTrue((target / "install.sh").is_file())
+            self.assertFalse((target / "tests").exists())
+            self.assertEqual((target / ".npm-version").read_text().strip(), json.loads((ROOT / "package.json").read_text())["version"])
+
     def test_cli_help_and_version(self):
         p = subprocess.run(["node", str(ROOT / "bin/agentic-sdd.js"), "--help"], capture_output=True, text=True, timeout=30)
         self.assertEqual(p.returncode, 0)

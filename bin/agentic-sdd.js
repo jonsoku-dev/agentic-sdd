@@ -62,9 +62,10 @@ function sync() {
   if (fs.existsSync(real)) {
     fs.rmSync(real, { recursive: true, force: true });
   }
-  // mirror the npm tarball: never carry a dev checkout's .git, tests, workflows, or eval records
-  const skip = /[\\/](node_modules|\.git|\.github|tests|docs[\\/]evals)([\\/]|$)/;
-  fs.cpSync(PKG, real, { recursive: true, filter: (src) => !skip.test(src) });
+  // mirror the npm tarball: never carry a dev checkout's .git, tests, workflows, or eval records.
+  // Match on the path relative to the package root: under npx the root itself lives in node_modules.
+  const skip = /^(node_modules|\.git|\.github|tests|docs[\\/]evals)([\\/]|$)/;
+  fs.cpSync(PKG, real, { recursive: true, filter: (src) => !skip.test(path.relative(PKG, src)) });
   fs.writeFileSync(stamp, VERSION + "\n");
   console.log(`installed agentic-sdd ${VERSION} into ${real}`);
   return real;
