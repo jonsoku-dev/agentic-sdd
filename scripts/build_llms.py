@@ -46,6 +46,7 @@ SECTIONS = [
         ("install.sh", "Installer and exact-inverse uninstaller"),
     ]),
     ("Evidence", [
+        ("docs/BENCHMARKS.md", "Method, routing table, gate-by-gate matrix of what each host invoked at every Spec Kit gate, result comparisons, A/B against plain Spec Kit"),
         ("docs/evals/2026-10-20-host-matrix/result.md", "Four hosts × routing prompts, a real feature, and a three-part goal; black-box, converge count, REA ids, cost"),
         ("docs/evals/2026-10-20-host-matrix/prediction.md", "Pre-registered predictions for that matrix"),
         ("docs/evals/2026-10-19-sandbox-ab/result.md", "Spec Kit alone versus this stack on one brief"),

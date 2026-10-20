@@ -353,6 +353,9 @@ deleted from a host config except the marked block and the named hook entries.
 
 ## Evidence that it works
 
+[`docs/BENCHMARKS.md`](docs/BENCHMARKS.md) has the full picture: method,
+routing table, a gate-by-gate matrix of what each host actually invoked at
+every Spec Kit gate, result comparisons, and the A/B against plain Spec Kit.
 `docs/evals/` keeps the records; raw headless transcripts are gitignored.
 
 - `2026-10-19-sandbox-ab/`: Spec Kit alone versus this stack on the same brief.
