@@ -1,0 +1,65 @@
+# agentic-sdd
+
+> Spec-Driven Development that finishes: one skill that drives GitHub Spec Kit end to end on Claude Code, Codex, Cursor, and Grok Build, runs pstack inside every phase, and closes a feature only on REA runtime evidence. One converge per spec; small specs; seven harness layers probed per host.
+
+Read SKILL.md first, then references/INDEX.md for which reference the current step needs. Paths are relative to the repository root; the links below point at the raw files on the main branch.
+
+## Start here
+
+- [README.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/README.md): Install (one-shot), per-host setup, keeping dependencies current, uninstall, evidence, license
+- [SKILL.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/SKILL.md): The skill entrypoint: Final Goal driver, phase contracts, universal first actions, hard boundaries
+- [references/INDEX.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/INDEX.md): Load map: which reference to open at which step
+
+## Core references
+
+- [references/spec-kit-alignment.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/spec-kit-alignment.md): Project/feature resolution, Spec Kit commands, non-SDD entry
+- [references/phase-contract.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/phase-contract.md): Entering or handing off a phase
+- [references/harness-layers.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/harness-layers.md): Seven harness layers × Spec Kit × pstack × host; readiness via `scripts/harness_probe.py`
+- [references/pstack-integration.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/pstack-integration.md): Phase→pstack map, per-host leaf dispatch (Cursor / Claude / Codex / Grok), hook precedence, review gate, full-autonomy grant
+- [references/poteto-mode-anatomy.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/poteto-mode-anatomy.md): How each host reaches pstack poteto-mode (mandate, user-only on Cursor), what the skill does when it runs, port vs Cursor plugin differences
+- [references/model-routing.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/model-routing.md): Child model/effort from pstack sheet → defaults → parent; per-host dispatch
+- [references/rea-closeout.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/rea-closeout.md): Mandatory post-converge REA analysis; install if missing
+- [references/recovery.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/recovery.md): Repeated failure, conflicting diagnoses, scope drift
+- [references/direction-keeper.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/direction-keeper.md): Before next feature / acceptance review
+- [references/verification-execution.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/verification-execution.md): Running approved CLI checks / evidence
+- [references/host-guide-greenfield-brownfield.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/host-guide-greenfield-brownfield.md): Human+agent guide: greenfield vs brownfield on Claude / Codex / Cursor
+- [references/starting-tool-considerations.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/starting-tool-considerations.md): Claude / Codex / Cursor / Grok bootstrap
+- [references/agent-compatibility.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/agent-compatibility.md): Host matrix, missing tools, Grok file-based mode
+- [references/cursor-continuation.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/cursor-continuation.md): Cursor only: `progress.md` machine line and stop-hook resume
+
+## Supporting references
+
+- [references/cost-modes.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/cost-modes.md): Economy / Balanced / Thorough (Thorough ≈ full Spec Kit rigor)
+- [references/multi-perspective-review.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/multi-perspective-review.md): Thorough / high-risk converge review
+- [references/compaction-timing.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/compaction-timing.md): Before `/compact` or context flush
+- [references/bug-workflow.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/bug-workflow.md): Repair: assess → fix → test
+- [references/anti-patterns.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/anti-patterns.md): Scope drift, invented requirements, chat-memory reliance
+- [references/anti-oververification.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/anti-oververification.md): Stopping verify loops mid-implement
+- [references/edge-cases-and-failure-modes.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/edge-cases-and-failure-modes.md): Ambiguity, partial failure, blockers
+- [references/main-model-guide.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/main-model-guide.md): Main vs light model roles; token overuse
+- [references/progress-template.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/progress-template.md)
+- [references/spec-template.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/spec-template.md)
+- [references/overview-template.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/overview-template.md)
+- [references/kanban-board.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/kanban-board.md): Optional visual board
+- [references/provider-personas-and-docs.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/provider-personas-and-docs.md): Provider-specific API work
+
+## Templates and scripts
+
+- [templates/playbooks/agentic-sdd.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/templates/playbooks/agentic-sdd.md): pstack project playbook: three Spec Kit handoffs anchored on Feature and Bug fix steps (pstack-claude port)
+- [templates/cursor-rules/agentic-sdd.mdc](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/templates/cursor-rules/agentic-sdd.mdc): Cursor project rule carrying the same handoffs; Cursor's plugin cannot invoke poteto-mode itself
+- [scripts/harness_probe.py](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/scripts/harness_probe.py): Readiness probe for the seven harness layers per host; prints the progress.md breadcrumbs
+- [scripts/setup.py](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/scripts/setup.py): One-shot setup: detect, plan, confirm, apply, verify
+- [scripts/deps.py](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/scripts/deps.py): Installed-vs-latest check and unattended update for Spec Kit, pstack per host, REA pins, host CLIs
+- [install.sh](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/install.sh): Installer and exact-inverse uninstaller
+
+## Evidence
+
+- [docs/evals/2026-10-20-host-matrix/result.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/docs/evals/2026-10-20-host-matrix/result.md): Four hosts × routing prompts, a real feature, and a three-part goal; black-box, converge count, REA ids, cost
+- [docs/evals/2026-10-20-host-matrix/prediction.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/docs/evals/2026-10-20-host-matrix/prediction.md): Pre-registered predictions for that matrix
+- [docs/evals/2026-10-19-sandbox-ab/result.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/docs/evals/2026-10-19-sandbox-ab/result.md): Spec Kit alone versus this stack on one brief
+
+## Optional
+
+- [LICENSE](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/LICENSE): MIT
+- [visualizer/index.html](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/visualizer/index.html): Optional Kanban over Spec Kit artifacts
+- [evals/evals.json](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/evals/evals.json): Behavioral eval cases

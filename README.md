@@ -365,6 +365,7 @@ deleted from a host config except the marked block and the named hook entries.
 | `agents/openai.yaml` | Codex skill metadata |
 | `visualizer/` | Optional Kanban over Spec Kit artifacts: `python3 visualizer/server.py --project /path/to/repo` |
 | `docs/evals/` | Measured runs and their artifacts |
+| `llms.txt`, `llms-full.txt` | [llms.txt](https://llmstxt.org/) index and full inline copy of the docs for agents; regenerate with `python3 scripts/build_llms.py` (the test suite fails when they are stale) |
 
 ## License and third-party notices
 
