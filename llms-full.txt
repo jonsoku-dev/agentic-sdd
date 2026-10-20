@@ -421,13 +421,14 @@ on `main` and automated with [release-please](https://github.com/googleapis/rele
 1. Commit with `feat:`, `fix:`, `docs:`, `refactor:`, `perf:` (a `!` or a
    `BREAKING CHANGE:` footer bumps the major).
 2. On every push to `main`, the `release-please` workflow opens or updates a
-   release pull request that bumps `version.txt`, rewrites `CHANGELOG.md`
+   release pull request that bumps `package.json`, rewrites `CHANGELOG.md`
    from the commits, and shows the next version.
 3. Merging that pull request creates the git tag `vX.Y.Z` and the GitHub
    release; the same workflow then runs tests and `npm publish --provenance`.
-   Authentication is npm **trusted publishing** (OIDC from this repository's
-   `release-please.yml`, configured on the package's npmjs.com settings page)
-   when no `NPM_TOKEN` secret exists, else that token.
+   Authentication is npm **trusted publishing** only (OIDC from this
+   repository's `release-please.yml`, registered on the package's npmjs.com
+   settings page). The package disallows token publishing, so there is no
+   secret to rotate or leak.
 
 Current version: `package.json`; history: `CHANGELOG.md`.
 
@@ -438,9 +439,8 @@ Current version: `package.json`; history: `CHANGELOG.md`.
 | Shell syntax + shellcheck, Python compile, unit tests | `.github/workflows/ci.yml` | every push and pull request |
 | `llms.txt` / `llms-full.txt` regenerated and committed when stale | `ci.yml` (push to `main`); fails a pull request instead | every push |
 | Release pull request with version bump and changelog | `.github/workflows/release-please.yml` | every push to `main` |
-| npm publish with provenance | `.github/workflows/publish.yml` | when a GitHub release is published |
+| npm publish with provenance (trusted publishing, no token) | `publish` job in `release-please.yml` | when the release pull request is merged |
 | Upstream watch: pstack, Spec Kit, rea-agents latest vs `pins.json`; bumps every `rea-agents@X.Y.Z` pin and opens `fix(deps)` pull request | `.github/workflows/upstream.yml`, `scripts/upstream_watch.py` | weekly (Monday) and on demand |
-| npm token still valid (`npm whoami` with the repository secret) | `.github/workflows/npm-auth-check.yml` | weekly and on demand |
 | GitHub Actions version bumps, auto-merged when minor/patch and CI is green | `.github/dependabot.yml`, `.github/workflows/dependabot-automerge.yml` | weekly |
 | Contributor hooks: regenerate `llms.txt` and run the tests before each commit | `scripts/dev-setup.sh` → `scripts/githooks/pre-commit` | on every local commit |
 | Dependency freshness on your machine | `npx agentic-sdd check-deps` / `deps` | whenever you run it |

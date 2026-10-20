@@ -39,7 +39,9 @@
     "scripts/",
     "templates/",
     "visualizer/",
-    "docs/BENCHMARKS.md"
+    "docs/BENCHMARKS.md",
+    "!**/__pycache__/",
+    "!**/*.pyc"
   ],
   "engines": {
     "node": ">=20"
