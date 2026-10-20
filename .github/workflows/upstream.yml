@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Compare pins with upstream and bump
@@ -27,7 +27,7 @@ jobs:
         run: python3 -m unittest discover -s tests -p 'test_*.py'
       - name: Open or update the pull request
         if: steps.bump.outputs.changed != '0'
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           branch: chore/upstream-pins
           commit-message: "fix(deps): bump upstream pins to the latest releases"
