@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version: "22"
           registry-url: https://registry.npmjs.org
       - name: Token is valid and can see the package (skipped once trusted publishing replaces the token)
         if: env.NPM_TOKEN_SET != ''
