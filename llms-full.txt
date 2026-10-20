@@ -399,6 +399,24 @@ every Spec Kit gate, result comparisons, and the A/B against plain Spec Kit.
 | `docs/evals/` | Measured runs and their artifacts |
 | `llms.txt`, `llms-full.txt` | [llms.txt](https://llmstxt.org/) index and full inline copy of the docs for agents; regenerate with `python3 scripts/build_llms.py` (the test suite fails when they are stale) |
 
+## Versioning and releases
+
+Semantic Versioning, driven by [Conventional Commits](https://www.conventionalcommits.org/)
+on `main` and automated with [release-please](https://github.com/googleapis/release-please):
+
+1. Commit with `feat:`, `fix:`, `docs:`, `refactor:`, `perf:` (a `!` or a
+   `BREAKING CHANGE:` footer bumps the major).
+2. On every push to `main`, the `release-please` workflow opens or updates a
+   release pull request that bumps `version.txt`, rewrites `CHANGELOG.md`
+   from the commits, and shows the next version.
+3. Merging that pull request creates the git tag `vX.Y.Z` and the GitHub
+   release. Nothing is published to a package registry; a release is the tag
+   plus the changelog section.
+
+The `ci` workflow runs shell syntax checks, the unit tests, and the
+`llms.txt` freshness check on every push and pull request. Current version:
+`version.txt`; history: `CHANGELOG.md`.
+
 ## License and third-party notices
 
 This repository is MIT (`LICENSE`). Everything here is original to this

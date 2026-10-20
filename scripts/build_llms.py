@@ -53,6 +53,7 @@ SECTIONS = [
     ]),
 ]
 OPTIONAL = [
+    ("CHANGELOG.md", "Release history (release-please, Conventional Commits)"),
     ("LICENSE", "MIT"),
     ("visualizer/index.html", "Optional Kanban over Spec Kit artifacts"),
     ("evals/evals.json", "Behavioral eval cases"),

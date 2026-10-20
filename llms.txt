@@ -63,6 +63,7 @@ To install on the machine you are running on: clone https://github.com/jonsoku-d
 
 ## Optional
 
+- [CHANGELOG.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/CHANGELOG.md): Release history (release-please, Conventional Commits)
 - [LICENSE](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/LICENSE): MIT
 - [visualizer/index.html](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/visualizer/index.html): Optional Kanban over Spec Kit artifacts
 - [evals/evals.json](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/evals/evals.json): Behavioral eval cases
