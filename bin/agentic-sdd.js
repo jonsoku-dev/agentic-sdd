@@ -48,7 +48,7 @@ function isGitCheckout(dir) {
 function sync() {
   const real = fs.existsSync(TARGET) ? fs.realpathSync(TARGET) : TARGET;
   if (fs.existsSync(real) && isGitCheckout(real)) {
-    console.log(`using existing git checkout at ${real} (git pull there to update)`);
+    console.error(`using existing git checkout at ${real} (git pull there to update)`);
     return real;
   }
   if (path.resolve(real) === path.resolve(PKG)) {
@@ -67,7 +67,7 @@ function sync() {
   const skip = /^(node_modules|\.git|\.github|tests|docs[\\/]evals)([\\/]|$)/;
   fs.cpSync(PKG, real, { recursive: true, filter: (src) => !skip.test(path.relative(PKG, src)) });
   fs.writeFileSync(stamp, VERSION + "\n");
-  console.log(`installed agentic-sdd ${VERSION} into ${real}`);
+  console.error(`installed agentic-sdd ${VERSION} into ${real}`);
   return real;
 }
 

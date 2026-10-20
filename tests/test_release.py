@@ -38,6 +38,7 @@ class ReleaseMetadataTests(unittest.TestCase):
             p = subprocess.run(["node", str(pkg / "bin/agentic-sdd.js"), "where"], capture_output=True, text=True, timeout=60, env=env)
             self.assertEqual(p.returncode, 0, p.stderr)
             target = home / ".agents/skills/agentic-sdd"
+            self.assertEqual(Path(p.stdout.strip()).resolve(), target.resolve())  # `where` prints only the path
             self.assertTrue((target / "SKILL.md").is_file())
             self.assertTrue((target / "install.sh").is_file())
             self.assertFalse((target / "tests").exists())
