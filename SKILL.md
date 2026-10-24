@@ -67,7 +67,7 @@ Universal first actions on every host:
 3. Use installed Spec Kit phase commands — do not re-implement phases in chat.
 4. Update feature artifacts and a root `progress.md` at every meaningful stage.
 5. Compact only after flushing durable state (see [compaction](references/compaction-timing.md)).
-6. Load [pstack integration](references/pstack-integration.md) and [harness layers](references/harness-layers.md) once per feature (or on host change); run `python scripts/harness_probe.py --host <host> --project .` and record its two breadcrumbs in `progress.md`; apply the phase→obligation map for every phase entered. Every breadcrumb is one line starting at column 1 with `pstack:`, `harness:`, `ROUTING:`, or `rea:` (for example `pstack: O-poteto|claude|inline → T001–T004 verified`); a bulleted `- pstack:` line is not counted.
+6. Load the [phase card](references/phase-card.md) once per feature (or on host change); open the longer references only for the cases its last table lists. Run `python scripts/harness_probe.py --host <host> --project .` and record its two breadcrumbs in `progress.md`; apply the phase→obligation map for every phase entered. Every breadcrumb is one line starting at column 1 with `pstack:`, `harness:`, `ROUTING:`, or `rea:` (for example `pstack: O-poteto|claude|inline → T001–T004 verified`); a bulleted `- pstack:` line is not counted.
 7. While a host goal (`/goal` on Claude, Cursor, Grok) is active, echo each check command and its decisive output line into the conversation after every verification; the evaluator reads the transcript, not files.
 
 ## Establish the working contract
@@ -98,12 +98,14 @@ repository requires them. Preserve already admitted gates. Never silently
 self-approve reviewer-owned checklists.
 
 **REA closeout is mandatory** after a clean converge (and before Final Goal
-finish). If REA CLI/MCP is missing, install and wire it, then analyze. See
-[REA closeout](references/rea-closeout.md).
+finish). If REA CLI/MCP is missing, install and wire it, then analyze. The
+[phase card](references/phase-card.md) has the common path;
+[REA closeout](references/rea-closeout.md) covers install failures and web capture.
 
 Read [phase contracts](references/phase-contract.md) when entering a phase or
-handing off. Read [pstack integration](references/pstack-integration.md) for
-*how* to execute inside each phase (Cursor pstack skills vs host fallbacks).
+handing off. The [phase card](references/phase-card.md) says *how* to execute
+inside each phase; [pstack integration](references/pstack-integration.md) holds
+the per-host dispatch detail.
 
 ### Unattended continuity
 
@@ -188,7 +190,7 @@ inside admitted phases — not a second SDD.
 | Priority | Action |
 |----------|--------|
 | 1 | Run the owning Spec Kit phase command / artifact contract |
-| 2 | Apply the matching obligation from [pstack integration](references/pstack-integration.md) |
+| 2 | Apply the matching obligation from the [phase card](references/phase-card.md) |
 | 3 | On **Cursor**: official `pstack` skills (`/architect`, `/arena`, `/swarm`, `/interrogate`, poteto non-negotiables, `poteto-agent`) |
 | 4 | On **Claude Code** with `pstack@pstack-claude`: same map via `/pstack:<skill>`; leaves (on a trigger) via `pstack:poteto-agent[-<level>]` |
 | 5 | On **Codex** with `pstack@pstack-claude`: skills load by name; leaves (on a trigger) via the session spawn tool + `reasoning_effort` (port's `codex-tools.md`) |

@@ -14,6 +14,7 @@ To install on the machine you are running on: run `npx agentic-sdd --dry-run` (n
 
 ## Core references
 
+- [references/phase-card.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/phase-card.md): Every feature: required phase→obligation rows, breadcrumb lines, common REA path; points to the long references
 - [references/spec-kit-alignment.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/spec-kit-alignment.md): Project/feature resolution, Spec Kit commands, non-SDD entry
 - [references/phase-contract.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/phase-contract.md): Entering or handing off a phase
 - [references/harness-layers.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/harness-layers.md): Seven harness layers × Spec Kit × pstack × host; readiness via `scripts/harness_probe.py`

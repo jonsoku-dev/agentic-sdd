@@ -543,7 +543,7 @@ Universal first actions on every host:
 3. Use installed Spec Kit phase commands — do not re-implement phases in chat.
 4. Update feature artifacts and a root `progress.md` at every meaningful stage.
 5. Compact only after flushing durable state (see [compaction](references/compaction-timing.md)).
-6. Load [pstack integration](references/pstack-integration.md) and [harness layers](references/harness-layers.md) once per feature (or on host change); run `python scripts/harness_probe.py --host <host> --project .` and record its two breadcrumbs in `progress.md`; apply the phase→obligation map for every phase entered. Every breadcrumb is one line starting at column 1 with `pstack:`, `harness:`, `ROUTING:`, or `rea:` (for example `pstack: O-poteto|claude|inline → T001–T004 verified`); a bulleted `- pstack:` line is not counted.
+6. Load the [phase card](references/phase-card.md) once per feature (or on host change); open the longer references only for the cases its last table lists. Run `python scripts/harness_probe.py --host <host> --project .` and record its two breadcrumbs in `progress.md`; apply the phase→obligation map for every phase entered. Every breadcrumb is one line starting at column 1 with `pstack:`, `harness:`, `ROUTING:`, or `rea:` (for example `pstack: O-poteto|claude|inline → T001–T004 verified`); a bulleted `- pstack:` line is not counted.
 7. While a host goal (`/goal` on Claude, Cursor, Grok) is active, echo each check command and its decisive output line into the conversation after every verification; the evaluator reads the transcript, not files.
 
 ## Establish the working contract
@@ -574,12 +574,14 @@ repository requires them. Preserve already admitted gates. Never silently
 self-approve reviewer-owned checklists.
 
 **REA closeout is mandatory** after a clean converge (and before Final Goal
-finish). If REA CLI/MCP is missing, install and wire it, then analyze. See
-[REA closeout](references/rea-closeout.md).
+finish). If REA CLI/MCP is missing, install and wire it, then analyze. The
+[phase card](references/phase-card.md) has the common path;
+[REA closeout](references/rea-closeout.md) covers install failures and web capture.
 
 Read [phase contracts](references/phase-contract.md) when entering a phase or
-handing off. Read [pstack integration](references/pstack-integration.md) for
-*how* to execute inside each phase (Cursor pstack skills vs host fallbacks).
+handing off. The [phase card](references/phase-card.md) says *how* to execute
+inside each phase; [pstack integration](references/pstack-integration.md) holds
+the per-host dispatch detail.
 
 ### Unattended continuity
 
@@ -664,7 +666,7 @@ inside admitted phases — not a second SDD.
 | Priority | Action |
 |----------|--------|
 | 1 | Run the owning Spec Kit phase command / artifact contract |
-| 2 | Apply the matching obligation from [pstack integration](references/pstack-integration.md) |
+| 2 | Apply the matching obligation from the [phase card](references/phase-card.md) |
 | 3 | On **Cursor**: official `pstack` skills (`/architect`, `/arena`, `/swarm`, `/interrogate`, poteto non-negotiables, `poteto-agent`) |
 | 4 | On **Claude Code** with `pstack@pstack-claude`: same map via `/pstack:<skill>`; leaves (on a trigger) via `pstack:poteto-agent[-<level>]` |
 | 5 | On **Codex** with `pstack@pstack-claude`: skills load by name; leaves (on a trigger) via the session spawn tool + `reasoning_effort` (port's `codex-tools.md`) |
@@ -775,6 +777,7 @@ Load only what the current step needs.
 
 | File | When to load |
 |------|--------------|
+| `phase-card.md` | Every feature: required phase→obligation rows, breadcrumb lines, common REA path; points to the long references |
 | `spec-kit-alignment.md` | Project/feature resolution, Spec Kit commands, non-SDD entry |
 | `phase-contract.md` | Entering or handing off a phase |
 | `harness-layers.md` | Seven harness layers × Spec Kit × pstack × host; readiness via `scripts/harness_probe.py` |
@@ -815,6 +818,85 @@ Load only what the current step needs.
 | `../personas/openai.md` | OpenAI API–specific work |
 | `../personas/google.md` | Google/Gemini API–specific work |
 | `../personas/xai.md` | xAI/Grok API–specific work |
+
+---
+
+<!-- file: references/phase-card.md -->
+
+---
+description: >
+  One-page card loaded on every feature: the required phase→obligation rows,
+  the breadcrumb lines, and the common REA closeout path. Open the long
+  references only for the cases listed at the end.
+---
+
+# Phase card
+
+## Obligations per phase
+
+Run each row as the pstack skill when it is installed (`/pstack:<skill>` on
+Claude, bare names on Cursor, by name on Codex), else as the obligation in your
+own words. Record one breadcrumb per row.
+
+| Phase | Obligation | Skill | Must leave |
+|-------|------------|-------|------------|
+| Enter / resume | `O-sharpen` | `sharpen` (`recall` when cold) | Final Goal + AC pinned in `progress.md` |
+| Enter, existing code touched | `O-how` | `how` | file:line evidence in `plan.md` |
+| `specify` / `clarify` | `O-specify` | `technical-writing` + `unslop` | spec prose; assumptions marked |
+| `plan`, code crosses a function boundary | `O-architect` | `architect` | plan + verification contract |
+| `tasks` | `O-sequence` | `principle-sequence-verifiable-units` | ordered `tasks.md`, each task ends in a check; one spec unless > ~12 tasks |
+| `implement` | `O-poteto` | poteto-mode non-negotiables | admitted task IDs only; inline unless a single-loop trigger holds |
+| Pre-converge | `O-blast`, `O-hygiene` | `blast-radius`, `no-comments` | external risk proved or task-tracked; no narrating comments |
+| `converge` | `O-interrogate` | `interrogate` | a **spawned** reviewer's findings; gaps appended to `tasks.md` |
+| Post-converge | `O-rea` | REA (below) | Evidence ID bound to the current code |
+| Before `/compact` or host switch | `O-pause` | `pause-safely` | `progress.md` current |
+
+`converge` runs once per spec. Its gap tasks get one `implement` round, then
+REA; still failing → `closed-carryover` and the gap becomes the next spec.
+
+## Breadcrumbs
+
+One line per obligation, at column 1, in `progress.md`. Bullets are not
+counted.
+
+```text
+harness: L1 ok|L2 ok|…            (from scripts/harness_probe.py)
+pstack: O-poteto|<host>|inline → T001–T004 verified
+pstack: O-interrogate|<host>|<reviewer subagent_type> → <n> findings
+rea: <feature>|pass|<ev_… id copied verbatim>
+ROUTING: <role> → <model>@<level> (source: sheet|default|parent) observed: …|unknown
+```
+
+No reviewer can run → `pstack: O-interrogate|<host>|BLOCKED: independent review`,
+and the Final Goal stays open.
+
+## REA closeout, common path
+
+1. Use the REA MCP tools when connected, else the `rea` CLI. Missing both in
+   delivery/repair → `npm install -g rea-agents@6.7.0`, then
+   `rea setup --yes --client <claude_code|codex|cursor|grok_build>` for the
+   active host only.
+2. Pick the smallest capture for the artifact:
+   - CLI or script → `capture_process_scenario` on the real command (P1 path
+     and one failure path).
+   - Node/Electron bundle → `analyze_javascript_application`.
+   - Web app → `capture_browser_scenario` with a real P1 action and `at_end`
+     `url` + `dom` or `accessibility`; a URL-only capture is not a pass.
+3. Copy the Evidence ID verbatim into `progress.md` (`rea:` line) and
+   `converge.md` if the feature has one.
+4. Disposition: `pass` (ID present, no material finding), `not-applicable` (no
+   runnable artifact, reason recorded), `tasks-appended` (material finding →
+   one fix round, then REA again), `blocked-limitation` (tooling failed after
+   an alternate path; does not finish).
+
+## Open the long references only when
+
+| Need | Read |
+|------|------|
+| Spawning a leaf or panel on a given host; review gate details; port-only skills | [pstack-integration.md](pstack-integration.md) |
+| REA install fails, web/SPA capture details, known REA failures | [rea-closeout.md](rea-closeout.md) |
+| A harness layer reports a gap | [harness-layers.md](harness-layers.md) |
+| Whether to spawn at all | [single-loop-default.md](single-loop-default.md) |
 
 ---
 

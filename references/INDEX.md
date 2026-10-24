@@ -10,6 +10,7 @@ Load only what the current step needs.
 
 | File | When to load |
 |------|--------------|
+| `phase-card.md` | Every feature: required phase→obligation rows, breadcrumb lines, common REA path; points to the long references |
 | `spec-kit-alignment.md` | Project/feature resolution, Spec Kit commands, non-SDD entry |
 | `phase-contract.md` | Entering or handing off a phase |
 | `harness-layers.md` | Seven harness layers × Spec Kit × pstack × host; readiness via `scripts/harness_probe.py` |
