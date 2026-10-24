@@ -31,6 +31,24 @@ description: Anti-patterns for Spec Kit Agentic SDD.
   Grok-only directories.
 - **Multi-writer checkout**: Two hosts editing the same feature without handoff.
 
+## Agent structure
+
+See [single-loop-default.md](single-loop-default.md).
+
+- **Spawn by habit**: A subagent for a packet that fits the parent's context,
+  with no `bloat` / `parallel` / `conflict` trigger named.
+- **Role or org-chart split**: Separate writer, tester, and reviewer agents for
+  one packet, or one agent per team. Each handoff drops context; split by
+  context instead.
+- **Full handoff**: A subagent takes over the conversation, the Final Goal, or
+  `tasks.md` instead of returning the shared schema to the parent.
+- **Trusting the summary**: Accepting a leaf's "done" without opening the
+  changed files and the decisive check output.
+- **Everything up front**: Loading every reference, skill, or log into the
+  prompt or a leaf's brief instead of pointers read on demand.
+- **Fold without measuring**: Merging or removing leaves without comparing the
+  same cases before and after, including the cases that flipped.
+
 ## Process
 
 - **Skipping Spec Kit by default**: Using light-path for non-trivial work.

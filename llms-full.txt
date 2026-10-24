@@ -26,7 +26,7 @@ specify → plan → tasks → implement → converge (once) → REA closeout �
 |---|---|---|
 | Phase order and artifacts | Spec Kit | `.specify/`, `specs/NNN-*/{spec,plan,tasks,converge}.md` |
 | Goal, contracts, continuity | agentic-sdd | Final Goal pinning, phase contracts, `progress.md` breadcrumbs, recovery, one converge per spec, small specs |
-| How a phase executes | pstack | `sharpen`/`how` on entry, `architect`/`arena` at plan, poteto non-negotiables and `poteto-agent` leaves at implement, `blast-radius` + `no-comments` + `interrogate` at converge |
+| How a phase executes | pstack | `sharpen`/`how` on entry, `architect`/`arena` at plan, poteto non-negotiables at implement (inline by default; `poteto-agent` leaves only for context bloat, parallel work, or review independence), `blast-radius` + `no-comments` + `interrogate` at converge |
 | Proof | REA | `capture_process_scenario` and friends; a feature closes on an Evidence id, not a claim |
 | Resilience | seven harness layers | workspace facts, procedure, source access, action rules, reviewer evidence, effort, completion goal, probed per host by `scripts/harness_probe.py` |
 
@@ -189,7 +189,8 @@ playbook. The project playbook from `npx agentic-sdd --project` anchors three
 handoffs on the port's Feature and Bug fix steps so a plain request in a Spec
 Kit repo still resolves the phase first.
 
-**Dispatch.** Implement leaves are `subagent_type: "pstack:poteto-agent"`, or
+**Dispatch.** Implement runs inline by default. A leaf that meets a
+[single-loop trigger](references/single-loop-default.md) is `subagent_type: "pstack:poteto-agent"`, or
 `pstack:poteto-agent-<level>` when the sheet names an effort. Review panels use
 `pstack:effort-<level>` with the `model` family (`opus`, `fable`, `sonnet`,
 `haiku`) from `~/.claude/pstack-models.md`, written by `/pstack:setup-pstack`.
@@ -649,8 +650,8 @@ inside admitted phases — not a second SDD.
 | 1 | Run the owning Spec Kit phase command / artifact contract |
 | 2 | Apply the matching obligation from [pstack integration](references/pstack-integration.md) |
 | 3 | On **Cursor**: official `pstack` skills (`/architect`, `/arena`, `/swarm`, `/interrogate`, poteto non-negotiables, `poteto-agent`) |
-| 4 | On **Claude Code** with `pstack@pstack-claude`: same map via `/pstack:<skill>`; leaves via `pstack:poteto-agent[-<level>]` |
-| 5 | On **Codex** with `pstack@pstack-claude`: skills load by name; leaves via the session spawn tool + `reasoning_effort` (port's `codex-tools.md`) |
+| 4 | On **Claude Code** with `pstack@pstack-claude`: same map via `/pstack:<skill>`; leaves (on a trigger) via `pstack:poteto-agent[-<level>]` |
+| 5 | On **Codex** with `pstack@pstack-claude`: skills load by name; leaves (on a trigger) via the session spawn tool + `reasoning_effort` (port's `codex-tools.md`) |
 | 6 | If pstack is absent: native Agent/Task + obligations; record `pstack: unavailable|<host>` once — do not stop Spec Kit |
 
 Never start a free-standing `/poteto-mode` or `/pstack:poteto-mode` playbook that
@@ -675,11 +676,16 @@ decides from the written rules; no external advisor is consulted. A routing
 decision is not proof a child actually ran. Dispatch the level as
 `pstack:poteto-agent-<level>` on Claude and `reasoning_effort` on Codex.
 
-Use native subagents when they clarify a failure or execute an independent
-packet. Prefer the host poteto agent for implement leaves when pstack is
-available (`poteto-agent` on Cursor; port equivalent on Claude). Leaves do not
-delegate. If unavailable, do explicit self-review and record the limit — never
-claim independent consensus.
+Run each phase in one loop by default: the primary plans, edits, checks, and
+revises in its own context. Spawn a subagent only for `bloat` (the work would
+crowd the parent's context), `parallel` (independent, disposable fresh-context
+work), or `conflict` (tool or instruction collision, including independent
+review), and name the trigger in the breadcrumb. Never split by role
+(write/test/review) or hand the conversation over. When a trigger holds, prefer
+the host poteto agent (`poteto-agent` on Cursor; port equivalent on Claude);
+the parent verifies its returned claims against the real artifacts. Leaves do
+not delegate. If unavailable, do explicit self-review and record the limit —
+never claim independent consensus. See [single loop](references/single-loop-default.md).
 
 ## Light path (opt-in only)
 
@@ -730,7 +736,7 @@ Load only when needed — see [references/INDEX.md](references/INDEX.md).
 Core: `spec-kit-alignment`, `phase-contract`, `pstack-integration`,
 `host-guide-greenfield-brownfield`, `verification-execution`, `recovery`,
 `direction-keeper`, `model-routing`, `starting-tool-considerations`,
-`agent-compatibility`, `rea-closeout`, `poteto-mode-anatomy` (how each host
+`agent-compatibility`, `rea-closeout`, `single-loop-default` (when to spawn), `poteto-mode-anatomy` (how each host
 reaches poteto-mode), `cursor-continuation` (Cursor only).
 
 ---
@@ -758,6 +764,7 @@ Load only what the current step needs.
 | `verification-execution.md` | Running approved CLI checks / evidence |
 | `recovery.md` | Repeated failure, conflicting diagnoses, scope drift |
 | `direction-keeper.md` | Before next feature / acceptance review |
+| `single-loop-default.md` | Before spawning any subagent: the three triggers, return schema, folding leaves back, breadcrumbs |
 | `model-routing.md` | Child model/effort from pstack sheet → defaults → parent; per-host dispatch |
 | `starting-tool-considerations.md` | Claude / Codex / Cursor / Grok bootstrap |
 | `cursor-continuation.md` | Cursor only: `progress.md` machine line and stop-hook resume |
@@ -1103,7 +1110,7 @@ Do not invent a second evidence format.
 | What | agentic-sdd / Spec Kit | pstack | Required? |
 |------|------------------------|--------|-----------|
 | Bounded review with usable findings | evidence classes static/test/runtime/provider/unverified ([phase-contract.md](phase-contract.md)); `criterion_gate.py` review index | `interrogate` (`O-interrogate`), `thermos` (port, high risk), `blast-radius` (`O-blast`), `benchmark-checklist` (`O-bench`) | Required at converge / bug test |
-| Implementation leaves | one writer per checkout | host poteto agent, fresh per packet (Leaf dispatch in pstack-integration) | Required |
+| Implementation leaves | one writer per checkout; inline by default ([single-loop-default.md](single-loop-default.md)) | host poteto agent, fresh per packet, only on a `bloat` / `parallel` / `conflict` trigger (Leaf dispatch in pstack-integration) | Required when a trigger holds |
 | Independent verdict | [multi-perspective-review.md](multi-perspective-review.md) | review gate stays `BLOCKED: independent review` when no independent reviewer can run | Required |
 | Verdict vocabulary | `met` / `unmet` / `blocked` (criterion_gate) | reviewer buckets act-on / consider / noted / dismissed | Required |
 
@@ -1175,7 +1182,7 @@ correction. Open the saved artifact, not the transcript, to accept it.
 1. L1–L2: resolve project, feature, phase; load instruction file; pin Final Goal.
 2. L3: `how` / `why` / `recall` as the phase needs; confirm REA before closeout.
 3. L4: confirm deny rules once per project; worktree per writer.
-4. L5–L6: dispatch leaves and reviewers with the sheet's model and level.
+4. L5–L6: dispatch reviewers, and leaves that meet a single-loop trigger, with the sheet's model and level.
 5. L7: set the host goal (if any) from the acceptance IDs; keep `progress.md`
    current; measure the accepted run.
 
@@ -1347,8 +1354,8 @@ rows must run (skill or obligation) every time the phase is entered;
 | `plan` | `O-architect` | `architect` (parallel design runners); `arena` when shapes compete | Required when code crosses a function boundary | Plan + verification contract in `plan.md` |
 | `plan` (brief asserts a fact about existing code) | `O-blast` | `blast-radius` | Required when the brief asserts "X already handles Y" | Prove or task-track the assertion |
 | `tasks` | `O-sequence` | `principle-sequence-verifiable-units` | Required | Dependency-ordered `tasks.md`; each task ends in a check |
-| `implement` (default) | `O-poteto` | poteto-mode non-negotiables + Principles; leaves via the host poteto agent (see Leaf dispatch) | Required | Admitted task IDs only; verify real artifacts |
-| `implement` (fan-out) | `O-swarm` | `swarm` | Optional: independent packets | Disjoint files; writers in own worktree |
+| `implement` (default) | `O-poteto` | poteto-mode non-negotiables + Principles; inline in the parent, or a host poteto agent leaf when a [single-loop](single-loop-default.md) trigger holds (see Leaf dispatch) | Required | Admitted task IDs only; verify real artifacts; breadcrumb says `inline` or the trigger |
+| `implement` (fan-out) | `O-swarm` | `swarm` | Optional: independent packets that gain from running at once (`parallel`) | Disjoint files; writers in own worktree |
 | `implement` (bakeoff) | `O-arena` | `arena` | Optional: ≥2 valid shapes | Pick base, graft, delete losers |
 | `implement` (large) | `O-fio` | `figure-it-out` + `show-me-your-work` | Optional: cross-cutting change | Spec Kit `tasks.md` stays authority |
 | `implement` (perf AC) | `O-bench` | `benchmark-checklist` + `principle-explain-the-number` | Required when an AC is a number | Baseline first; name the limiter |
@@ -1359,7 +1366,7 @@ rows must run (skill or obligation) every time the phase is entered;
 | `converge` / bug `test` | `O-interrogate` | `interrogate` + [multi-perspective review](multi-perspective-review.md); `thermos` (port only) for auth/payment/schema/public-API risk | Required | Append gaps; no AC relaxation; see Review gate |
 | Post-converge | `O-rea` | REA closeout | Required | [rea-closeout.md](rea-closeout.md) |
 | Post-REA (feature close) | `O-reflect` | `reflect` → route lessons; `correct` when the same mistake repeated ≥2× this feature | Optional | Encode in structure (lint/test/type) before docs |
-| Context pressure | `O-guard` | `principle-guard-the-context-window` | Required | Bulk to subagents; summaries in parent |
+| Context pressure | `O-guard` | `principle-guard-the-context-window` | Required | Bulk to subagents (`bloat`); parent verifies their claims against artifacts |
 | Pause / compact / handoff | `O-pause` | poteto `pause-safely` (+ `resume.mjs` on port) · `session-pickup` on resume | Required before `/compact` or host switch | `progress.md` stays authoritative |
 | No app harness | `O-verify-skill` | `create-verification-skill` | Optional | Repo checks first |
 
@@ -1376,9 +1383,9 @@ catching three shipped defects; see
 
 | Mode | `O-architect` | `O-interrogate` panel | `O-poteto` leaves |
 |------|---------------|-----------------------|-------------------|
-| Economy | skip for single-file specs (record `O-architect: n/a single-file`) | 2 reviewers, different families | 1 leaf, worker model |
-| Balanced | run when code crosses a function boundary | sheet default (4) | per packet |
-| Thorough | always | sheet default + `thermos` on the port | per packet + re-review by a second model |
+| Economy | skip for single-file specs (record `O-architect: n/a single-file`) | 2 reviewers, different families | inline; 1 worker-model leaf only on a trigger |
+| Balanced | run when code crosses a function boundary | sheet default (4) | inline; a leaf per packet that meets a trigger |
+| Thorough | always | sheet default + `thermos` on the port | inline or leaf by trigger, + re-review by a second model |
 
 ### Poteto-mode under Spec Kit (critical)
 
@@ -1404,9 +1411,12 @@ Instead:
 
 1. Stay on the owning Spec Kit phase command / artifact contract.
 2. For each implement (or fix) batch, **read** the poteto-mode skill and apply its
-   non-negotiables and principles to *how* you execute that batch. Name each
+   non-negotiables and principles to *how* you execute that batch. Its
+   delegate-every-step subagent policy does not apply; the single-loop trigger
+   rule does. Name each
    principle leaf you actually read when it changed a decision.
-3. Spawn implement leaves with the host's poteto agent (see Leaf dispatch).
+3. Execute the batch inline; spawn the host's poteto agent only for a
+   [single-loop](single-loop-default.md) trigger (see Leaf dispatch).
 4. Keep Spec Kit `tasks.md` IDs as the todo source of truth; poteto playbook todos
    must not reorder or drop Spec Kit phases.
 
@@ -1415,8 +1425,11 @@ artifacts outrank the playbook's default phase list.
 
 ## Leaf dispatch per host
 
-One implement leaf = one admitted task packet (task IDs, owned paths, named
-data shape, acceptance check, return format). Rules that hold everywhere:
+Implement runs inline by default. Spawn a leaf only when a
+[single-loop](single-loop-default.md) trigger holds (`bloat`, `parallel`,
+`conflict`); never split one packet by role (write/test/review). One implement
+leaf = one admitted task packet (task IDs, owned paths, named data shape,
+acceptance check, return format). Rules that hold everywhere:
 
 - **Fresh agent per packet.** Resume an existing agent only when the new work
   needs state that lives there (its worktree, uncommitted edits, a running
@@ -1428,7 +1441,11 @@ data shape, acceptance check, return format). Rules that hold everywhere:
 - **Model and effort:** role line from the pstack sheet when present, else the
   skill's default; the chosen level becomes the leaf's effort (see
   [model-routing.md](model-routing.md#pstack-bridge)).
-- **You own the leaf's diff.** Review it; write your own summary.
+- **Call as a tool, not a handoff.** The leaf returns the shared schema in
+  [single-loop-default.md](single-loop-default.md); the parent keeps the
+  conversation and `tasks.md`.
+- **You own the leaf's diff.** Open the changed files and the decisive check
+  output before accepting; write your own summary.
 
 | Host | Dispatch | Effort level | Notes |
 |------|----------|--------------|-------|
@@ -1465,7 +1482,8 @@ pstack: 0.9.93|codex
 pstack: hook-mandate → satisfied by O-poteto
 pstack: O-how|claude|/pstack:how → plan.md §Context cites src/auth/*.ts
 pstack: O-architect|cursor|/architect → plan.md updated
-pstack: O-poteto|claude|pstack:poteto-agent-high → T012–T015 verified (worktree wt-012)
+pstack: O-poteto|claude|inline → T010–T011 verified
+pstack: O-poteto|claude|pstack:poteto-agent-high (parallel) → T012–T015 verified (worktree wt-012)
 pstack: O-interrogate|codex|interrogate → converge gaps appended
 pstack: O-pause|claude|resume.mjs → checkpoint 2026-10-19T14:02
 pstack: unavailable|grok → obligations-only
@@ -1482,6 +1500,8 @@ Long unattended runs: `show-me-your-work` TSV, linked from `progress.md`.
 ## Anti-patterns
 
 - Running arena/swarm *instead of* Spec Kit specify / plan / tasks.
+- Spawning a leaf with no `bloat` / `parallel` / `conflict` trigger, or
+  splitting one packet into writer, tester, and reviewer agents.
 - Running `converge` twice on one spec; carry remaining gaps into the next small spec.
 - Opening a poteto playbook todolist beside the Spec Kit `tasks.md`.
 - Asking "should I continue to plan?" after specify succeeds.
@@ -1493,6 +1513,118 @@ Long unattended runs: `show-me-your-work` TSV, linked from `progress.md`.
 - Auto-installing marketplace plugins without user request (except the narrow
   REA closeout install already authorized in `SKILL.md`).
 - Adding a generic verification framework when repo checks already suffice.
+
+---
+
+<!-- file: references/single-loop-default.md -->
+
+---
+description: >
+  Single agent loop as the default inside every Spec Kit phase; spawn a
+  subagent only for context bloat, parallel disposable work, or tool/prompt
+  conflict. How to fold leaves back and how to measure the change.
+---
+
+# Single loop by default
+
+The primary runs each admitted phase in one loop: one model, one context, an
+open-ended tool loop where the model writes the plan, sees results, and revises
+mid-turn. The harness sets the limits; the model decides the next step.
+Subagents are a tool for three named problems, not the shape of the run.
+
+Source: Diane Sarkis, "Building agents: When to fold subagents into your main
+agent loop", Anthropic Applied AI, 2026-10-22
+(<https://claude.com/resources/articles/building-agents-when-to-fold-subagents-into-your-main-agent-loop>),
+migration kit <https://github.com/anthropics/single-agent-loop-kit>. The
+article reports about 2× faster runs than a multi-agent harness for one
+customer and a Claude Code system prompt cut by more than 80% through skills
+and tool progressive disclosure. Those are the source's measurements, not
+numbers measured on agentic-sdd.
+
+## When a subagent is allowed
+
+Spawn only when at least one trigger holds, and name it in the breadcrumb:
+
+| Trigger | Means | agentic-sdd examples |
+|---------|-------|----------------------|
+| `bloat` | Keeping the work in the parent would push the parent's context past what it can use well: large reads, logs, or a packet the parent would have to page through | `O-guard` bulk reads; a cross-cutting `O-fio` survey |
+| `parallel` | Independent work that runs at the same time in a fresh context and is thrown away after it returns | `O-swarm` disjoint packets; `O-architect` / `O-arena` design runners |
+| `conflict` | One loop picks tools badly or its instructions collide, including the anchoring a reviewer must not share with the author | `O-interrogate` panel; the independent review gate; recovery reviewers |
+
+Everything else runs inline in the parent: a packet that fits the parent's
+context, a mechanical edit, a sequential task chain over the same files.
+
+Split by context, never by role or org chart. Write → test → review as three
+agents loses context at every handoff; one loop that writes, runs the check,
+and fixes keeps it. An independent reviewer is the exception because its value
+is the fresh context (`conflict`), and it returns findings, not a takeover.
+
+## Call as tools, never full handoff
+
+A spawned agent is a tool call. The parent keeps the conversation, the Final
+Goal, `progress.md`, and `tasks.md`. Hand the conversation over only when a
+human must talk to that agent directly, which agentic-sdd never needs.
+
+Every packet returns the same schema, which the parent checks against real
+artifacts before acting:
+
+```text
+changed paths | commands run → decisive output line | acceptance IDs → met/unmet/blocked | open risks | observed model@effort or unknown
+```
+
+The parent opens the changed files and reruns or reads the decisive check. A
+summary is a claim; the artifact is the evidence (see
+[harness-layers.md](harness-layers.md) L5).
+
+## Folding leaves back
+
+When a run keeps spawning the same kinds of leaf, fold them, one at a time:
+
+1. **Merge.** Leaves that chain into each other or touch the same data become
+   one packet, or go inline.
+2. **Call as tools.** A leaf that took over a whole phase becomes a bounded
+   call with the return schema above.
+3. **Fold into skills and tools.** A leaf's standing prompt becomes a skill
+   loaded on demand; its API calls become tools. The parent loads the skill
+   only in the phase that needs it.
+
+After each fold, compare the same cases before and after (`evals/evals.json`,
+a feature's acceptance checks, or a `docs/evals/` run). Look at the cases that
+flipped, not only the total, and run more than once. Keep the fold when the
+score holds; otherwise restore the leaf or fix the skill. Change one thing per
+comparison.
+
+## Harness limits stay in the harness
+
+The single loop is open-ended inside fixed limits that agentic-sdd already has:
+
+| Limit | Where |
+|-------|-------|
+| Turn budget | two unchanged attempts → [verification_guard.py](../scripts/verification_guard.py) and [recovery](recovery.md) |
+| Cost budget | [cost modes](cost-modes.md); escalation budget in [model-routing](model-routing.md) |
+| Write gates | one writer per checkout; hard boundaries in `SKILL.md`; admitted paths in the feature contract |
+| Scope | Final Goal, `tasks.md` IDs, one converge per spec |
+
+## Progressive disclosure
+
+- `SKILL.md` stays the short always-loaded prompt; detail lives in
+  `references/` and loads from [INDEX.md](INDEX.md) when a step needs it.
+- pstack skills load per obligation row, not all at once.
+- Knowledge (specs, logs, prior evidence) is read on demand by path, never
+  pasted into a prompt or a leaf's brief. Leaves get file pointers.
+
+## Breadcrumbs
+
+Use the existing `pstack:` line form so `scripts/harness_probe.py` L7 counts it:
+
+```text
+pstack: O-poteto|claude|inline → T010–T012 verified
+pstack: O-swarm|claude|pstack:poteto-agent-medium (parallel) → T013, T014 verified (worktrees wt-013, wt-014)
+pstack: O-interrogate|codex|interrogate (conflict) → 2 gaps appended
+```
+
+`inline` means the parent did the packet itself. A spawn without a named
+trigger is an anti-pattern ([anti-patterns.md](anti-patterns.md)).
 
 ---
 
@@ -1530,6 +1662,9 @@ When it runs it does four things, in this order:
    `poteto-agent` subagent (fresh per task, own worktree, explicit model and
    effort from the sheet or the Models defaults). The chat that received the
    request keeps the playbook, reviews every diff, and writes the reply.
+   Under agentic-sdd this delegate-every-step policy is replaced by the
+   trigger rule in [single-loop-default.md](single-loop-default.md): packets
+   run inline unless `bloat`, `parallel`, or `conflict` holds.
 4. **Verifies and replies.** "Prove it works" on the real artifact, then a
    reply in the Writing-the-reply shape (short declarative sentences, evidence
    or label on every claim, no long-dash).
@@ -1606,7 +1741,7 @@ handoffs as an always-applied project rule.
    the repository root passes after any pstack upgrade.
 4. The delegate type the host accepts is the one in `pstack-integration.md`
    Leaf dispatch; a rejected name is not a capacity error.
-5. Breadcrumb `pstack: O-poteto|<host>|<delegate> -> <task ids> verified` lands
+5. Breadcrumb `pstack: O-poteto|<host>|<delegate> -> <task ids> verified` (`<delegate>` is `inline` when the parent ran the packet) lands
    in `progress.md` before Spec Kit `converge` starts.
 
 ---
@@ -1615,7 +1750,10 @@ handoffs as an always-applied project rule.
 
 # Model and effort routing
 
-Use at a phase/role change or a recovery decision, not every tool call. Keep the
+Use at a phase/role change or a recovery decision, not every tool call. Decide
+first whether a child is needed at all: the default is the parent's own loop
+([single-loop-default.md](single-loop-default.md)); route a child only for a
+`bloat`, `parallel`, or `conflict` trigger. Keep the
 user's active parent model and effort. The primary chooses a bounded child
 configuration from the written rules below; nothing rewrites the parent session,
 global config, or project policy. No external advisor service is consulted.
@@ -1684,6 +1822,9 @@ unknown.
 
 Record in `progress.md`:
 `ROUTING: <role> → <model>@<level> (source: sheet|default|parent) observed: <model>@<level>|unknown`
+
+A packet the parent ran itself gets no `ROUTING:` line; its `pstack:` breadcrumb
+says `inline`.
 
 ---
 
@@ -2663,7 +2804,7 @@ Verify with the failing case before and after.
 | Spec Kit | `/speckit-*` or project `.cursor/skills/speckit-*` |
 | pstack | Official marketplace `pstack` |
 | Continuity | `progress.md` `sdd-continue` + stop-hook ([cursor-continuation.md](cursor-continuation.md)) |
-| Implement leaves | `poteto-agent` when spawning Task |
+| Implement leaves | Inline by default; `poteto-agent` when a single-loop trigger justifies a Task |
 | Model sheet | `~/.cursor/rules/pstack-models.mdc` after `/setup-pstack` |
 
 **Cursor-specific:** do not end a turn on a status report while Goal is open.
@@ -2841,7 +2982,7 @@ copy; do not fork per-agent skill trees.
 | Spec Kit key | `claude` via `setup-speckit-multi-agent` |
 | Phase invoke | `/speckit.specify`, `/speckit.plan`, … (installed surface) |
 | Compact | `/compact` after flushing `progress.md` |
-| Subagents | Native Agent/Task; prefer port poteto agent for implement leaves when pstack is installed |
+| Subagents | Inline by default; on a single-loop trigger, native Agent/Task, preferring the port poteto agent when pstack is installed |
 | pstack | Install port e.g. `michael-denyer/pstack-claude` → `/pstack:<skill>`; map in [pstack-integration.md](pstack-integration.md) |
 
 **First actions**
@@ -2881,7 +3022,7 @@ copy; do not fork per-agent skill trees.
 | Project rules | `.cursor/rules/` and/or `AGENTS.md` |
 | Spec Kit key | `cursor-agent` |
 | Phase invoke | `/speckit.*` or Cursor skill commands as installed |
-| Subagents | Task tool; prefer `poteto-agent` for implement leaves when pstack is installed |
+| Subagents | Inline by default; on a single-loop trigger, Task tool, preferring `poteto-agent` when pstack is installed |
 | pstack | Marketplace plugin `pstack` — phase map in [pstack-integration.md](pstack-integration.md) |
 
 **First actions**
@@ -3116,7 +3257,7 @@ Converged is not finish; only REA `pass` or `not-applicable` finishes.
 
 | Mode | When | Behavior |
 |------|------|----------|
-| **Economy** | High volume, low risk, explicit budget | Prefer light child models for mechanical leaves; compact early; keep Spec Kit artifacts but narrow intermediate checks |
+| **Economy** | High volume, low risk, explicit budget | Run packets inline; light child models only for leaves a single-loop trigger justifies; compact early; keep Spec Kit artifacts but narrow intermediate checks |
 | **Balanced** | Default | Full Spec Kit core flow; repository checks + narrowest extra proof; pstack-sheet routing at phase/recovery boundaries |
 | **Thorough** | High-risk or user asks for high confidence | Full Spec Kit + clarify/analyze/checklist as needed; multi-perspective review at converge; deeper evidence classes |
 
@@ -3402,6 +3543,24 @@ description: Anti-patterns for Spec Kit Agentic SDD.
   Grok-only directories.
 - **Multi-writer checkout**: Two hosts editing the same feature without handoff.
 
+## Agent structure
+
+See [single-loop-default.md](single-loop-default.md).
+
+- **Spawn by habit**: A subagent for a packet that fits the parent's context,
+  with no `bloat` / `parallel` / `conflict` trigger named.
+- **Role or org-chart split**: Separate writer, tester, and reviewer agents for
+  one packet, or one agent per team. Each handoff drops context; split by
+  context instead.
+- **Full handoff**: A subagent takes over the conversation, the Final Goal, or
+  `tasks.md` instead of returning the shared schema to the parent.
+- **Trusting the summary**: Accepting a leaf's "done" without opening the
+  changed files and the decisive check output.
+- **Everything up front**: Loading every reference, skill, or log into the
+  prompt or a leaf's brief instead of pointers read on demand.
+- **Fold without measuring**: Merging or removing leaves without comparing the
+  same cases before and after, including the cases that flipped.
+
 ## Process
 
 - **Skipping Spec Kit by default**: Using light-path for non-trivial work.
@@ -3583,7 +3742,10 @@ unless the user explicitly overrides.
 
 ## Light models are for leaves
 
-Haiku-class, Luna-class, Composer/Spark-class, etc. are for **sub-tasks**:
+The parent runs each phase in one loop by default
+([single-loop-default.md](single-loop-default.md)). When a `bloat`, `parallel`,
+or `conflict` trigger justifies a leaf, Haiku-class, Luna-class,
+Composer/Spark-class, etc. fit **sub-tasks**:
 
 - Classification, extraction, summarization
 - Mechanical edits inside an admitted task
@@ -3594,7 +3756,10 @@ They are not the Spec Kit orchestrator for multi-phase delivery.
 ## Why the main model consumes too many tokens
 
 1. Reloading this entire skill + all references every turn.
-2. Parent doing mechanical work instead of delegating leaves.
+2. Parent paging large reads or logs through its own context instead of
+   sending them to a disposable leaf (`bloat`) — or the reverse: spawning
+   leaves for packets that fit the parent, then re-reading their summaries and
+   losing context at every handoff.
 3. Full verification after every micro-edit mid-implement.
 4. Uncompacted history; `progress.md` not used as resume surface.
 5. Thorough/multi-perspective review on low-risk features.
@@ -3605,7 +3770,9 @@ They are not the Spec Kit orchestrator for multi-phase delivery.
 - Keep the active prompt short: Final Goal, phase, hard boundaries, pointer to
   `progress.md` + current feature paths.
 - Load references conditionally (see INDEX.md).
-- Delegate mechanical leaves; keep parent on phase ownership and integration.
+- Keep packets that fit the parent inline; delegate bulk reads, parallel
+  packets, and independent review. The parent keeps phase ownership and
+  integration either way.
 - Intermediate checks stay narrow; full evidence at converge / bug test.
 - After each Spec Kit stage: update artifacts → update `progress.md` → compact
   if the host supports it.

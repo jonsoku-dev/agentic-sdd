@@ -15,7 +15,7 @@ specify → plan → tasks → implement → converge (once) → REA closeout �
 |---|---|---|
 | Phase order and artifacts | Spec Kit | `.specify/`, `specs/NNN-*/{spec,plan,tasks,converge}.md` |
 | Goal, contracts, continuity | agentic-sdd | Final Goal pinning, phase contracts, `progress.md` breadcrumbs, recovery, one converge per spec, small specs |
-| How a phase executes | pstack | `sharpen`/`how` on entry, `architect`/`arena` at plan, poteto non-negotiables and `poteto-agent` leaves at implement, `blast-radius` + `no-comments` + `interrogate` at converge |
+| How a phase executes | pstack | `sharpen`/`how` on entry, `architect`/`arena` at plan, poteto non-negotiables at implement (inline by default; `poteto-agent` leaves only for context bloat, parallel work, or review independence), `blast-radius` + `no-comments` + `interrogate` at converge |
 | Proof | REA | `capture_process_scenario` and friends; a feature closes on an Evidence id, not a claim |
 | Resilience | seven harness layers | workspace facts, procedure, source access, action rules, reviewer evidence, effort, completion goal, probed per host by `scripts/harness_probe.py` |
 
@@ -178,7 +178,8 @@ playbook. The project playbook from `npx agentic-sdd --project` anchors three
 handoffs on the port's Feature and Bug fix steps so a plain request in a Spec
 Kit repo still resolves the phase first.
 
-**Dispatch.** Implement leaves are `subagent_type: "pstack:poteto-agent"`, or
+**Dispatch.** Implement runs inline by default. A leaf that meets a
+[single-loop trigger](references/single-loop-default.md) is `subagent_type: "pstack:poteto-agent"`, or
 `pstack:poteto-agent-<level>` when the sheet names an effort. Review panels use
 `pstack:effort-<level>` with the `model` family (`opus`, `fable`, `sonnet`,
 `haiku`) from `~/.claude/pstack-models.md`, written by `/pstack:setup-pstack`.

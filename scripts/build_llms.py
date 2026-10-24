@@ -25,7 +25,7 @@ SECTIONS = [
     ]),
     ("Core references", [
         "references/spec-kit-alignment.md", "references/phase-contract.md", "references/harness-layers.md",
-        "references/pstack-integration.md", "references/poteto-mode-anatomy.md", "references/model-routing.md",
+        "references/pstack-integration.md", "references/single-loop-default.md", "references/poteto-mode-anatomy.md", "references/model-routing.md",
         "references/rea-closeout.md", "references/recovery.md", "references/direction-keeper.md",
         "references/verification-execution.md", "references/host-guide-greenfield-brownfield.md",
         "references/starting-tool-considerations.md", "references/agent-compatibility.md", "references/cursor-continuation.md",

@@ -174,8 +174,8 @@ inside admitted phases — not a second SDD.
 | 1 | Run the owning Spec Kit phase command / artifact contract |
 | 2 | Apply the matching obligation from [pstack integration](references/pstack-integration.md) |
 | 3 | On **Cursor**: official `pstack` skills (`/architect`, `/arena`, `/swarm`, `/interrogate`, poteto non-negotiables, `poteto-agent`) |
-| 4 | On **Claude Code** with `pstack@pstack-claude`: same map via `/pstack:<skill>`; leaves via `pstack:poteto-agent[-<level>]` |
-| 5 | On **Codex** with `pstack@pstack-claude`: skills load by name; leaves via the session spawn tool + `reasoning_effort` (port's `codex-tools.md`) |
+| 4 | On **Claude Code** with `pstack@pstack-claude`: same map via `/pstack:<skill>`; leaves (on a trigger) via `pstack:poteto-agent[-<level>]` |
+| 5 | On **Codex** with `pstack@pstack-claude`: skills load by name; leaves (on a trigger) via the session spawn tool + `reasoning_effort` (port's `codex-tools.md`) |
 | 6 | If pstack is absent: native Agent/Task + obligations; record `pstack: unavailable|<host>` once — do not stop Spec Kit |
 
 Never start a free-standing `/poteto-mode` or `/pstack:poteto-mode` playbook that
@@ -200,11 +200,16 @@ decides from the written rules; no external advisor is consulted. A routing
 decision is not proof a child actually ran. Dispatch the level as
 `pstack:poteto-agent-<level>` on Claude and `reasoning_effort` on Codex.
 
-Use native subagents when they clarify a failure or execute an independent
-packet. Prefer the host poteto agent for implement leaves when pstack is
-available (`poteto-agent` on Cursor; port equivalent on Claude). Leaves do not
-delegate. If unavailable, do explicit self-review and record the limit — never
-claim independent consensus.
+Run each phase in one loop by default: the primary plans, edits, checks, and
+revises in its own context. Spawn a subagent only for `bloat` (the work would
+crowd the parent's context), `parallel` (independent, disposable fresh-context
+work), or `conflict` (tool or instruction collision, including independent
+review), and name the trigger in the breadcrumb. Never split by role
+(write/test/review) or hand the conversation over. When a trigger holds, prefer
+the host poteto agent (`poteto-agent` on Cursor; port equivalent on Claude);
+the parent verifies its returned claims against the real artifacts. Leaves do
+not delegate. If unavailable, do explicit self-review and record the limit —
+never claim independent consensus. See [single loop](references/single-loop-default.md).
 
 ## Light path (opt-in only)
 
@@ -255,5 +260,5 @@ Load only when needed — see [references/INDEX.md](references/INDEX.md).
 Core: `spec-kit-alignment`, `phase-contract`, `pstack-integration`,
 `host-guide-greenfield-brownfield`, `verification-execution`, `recovery`,
 `direction-keeper`, `model-routing`, `starting-tool-considerations`,
-`agent-compatibility`, `rea-closeout`, `poteto-mode-anatomy` (how each host
+`agent-compatibility`, `rea-closeout`, `single-loop-default` (when to spawn), `poteto-mode-anatomy` (how each host
 reaches poteto-mode), `cursor-continuation` (Cursor only).

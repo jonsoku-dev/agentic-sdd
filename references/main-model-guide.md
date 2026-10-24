@@ -24,7 +24,10 @@ unless the user explicitly overrides.
 
 ## Light models are for leaves
 
-Haiku-class, Luna-class, Composer/Spark-class, etc. are for **sub-tasks**:
+The parent runs each phase in one loop by default
+([single-loop-default.md](single-loop-default.md)). When a `bloat`, `parallel`,
+or `conflict` trigger justifies a leaf, Haiku-class, Luna-class,
+Composer/Spark-class, etc. fit **sub-tasks**:
 
 - Classification, extraction, summarization
 - Mechanical edits inside an admitted task
@@ -35,7 +38,10 @@ They are not the Spec Kit orchestrator for multi-phase delivery.
 ## Why the main model consumes too many tokens
 
 1. Reloading this entire skill + all references every turn.
-2. Parent doing mechanical work instead of delegating leaves.
+2. Parent paging large reads or logs through its own context instead of
+   sending them to a disposable leaf (`bloat`) — or the reverse: spawning
+   leaves for packets that fit the parent, then re-reading their summaries and
+   losing context at every handoff.
 3. Full verification after every micro-edit mid-implement.
 4. Uncompacted history; `progress.md` not used as resume surface.
 5. Thorough/multi-perspective review on low-risk features.
@@ -46,7 +52,9 @@ They are not the Spec Kit orchestrator for multi-phase delivery.
 - Keep the active prompt short: Final Goal, phase, hard boundaries, pointer to
   `progress.md` + current feature paths.
 - Load references conditionally (see INDEX.md).
-- Delegate mechanical leaves; keep parent on phase ownership and integration.
+- Keep packets that fit the parent inline; delegate bulk reads, parallel
+  packets, and independent review. The parent keeps phase ownership and
+  integration either way.
 - Intermediate checks stay narrow; full evidence at converge / bug test.
 - After each Spec Kit stage: update artifacts → update `progress.md` → compact
   if the host supports it.

@@ -11,7 +11,7 @@ Converged is not finish; only REA `pass` or `not-applicable` finishes.
 
 | Mode | When | Behavior |
 |------|------|----------|
-| **Economy** | High volume, low risk, explicit budget | Prefer light child models for mechanical leaves; compact early; keep Spec Kit artifacts but narrow intermediate checks |
+| **Economy** | High volume, low risk, explicit budget | Run packets inline; light child models only for leaves a single-loop trigger justifies; compact early; keep Spec Kit artifacts but narrow intermediate checks |
 | **Balanced** | Default | Full Spec Kit core flow; repository checks + narrowest extra proof; pstack-sheet routing at phase/recovery boundaries |
 | **Thorough** | High-risk or user asks for high confidence | Full Spec Kit + clarify/analyze/checklist as needed; multi-perspective review at converge; deeper evidence classes |
 

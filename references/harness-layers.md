@@ -133,7 +133,7 @@ Do not invent a second evidence format.
 | What | agentic-sdd / Spec Kit | pstack | Required? |
 |------|------------------------|--------|-----------|
 | Bounded review with usable findings | evidence classes static/test/runtime/provider/unverified ([phase-contract.md](phase-contract.md)); `criterion_gate.py` review index | `interrogate` (`O-interrogate`), `thermos` (port, high risk), `blast-radius` (`O-blast`), `benchmark-checklist` (`O-bench`) | Required at converge / bug test |
-| Implementation leaves | one writer per checkout | host poteto agent, fresh per packet (Leaf dispatch in pstack-integration) | Required |
+| Implementation leaves | one writer per checkout; inline by default ([single-loop-default.md](single-loop-default.md)) | host poteto agent, fresh per packet, only on a `bloat` / `parallel` / `conflict` trigger (Leaf dispatch in pstack-integration) | Required when a trigger holds |
 | Independent verdict | [multi-perspective-review.md](multi-perspective-review.md) | review gate stays `BLOCKED: independent review` when no independent reviewer can run | Required |
 | Verdict vocabulary | `met` / `unmet` / `blocked` (criterion_gate) | reviewer buckets act-on / consider / noted / dismissed | Required |
 
@@ -205,7 +205,7 @@ correction. Open the saved artifact, not the transcript, to accept it.
 1. L1–L2: resolve project, feature, phase; load instruction file; pin Final Goal.
 2. L3: `how` / `why` / `recall` as the phase needs; confirm REA before closeout.
 3. L4: confirm deny rules once per project; worktree per writer.
-4. L5–L6: dispatch leaves and reviewers with the sheet's model and level.
+4. L5–L6: dispatch reviewers, and leaves that meet a single-loop trigger, with the sheet's model and level.
 5. L7: set the host goal (if any) from the acceptance IDs; keep `progress.md`
    current; measure the accepted run.
 

@@ -118,10 +118,10 @@
     {
       "id": 11,
       "prompt": "Claude Code session starts with the pstack SessionStart hook mandate (invoke poteto-mode for multi-file tasks) and the user types /agentic-sdd to continue feature 003 at implement with tasks T010-T014 admitted.",
-      "expected_output": "Treat the hook mandate as satisfied by O-poteto inside implement; read poteto-mode non-negotiables; dispatch leaves as pstack:poteto-agent[-<level>] with the resolved SKILL.md path and worktree isolation for writers; keep tasks.md as the only todo source.",
+      "expected_output": "Treat the hook mandate as satisfied by O-poteto inside implement; read poteto-mode non-negotiables; run packets that fit the parent inline; when a single-loop trigger holds, dispatch leaves as pstack:poteto-agent[-<level>] with the resolved SKILL.md path and worktree isolation for writers; keep tasks.md as the only todo source.",
       "assertions": [
         "Does not run /pstack:poteto-mode as a standalone playbook",
-        "Spawns leaves with subagent_type pstack:poteto-agent (or -<level>), not general-purpose",
+        "Any spawned leaf uses subagent_type pstack:poteto-agent (or -<level>), not general-purpose, and names its trigger",
         "Passes the absolute poteto-mode SKILL.md path to each leaf",
         "Keeps Spec Kit task IDs as the todo source of truth",
         "Records pstack: hook-mandate → satisfied by O-poteto once"
@@ -148,6 +148,28 @@
         "Specifies a smaller next spec containing only the carried gap plus any admitted work",
         "Does not relax AC-4 or claim 006 finished",
         "Keeps context small by not reopening 006"
+      ]
+    },
+    {
+      "id": 14,
+      "prompt": "Claude Code with pstack installed. Feature 008 is at implement with T020-T022 admitted: three sequential edits to one 200-line module, each followed by the same unit test. Continue.",
+      "expected_output": "Run T020-T022 inline in the parent loop (edit, run the test, fix) without spawning writer/tester/reviewer agents; record pstack: O-poteto|claude|inline breadcrumbs and continue.",
+      "assertions": [
+        "Does not spawn a subagent for packets that fit the parent context",
+        "Does not split one packet into separate writer, tester, and reviewer agents",
+        "Records an O-poteto breadcrumb that says inline",
+        "Runs the unit test after the edits and continues to the next phase without asking"
+      ]
+    },
+    {
+      "id": 15,
+      "prompt": "Claude Code with pstack installed. Feature 009 is at implement with T030-T033 admitted: four independent packets in disjoint directories, each needing a long build log read. Continue.",
+      "expected_output": "Spawn one pstack:poteto-agent leaf per packet in its own worktree, naming the parallel/bloat trigger; each returns changed paths, decisive check lines, and acceptance status; the parent opens the changed files and check output before marking tasks done.",
+      "assertions": [
+        "Names the parallel or bloat trigger for each spawn",
+        "Gives each writer its own worktree",
+        "Keeps the conversation, Final Goal, and tasks.md in the parent (no full handoff)",
+        "Verifies each leaf's claims against the changed files and check output before accepting"
       ]
     }
   ]

@@ -1,6 +1,9 @@
 # Model and effort routing
 
-Use at a phase/role change or a recovery decision, not every tool call. Keep the
+Use at a phase/role change or a recovery decision, not every tool call. Decide
+first whether a child is needed at all: the default is the parent's own loop
+([single-loop-default.md](single-loop-default.md)); route a child only for a
+`bloat`, `parallel`, or `conflict` trigger. Keep the
 user's active parent model and effort. The primary chooses a bounded child
 configuration from the written rules below; nothing rewrites the parent session,
 global config, or project policy. No external advisor service is consulted.
@@ -69,3 +72,6 @@ unknown.
 
 Record in `progress.md`:
 `ROUTING: <role> → <model>@<level> (source: sheet|default|parent) observed: <model>@<level>|unknown`
+
+A packet the parent ran itself gets no `ROUTING:` line; its `pstack:` breadcrumb
+says `inline`.

@@ -19,6 +19,7 @@ Load only what the current step needs.
 | `verification-execution.md` | Running approved CLI checks / evidence |
 | `recovery.md` | Repeated failure, conflicting diagnoses, scope drift |
 | `direction-keeper.md` | Before next feature / acceptance review |
+| `single-loop-default.md` | Before spawning any subagent: the three triggers, return schema, folding leaves back, breadcrumbs |
 | `model-routing.md` | Child model/effort from pstack sheet → defaults → parent; per-host dispatch |
 | `starting-tool-considerations.md` | Claude / Codex / Cursor / Grok bootstrap |
 | `cursor-continuation.md` | Cursor only: `progress.md` machine line and stop-hook resume |

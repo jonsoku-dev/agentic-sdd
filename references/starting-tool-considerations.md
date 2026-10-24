@@ -29,7 +29,7 @@ copy; do not fork per-agent skill trees.
 | Spec Kit key | `claude` via `setup-speckit-multi-agent` |
 | Phase invoke | `/speckit.specify`, `/speckit.plan`, … (installed surface) |
 | Compact | `/compact` after flushing `progress.md` |
-| Subagents | Native Agent/Task; prefer port poteto agent for implement leaves when pstack is installed |
+| Subagents | Inline by default; on a single-loop trigger, native Agent/Task, preferring the port poteto agent when pstack is installed |
 | pstack | Install port e.g. `michael-denyer/pstack-claude` → `/pstack:<skill>`; map in [pstack-integration.md](pstack-integration.md) |
 
 **First actions**
@@ -69,7 +69,7 @@ copy; do not fork per-agent skill trees.
 | Project rules | `.cursor/rules/` and/or `AGENTS.md` |
 | Spec Kit key | `cursor-agent` |
 | Phase invoke | `/speckit.*` or Cursor skill commands as installed |
-| Subagents | Task tool; prefer `poteto-agent` for implement leaves when pstack is installed |
+| Subagents | Inline by default; on a single-loop trigger, Task tool, preferring `poteto-agent` when pstack is installed |
 | pstack | Marketplace plugin `pstack` — phase map in [pstack-integration.md](pstack-integration.md) |
 
 **First actions**

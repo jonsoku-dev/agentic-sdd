@@ -30,6 +30,9 @@ When it runs it does four things, in this order:
    `poteto-agent` subagent (fresh per task, own worktree, explicit model and
    effort from the sheet or the Models defaults). The chat that received the
    request keeps the playbook, reviews every diff, and writes the reply.
+   Under agentic-sdd this delegate-every-step policy is replaced by the
+   trigger rule in [single-loop-default.md](single-loop-default.md): packets
+   run inline unless `bloat`, `parallel`, or `conflict` holds.
 4. **Verifies and replies.** "Prove it works" on the real artifact, then a
    reply in the Writing-the-reply shape (short declarative sentences, evidence
    or label on every claim, no long-dash).
@@ -106,5 +109,5 @@ handoffs as an always-applied project rule.
    the repository root passes after any pstack upgrade.
 4. The delegate type the host accepts is the one in `pstack-integration.md`
    Leaf dispatch; a rejected name is not a capacity error.
-5. Breadcrumb `pstack: O-poteto|<host>|<delegate> -> <task ids> verified` lands
+5. Breadcrumb `pstack: O-poteto|<host>|<delegate> -> <task ids> verified` (`<delegate>` is `inline` when the parent ran the packet) lands
    in `progress.md` before Spec Kit `converge` starts.

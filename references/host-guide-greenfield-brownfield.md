@@ -350,7 +350,7 @@ Verify with the failing case before and after.
 | Spec Kit | `/speckit-*` or project `.cursor/skills/speckit-*` |
 | pstack | Official marketplace `pstack` |
 | Continuity | `progress.md` `sdd-continue` + stop-hook ([cursor-continuation.md](cursor-continuation.md)) |
-| Implement leaves | `poteto-agent` when spawning Task |
+| Implement leaves | Inline by default; `poteto-agent` when a single-loop trigger justifies a Task |
 | Model sheet | `~/.cursor/rules/pstack-models.mdc` after `/setup-pstack` |
 
 **Cursor-specific:** do not end a turn on a status report while Goal is open.

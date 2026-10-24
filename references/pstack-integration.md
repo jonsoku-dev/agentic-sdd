@@ -159,8 +159,8 @@ rows must run (skill or obligation) every time the phase is entered;
 | `plan` | `O-architect` | `architect` (parallel design runners); `arena` when shapes compete | Required when code crosses a function boundary | Plan + verification contract in `plan.md` |
 | `plan` (brief asserts a fact about existing code) | `O-blast` | `blast-radius` | Required when the brief asserts "X already handles Y" | Prove or task-track the assertion |
 | `tasks` | `O-sequence` | `principle-sequence-verifiable-units` | Required | Dependency-ordered `tasks.md`; each task ends in a check |
-| `implement` (default) | `O-poteto` | poteto-mode non-negotiables + Principles; leaves via the host poteto agent (see Leaf dispatch) | Required | Admitted task IDs only; verify real artifacts |
-| `implement` (fan-out) | `O-swarm` | `swarm` | Optional: independent packets | Disjoint files; writers in own worktree |
+| `implement` (default) | `O-poteto` | poteto-mode non-negotiables + Principles; inline in the parent, or a host poteto agent leaf when a [single-loop](single-loop-default.md) trigger holds (see Leaf dispatch) | Required | Admitted task IDs only; verify real artifacts; breadcrumb says `inline` or the trigger |
+| `implement` (fan-out) | `O-swarm` | `swarm` | Optional: independent packets that gain from running at once (`parallel`) | Disjoint files; writers in own worktree |
 | `implement` (bakeoff) | `O-arena` | `arena` | Optional: ≥2 valid shapes | Pick base, graft, delete losers |
 | `implement` (large) | `O-fio` | `figure-it-out` + `show-me-your-work` | Optional: cross-cutting change | Spec Kit `tasks.md` stays authority |
 | `implement` (perf AC) | `O-bench` | `benchmark-checklist` + `principle-explain-the-number` | Required when an AC is a number | Baseline first; name the limiter |
@@ -171,7 +171,7 @@ rows must run (skill or obligation) every time the phase is entered;
 | `converge` / bug `test` | `O-interrogate` | `interrogate` + [multi-perspective review](multi-perspective-review.md); `thermos` (port only) for auth/payment/schema/public-API risk | Required | Append gaps; no AC relaxation; see Review gate |
 | Post-converge | `O-rea` | REA closeout | Required | [rea-closeout.md](rea-closeout.md) |
 | Post-REA (feature close) | `O-reflect` | `reflect` → route lessons; `correct` when the same mistake repeated ≥2× this feature | Optional | Encode in structure (lint/test/type) before docs |
-| Context pressure | `O-guard` | `principle-guard-the-context-window` | Required | Bulk to subagents; summaries in parent |
+| Context pressure | `O-guard` | `principle-guard-the-context-window` | Required | Bulk to subagents (`bloat`); parent verifies their claims against artifacts |
 | Pause / compact / handoff | `O-pause` | poteto `pause-safely` (+ `resume.mjs` on port) · `session-pickup` on resume | Required before `/compact` or host switch | `progress.md` stays authoritative |
 | No app harness | `O-verify-skill` | `create-verification-skill` | Optional | Repo checks first |
 
@@ -188,9 +188,9 @@ catching three shipped defects; see
 
 | Mode | `O-architect` | `O-interrogate` panel | `O-poteto` leaves |
 |------|---------------|-----------------------|-------------------|
-| Economy | skip for single-file specs (record `O-architect: n/a single-file`) | 2 reviewers, different families | 1 leaf, worker model |
-| Balanced | run when code crosses a function boundary | sheet default (4) | per packet |
-| Thorough | always | sheet default + `thermos` on the port | per packet + re-review by a second model |
+| Economy | skip for single-file specs (record `O-architect: n/a single-file`) | 2 reviewers, different families | inline; 1 worker-model leaf only on a trigger |
+| Balanced | run when code crosses a function boundary | sheet default (4) | inline; a leaf per packet that meets a trigger |
+| Thorough | always | sheet default + `thermos` on the port | inline or leaf by trigger, + re-review by a second model |
 
 ### Poteto-mode under Spec Kit (critical)
 
@@ -216,9 +216,12 @@ Instead:
 
 1. Stay on the owning Spec Kit phase command / artifact contract.
 2. For each implement (or fix) batch, **read** the poteto-mode skill and apply its
-   non-negotiables and principles to *how* you execute that batch. Name each
+   non-negotiables and principles to *how* you execute that batch. Its
+   delegate-every-step subagent policy does not apply; the single-loop trigger
+   rule does. Name each
    principle leaf you actually read when it changed a decision.
-3. Spawn implement leaves with the host's poteto agent (see Leaf dispatch).
+3. Execute the batch inline; spawn the host's poteto agent only for a
+   [single-loop](single-loop-default.md) trigger (see Leaf dispatch).
 4. Keep Spec Kit `tasks.md` IDs as the todo source of truth; poteto playbook todos
    must not reorder or drop Spec Kit phases.
 
@@ -227,8 +230,11 @@ artifacts outrank the playbook's default phase list.
 
 ## Leaf dispatch per host
 
-One implement leaf = one admitted task packet (task IDs, owned paths, named
-data shape, acceptance check, return format). Rules that hold everywhere:
+Implement runs inline by default. Spawn a leaf only when a
+[single-loop](single-loop-default.md) trigger holds (`bloat`, `parallel`,
+`conflict`); never split one packet by role (write/test/review). One implement
+leaf = one admitted task packet (task IDs, owned paths, named data shape,
+acceptance check, return format). Rules that hold everywhere:
 
 - **Fresh agent per packet.** Resume an existing agent only when the new work
   needs state that lives there (its worktree, uncommitted edits, a running
@@ -240,7 +246,11 @@ data shape, acceptance check, return format). Rules that hold everywhere:
 - **Model and effort:** role line from the pstack sheet when present, else the
   skill's default; the chosen level becomes the leaf's effort (see
   [model-routing.md](model-routing.md#pstack-bridge)).
-- **You own the leaf's diff.** Review it; write your own summary.
+- **Call as a tool, not a handoff.** The leaf returns the shared schema in
+  [single-loop-default.md](single-loop-default.md); the parent keeps the
+  conversation and `tasks.md`.
+- **You own the leaf's diff.** Open the changed files and the decisive check
+  output before accepting; write your own summary.
 
 | Host | Dispatch | Effort level | Notes |
 |------|----------|--------------|-------|
@@ -277,7 +287,8 @@ pstack: 0.9.93|codex
 pstack: hook-mandate → satisfied by O-poteto
 pstack: O-how|claude|/pstack:how → plan.md §Context cites src/auth/*.ts
 pstack: O-architect|cursor|/architect → plan.md updated
-pstack: O-poteto|claude|pstack:poteto-agent-high → T012–T015 verified (worktree wt-012)
+pstack: O-poteto|claude|inline → T010–T011 verified
+pstack: O-poteto|claude|pstack:poteto-agent-high (parallel) → T012–T015 verified (worktree wt-012)
 pstack: O-interrogate|codex|interrogate → converge gaps appended
 pstack: O-pause|claude|resume.mjs → checkpoint 2026-10-19T14:02
 pstack: unavailable|grok → obligations-only
@@ -294,6 +305,8 @@ Long unattended runs: `show-me-your-work` TSV, linked from `progress.md`.
 ## Anti-patterns
 
 - Running arena/swarm *instead of* Spec Kit specify / plan / tasks.
+- Spawning a leaf with no `bloat` / `parallel` / `conflict` trigger, or
+  splitting one packet into writer, tester, and reviewer agents.
 - Running `converge` twice on one spec; carry remaining gaps into the next small spec.
 - Opening a poteto playbook todolist beside the Spec Kit `tasks.md`.
 - Asking "should I continue to plan?" after specify succeeds.
