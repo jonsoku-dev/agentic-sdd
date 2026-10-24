@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 by [release-please](https://github.com/googleapis/release-please) from
 [Conventional Commits](https://www.conventionalcommits.org/) on `main`.
 
+## [1.2.0](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.1.6...v1.2.0) (2026-10-24)
+
+
+### Features
+
+* single agent loop by default, subagents only on a named trigger ([f3702ac](https://github.com/jonsoku-dev/agentic-sdd/commit/f3702ac82f8b4e96cff640a2d22a0d356afcebaa))
+
 ## [1.1.6](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.1.5...v1.1.6) (2026-10-20)
 
 
