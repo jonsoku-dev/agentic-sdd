@@ -6,6 +6,18 @@ All notable changes to this project are documented here. The format follows
 by [release-please](https://github.com/googleapis/release-please) from
 [Conventional Commits](https://www.conventionalcommits.org/) on `main`.
 
+## [1.2.3](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.2.2...v1.2.3) (2026-10-24)
+
+
+### Bug fixes
+
+* end the turn to wait for a background agent, never a placeholder agent ([05f2f36](https://github.com/jonsoku-dev/agentic-sdd/commit/05f2f36212c257ac159db1a0148d339126231367))
+
+
+### Documentation
+
+* **evals:** round 3 — gate n=8 on sonnet, second repo, Codex and Grok isolated ([0995832](https://github.com/jonsoku-dev/agentic-sdd/commit/0995832c47229a279065f0c48a9401ebeda07bd6))
+
 ## [1.2.2](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.2.1...v1.2.2) (2026-10-24)
 
 
