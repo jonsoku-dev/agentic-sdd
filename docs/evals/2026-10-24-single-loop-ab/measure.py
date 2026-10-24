@@ -17,6 +17,8 @@ def role(inp):
     typ, desc = inp.get("subagent_type") or "", inp.get("description") or ""
     if len(inp.get("prompt") or "") < 80 or PLACEHOLDER.search(desc):
         return "placeholder"
+    if REVIEW.search(desc):
+        return "review"
     if "poteto-agent" in typ or WORK.search(desc):
         return "work"
     return "review" if REVIEW.search(f"{desc} {typ}") else "work"

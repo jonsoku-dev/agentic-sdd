@@ -15,7 +15,7 @@ own words. Record one breadcrumb per row.
 
 | Phase | Obligation | Skill | Must leave |
 |-------|------------|-------|------------|
-| Enter / resume | `O-sharpen` | `sharpen` (`recall` when cold) | Final Goal + AC pinned in `progress.md` |
+| Enter / resume | `O-sharpen` | `sharpen` (`recall` when cold) | Final Goal + AC pinned in `progress.md`; plan **one** spec per Final Goal slice (split later, at `tasks`, only past ~12 tasks) |
 | Enter, existing code touched | `O-how` | `how` | file:line evidence in `plan.md` |
 | `specify` / `clarify` | `O-specify` | `technical-writing` + `unslop` | spec prose; assumptions marked |
 | `plan`, code crosses a function boundary | `O-architect` | `architect` | plan + verification contract |
