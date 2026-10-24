@@ -6,6 +6,26 @@ All notable changes to this project are documented here. The format follows
 by [release-please](https://github.com/googleapis/release-please) from
 [Conventional Commits](https://www.conventionalcommits.org/) on `main`.
 
+## [1.3.0](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.2.3...v1.3.0) (2026-10-24)
+
+
+### Features
+
+* one-page phase card loaded per feature instead of the long references ([bb7afd6](https://github.com/jonsoku-dev/agentic-sdd/commit/bb7afd61a862cf29fba7d3af8e403412d9740812))
+
+
+### Bug fixes
+
+* phase card plans one spec at sharpen; scorer counts poteto-agent reviews as review ([17939e7](https://github.com/jonsoku-dev/agentic-sdd/commit/17939e784507cc1a2ec48a3c832742606375e666))
+* plan the whole Final Goal as one spec; 'slice' read as one command per spec ([65f17cb](https://github.com/jonsoku-dev/agentic-sdd/commit/65f17cbf3a5e5d816f288f89d8a0b04a7e581998))
+* split specs only past the task threshold, decided at tasks ([8c09070](https://github.com/jonsoku-dev/agentic-sdd/commit/8c090709f86da9c93742154b13917d4d4484dd93))
+
+
+### Documentation
+
+* **evals:** round 4 — one spec per small brief, 6/6, spend −27% ([d6bb600](https://github.com/jonsoku-dev/agentic-sdd/commit/d6bb60062a5d4d6aef4e1ca6f88f88cc6ea5431c))
+* **evals:** round 5 — phase card stops long-reference reads, one spec held 4/4 ([eb04587](https://github.com/jonsoku-dev/agentic-sdd/commit/eb04587f92bcd55cbc8b1f6016e3973a4ab584ca))
+
 ## [1.2.3](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.2.2...v1.2.3) (2026-10-24)
 
 
