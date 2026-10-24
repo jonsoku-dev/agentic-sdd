@@ -21,6 +21,20 @@ Light scaffolding is opt-in for trivial work only — never the default.
 The primary owns scope, integration, and completion. Reviewer agreement and
 model scores never replace required evidence or authorization.
 
+**Completion gate (every model, every cost mode).** Do not write "Final Goal
+met" or close a feature until `progress.md` holds, at column 1, for each
+feature:
+
+```text
+pstack: O-interrogate|<host>|<reviewer subagent_type> → <n> findings
+rea: <feature>|pass|<ev_… id>
+```
+
+The review line names a reviewer you actually spawned at `converge` (a separate
+subagent, not your own reading of the diff); when no reviewer can run, write
+`pstack: O-interrogate|<host>|BLOCKED: independent review` and leave the Final
+Goal open. A missing line means the feature is not done.
+
 **Invocation of this skill for delivery/repair is a full-autonomy grant** inside
 the admitted Final Goal: advance every Spec Kit phase and remaining numbered
 features without a human phase quiz. See [pstack integration](references/pstack-integration.md)

@@ -497,6 +497,20 @@ Light scaffolding is opt-in for trivial work only — never the default.
 The primary owns scope, integration, and completion. Reviewer agreement and
 model scores never replace required evidence or authorization.
 
+**Completion gate (every model, every cost mode).** Do not write "Final Goal
+met" or close a feature until `progress.md` holds, at column 1, for each
+feature:
+
+```text
+pstack: O-interrogate|<host>|<reviewer subagent_type> → <n> findings
+rea: <feature>|pass|<ev_… id>
+```
+
+The review line names a reviewer you actually spawned at `converge` (a separate
+subagent, not your own reading of the diff); when no reviewer can run, write
+`pstack: O-interrogate|<host>|BLOCKED: independent review` and leave the Final
+Goal open. A missing line means the feature is not done.
+
 **Invocation of this skill for delivery/repair is a full-autonomy grant** inside
 the admitted Final Goal: advance every Spec Kit phase and remaining numbered
 features without a human phase quiz. See [pstack integration](references/pstack-integration.md)
@@ -4311,9 +4325,9 @@ Predictions:
 
 Judgment (pre-registered rule): 4 and 5 hold, 2 and 3 do not, so the
 single-loop change **bought nothing measurable on these briefs**. It is kept
-because it cost no quality and guards a behaviour seen elsewhere (the
-2026-10-20 host matrix shows Claude dispatching a `poteto-agent-medium` leaf for
-a comparable feature), but no speed or cost claim is made for it.
+because it cost no quality and guards a behaviour seen elsewhere (in the
+2026-10-20 host matrix Tier 2 run, not isolated and in Economy mode, Claude
+dispatched a `pstack:poteto-agent-low` implement leaf on `sonnet`), but no speed or cost claim is made for it.
 
 ### Two defects the runs exposed (present in both versions)
 
@@ -4368,6 +4382,57 @@ does not enter the judgment.
 - The 1.1.6 baseline never delegated implementation, so the experiment could not
   test the single-loop rule against a harness that over-delegates.
 - Total spend for 12 runs: $29.42 (sum of `total_cost_usd`).
+
+## Round 2: looking for a delegating baseline, and a sonnet review gap
+
+Scorer fix first (42e5dab): spawns whose `subagent_type` contains
+`poteto-agent` or whose description names an implement packet now count as
+work; round 1 numbers did not change.
+
+### Probes on 1.1.6
+
+| Condition | Cost | Implement leaves | Reviewer spawns | Black-box checks |
+|---|---|---|---|---|
+| S, "Economy cost mode", opus | $1.27 | 0 | 2 | 2/2 |
+| L, "Thorough cost mode; high-risk", opus | $6.30 | 0 | 6 | 9/9 |
+| S, sonnet parent | $0.57 | 0 | **0** | 2/2 |
+
+Across five conditions and 15 runs on this host, 1.1.6 never delegated
+implementation. The single-loop rule has no waste to remove here; it stays as a
+guard, and no speed or cost claim is made for it.
+
+The sonnet probe exposed a different defect: no reviewer spawned, no column-1
+breadcrumbs, yet "Final Goal met".
+
+### Sonnet: 1.2.1 vs completion gate
+
+Candidate change: a **Completion gate** block at the top of `SKILL.md`. A
+feature is not done until `progress.md` holds, at column 1,
+`pstack: O-interrogate|<host>|<reviewer subagent_type> → <n> findings` naming a
+reviewer actually spawned at converge (or `BLOCKED: independent review`, which
+keeps the Final Goal open) and `rea: <feature>|pass|<ev_… id>`.
+
+| Arm (sonnet) | Runs | Reviewer spawned | Review line | `rea:` pass line | Black-box checks | Mean cost |
+|---|---|---|---|---|---|---|
+| 1.2.1 | S×4, L×2 | **2/6** | 3/6 | 0/6 | 6/6 | $0.62 |
+| gate | S×2, L×2 | **4/4** | 4/4 | 4/4 | 4/4 | $0.71 |
+
+- 1.2.1-S-s4 wrote `pstack: O-interrogate|claude|inline → no independent
+  reviewer triggered (spec has no required review)`: a self-review labelled as
+  the obligation. The gate's wording ("a separate subagent, not your own
+  reading of the diff") closes that reading.
+- Gate reviewers found 1–7 findings per spec; the L runs appended and fixed
+  in-scope ones before REA.
+- Cost +15% (one extra reviewer call per spec).
+- One gate run spawned a `poteto-agent-low` "Noop wait" agent to block until a
+  background reviewer returned: wasteful but harmless; seen once, not acted on.
+
+Opus regression check, gate on L once: $3.19, 617 s, 2 reviewers, 9/9 checks,
+both gate lines present, 22 column-1 breadcrumbs. Within noise of the round-1
+L cells.
+
+Round 2 spend: $17.90 (probes, 10 sonnet runs, 1 opus run). Both rounds:
+$47.32.
 
 ---
 

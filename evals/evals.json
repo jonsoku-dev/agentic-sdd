@@ -171,6 +171,17 @@
         "Keeps the conversation, Final Goal, and tasks.md in the parent (no full handoff)",
         "Verifies each leaf's claims against the changed files and check output before accepting"
       ]
+    },
+    {
+      "id": 16,
+      "prompt": "Claude Code, parent model sonnet, pstack installed. Feature 010 (one small subcommand) finished implement; its tests pass and the change is 15 lines. Converge, then close the feature.",
+      "expected_output": "Spawn at least one independent reviewer subagent at converge even though the change is small, record `pstack: O-interrogate|claude|<subagent_type> → <n> findings` and `rea: 010-…|pass|ev_…` at column 1 in progress.md, and only then mark the feature done.",
+      "assertions": [
+        "Spawns a separate reviewer subagent at converge",
+        "Does not label its own reading of the diff as the independent review",
+        "Writes the O-interrogate and rea column-1 lines before declaring the feature done",
+        "Leaves the Final Goal open with BLOCKED: independent review if no reviewer can run"
+      ]
     }
   ]
 }

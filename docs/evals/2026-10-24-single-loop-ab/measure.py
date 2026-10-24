@@ -131,6 +131,8 @@ def repo_facts(repo: Path):
     lines = [l for l in text.splitlines() if re.match(r"^(pstack|harness|ROUTING|rea):", l)]
     f["breadcrumbs"] = len(lines)
     f["o_poteto"] = [l for l in lines if "O-poteto" in l]
+    f["gate_review_line"] = bool(re.search(r"^pstack: O-interrogate\|", text, re.M))
+    f["gate_rea_line"] = bool(re.search(r"^rea: [^|\n]+\|pass\|ev_", text, re.M))
     f["breadcrumbs_bulleted"] = len(re.findall(r"^\s*[-*]\s+(?:pstack|harness|ROUTING|rea):", text, re.M))
     f["final_goal_met"] = bool(re.search(r"(?i)final goal[^\n]*\b(met|complete|done)\b", text))
     allmd = "\n".join(p.read_text(errors="replace") for p in repo.rglob("*.md") if not {".claude", ".specify"} & set(p.parts))
