@@ -6,6 +6,19 @@ All notable changes to this project are documented here. The format follows
 by [release-please](https://github.com/googleapis/release-please) from
 [Conventional Commits](https://www.conventionalcommits.org/) on `main`.
 
+## [1.2.1](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.2.0...v1.2.1) (2026-10-24)
+
+
+### Bug fixes
+
+* foreground gating reviewers and column-1 breadcrumbs, from an isolated A/B ([27d75b3](https://github.com/jonsoku-dev/agentic-sdd/commit/27d75b30596cafb33ec8b5aaa8a3f8f040b4cbc0))
+
+
+### Documentation
+
+* **evals:** pre-register single-loop A/B (1.1.6 vs 1.2.0, isolated) ([756bbb9](https://github.com/jonsoku-dev/agentic-sdd/commit/756bbb989248402df7a70d0efdbfe1b80d378207))
+* **evals:** single-loop A/B scorer (transcript + black-box checks) ([c48166e](https://github.com/jonsoku-dev/agentic-sdd/commit/c48166e7e15e7c0f8594c5d753ab3a01994f7e14))
+
 ## [1.2.0](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.1.6...v1.2.0) (2026-10-24)
 
 
