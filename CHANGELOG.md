@@ -6,6 +6,18 @@ All notable changes to this project are documented here. The format follows
 by [release-please](https://github.com/googleapis/release-please) from
 [Conventional Commits](https://www.conventionalcommits.org/) on `main`.
 
+## [1.2.2](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.2.1...v1.2.2) (2026-10-24)
+
+
+### Bug fixes
+
+* completion gate so cheaper parents cannot skip the independent review ([a9d5b89](https://github.com/jonsoku-dev/agentic-sdd/commit/a9d5b897b0d2a04b74e381077036225b9c968983))
+
+
+### Documentation
+
+* **evals:** scorer classifies poteto-agent leaves as work, sums usage per segment, runner takes cost mode and model ([42e5dab](https://github.com/jonsoku-dev/agentic-sdd/commit/42e5dab06d7450c9f7a3196184a52154eaebd4a7))
+
 ## [1.2.1](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.2.0...v1.2.1) (2026-10-24)
 
 
