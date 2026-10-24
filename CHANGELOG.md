@@ -6,6 +6,20 @@ All notable changes to this project are documented here. The format follows
 by [release-please](https://github.com/googleapis/release-please) from
 [Conventional Commits](https://www.conventionalcommits.org/) on `main`.
 
+## [1.3.1](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.3.0...v1.3.1) (2026-10-24)
+
+
+### Bug fixes
+
+* progress_gate.py checks the completion gate instead of trusting the text ([f122672](https://github.com/jonsoku-dev/agentic-sdd/commit/f122672f58bf40cde53fd54aea04d907effdc06f))
+* SKILL.md sends autonomy and REA details to the phase card first ([ff06fcc](https://github.com/jonsoku-dev/agentic-sdd/commit/ff06fccd7cd2a628aa9539d09a3b2750ae036653))
+
+
+### Documentation
+
+* **evals:** pre-register round 6 (1.3.0 on large brief, Codex, Grok, extra reps) ([d259251](https://github.com/jonsoku-dev/agentic-sdd/commit/d259251aba199eee783c3bc3c6cb7cb81cafd6f5))
+* **evals:** round 6 — gate script closes the Codex format gap; link change reverted ([3e1d26f](https://github.com/jonsoku-dev/agentic-sdd/commit/3e1d26ff173fb07287393aa6d4eb6aac433f1fff))
+
 ## [1.3.0](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.2.3...v1.3.0) (2026-10-24)
 
 
