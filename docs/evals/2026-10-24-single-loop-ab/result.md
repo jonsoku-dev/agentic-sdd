@@ -142,3 +142,90 @@ L cells.
 
 Round 2 spend: $17.90 (probes, 10 sonnet runs, 1 opus run). Both rounds:
 $47.32.
+
+## Round 3: the four remaining limits
+
+Pre-registered in `prediction-3.md` (05f2f36) before any round-3 run. "main" is
+1.2.2 plus the placeholder-wait fix. Prompts in this round say "new numbered
+Spec Kit features", which led sonnet to split even the small brief into two
+specs; that is the prompt, not the skill, and it applies to every round-3 arm.
+
+### Limit 1, thin n on the sonnet gate (cell G)
+
+| Arm (sonnet, todo) | Runs | Reviewer spawned | Both gate lines | Checks |
+|---|---|---|---|---|
+| main | S×2, L×2 | 4/4 | 4/4 | 4/4 |
+| with round 2's gate runs | 8 | **8/8** | **8/8** | 8/8 |
+
+Prediction 1 (≥ 7/8) holds.
+
+### Limit 2, one toy repository (cell X)
+
+Second repository: a Node ES-module kv CLI split over `store.js`,
+`commands.js`, `cli.js`, with a `node --test` suite. Brief K adds TTL expiry
+and a `kv ttl` command; seven black-box checks, verified to score 0/7 on the
+untouched base.
+
+| Run | Cost | Active | Checks | Column-1 breadcrumbs | Gate lines | Wakeups / placeholders |
+|---|---|---|---|---|---|---|
+| opus 1 | $3.00 | 567 s | 7/7 | 26 | both | 0 / 0 |
+| opus 2 | $2.53 | 422 s | 7/7 | 23 | both | 0 / 0 |
+| sonnet 1 | $1.06 | 173 s | 7/7 | 11 | both | 0 / 0 |
+| sonnet 2 | $0.76 | 151 s | 7/7 | 9 | both | 0 / 0 |
+
+Prediction 2 holds. (One sonnet run recorded converge in `tasks.md` and
+`progress.md` without a `converge.md`; Spec Kit's converge command does not
+require that file, so the scorer's `converge_files` count is not a compliance
+check.)
+
+### Limit 3, one host (cells C, CK, and Grok)
+
+**Codex** (`gpt-6-luna`, subscription, so tokens instead of dollars). `HOME`
+and `CODEX_HOME` were throwaway directories; a probe listed only Codex's
+bundled skills and pstack. Codex synced the pstack marketplace on first start
+and ran pstack 0.9.102 instead of the copied 0.9.95, in both arms alike.
+
+| Arm (todo S) | Run | Wall | Input tokens | Independent review | Both gate lines | Checks |
+|---|---|---|---|---|---|---|
+| 1.2.1 | c1 | n/a (log line lost) | 10.1 M | **none**: "self-review only because no independent review agent is callable", while the same home spawned reviewers in every other run | no | 2/2 |
+| 1.2.1 | c2 | 685 s | 8.8 M | 2 + 3 reviewers | review line only | 2/2 |
+| main | c1 | 360 s | 4.6 M | 2 reviewers, 2 findings | yes | 2/2 |
+| main | c2 | 340 s | 5.6 M | 3 reviewers, 1 finding | yes | 2/2 |
+| main | kv K | 657 s | 10.0 M | 3 reviewers, 1 finding → T008 | yes | 7/7 |
+
+Prediction 3 holds: main 2/2, 1.2.1 1/2 with a real review. Main also used
+about half the input tokens of 1.2.1 on the same brief; n = 2, reported, not
+claimed.
+
+**Grok** (`grok-4.7-build`). `HOME` and `GROK_HOME` were throwaway directories
+with only `auth.json` and a link to the macOS keychains; a probe saw no user
+rules, memory, or skills. pstack and the REA MCP server were not installed, so
+this is the pstack-absent path (REA ran through the `rea` CLI).
+
+| Arm (todo S) | Cost | Independent review | Gate lines | Checks |
+|---|---|---|---|---|
+| 1.2.1 | $1.53 | none; "single-model self-review", feature closed | review line only | 2/2 |
+| main | $1.43 | `general-purpose` reviewer, 0 findings | both | 2/2 |
+
+**Cursor: not measured isolated.** With a fresh `CURSOR_CONFIG_DIR` and `HOME`
+(keychain linked for auth), the agent still saw `CAVEMAN` and `jev` text,
+which come from rules synced to the Cursor account, not from local files. No
+local switch removes them, so a Cursor arm would not be isolated.
+
+### Limit 4, the placeholder agent
+
+No run in round 3 (17 runs, all hosts) spawned a placeholder agent or called
+`ScheduleWakeup`.
+
+### Judgment
+
+Predictions 1, 2, 4 hold, so the three fixes generalize to a second repository,
+a second language, and two more hosts. Prediction 3 holds, so the gate matters
+on Codex and Grok as well as on Claude with sonnet: in each, the release before
+the gate closed at least one feature on self-review.
+
+Remaining, and not removable from here: n is 1–8 per cell; Cursor cannot be
+isolated on this account; Codex auto-updates pstack.
+
+Round 3 spend: Claude $11.92, Grok $2.96, Codex on subscription. All rounds:
+$62.20.

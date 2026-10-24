@@ -1,7 +1,8 @@
 #!/bin/sh
-# usage: run3.sh <sl-root> <host claude|codex> <base dir name> <version> <brief S|L|K> <rep> <outdir> [model]
+# usage: run3.sh <sl-root> <host claude|codex|grok> <base dir name> <version> <brief S|L|K> <rep> <outdir> [model]
 # One isolated headless run. Claude: --setting-sources project + --plugin-dir pstack + strict MCP.
 # Codex: HOME and CODEX_HOME point at throwaway dirs holding only auth, pstack, the pstack AGENTS.md block, and REA.
+# Grok: HOME and GROK_HOME are throwaway dirs holding only auth (keychain linked); no pstack, no REA MCP.
 SL=$1; host=$2; base=$3; v=$4; brief=$5; rep=$6; out=$7; model=$8
 tag="$host-$base-$v-$brief-$rep"; dir="$SL/runs/$tag"
 rm -rf "$dir"; mkdir -p "$SL/runs" "$out"; cp -R "$SL/$base" "$dir"
@@ -9,6 +10,7 @@ case $host in
   claude) mkdir -p "$dir/.claude/skills" && cp -R "$SL/skill/$v" "$dir/.claude/skills/agentic-sdd" ;;
   codex)  (cd "$dir" && specify init --here --force --non-interactive --integration codex --integration-options="--skills" < /dev/null > /dev/null 2>&1)
           mkdir -p "$dir/.agents/skills" && cp -R "$SL/skill/$v" "$dir/.agents/skills/agentic-sdd" ;;
+  grok)   mkdir -p "$dir/.grok/skills" && cp -R "$dir"/.claude/skills/* "$dir/.grok/skills/" && cp -R "$SL/skill/$v" "$dir/.grok/skills/agentic-sdd" ;;
 esac
 (cd "$dir" && git add -A && git commit -qm "install agentic-sdd $v for $host")
 case $brief in
@@ -29,5 +31,10 @@ case $host in
             GIT_COMMITTER_NAME=eval GIT_COMMITTER_EMAIL=eval@example.invalid \
             codex exec --json --skip-git-repo-check --dangerously-bypass-approvals-and-sandbox ${model:+-m "$model"} \
             "$prompt" < /dev/null > "$out/$tag.jsonl" 2> "$out/$tag.err" ;;
+  grok)   fh="$SL/fakehome-$tag"; rm -rf "$fh"; mkdir -p "$fh/.grok" "$fh/Library"; ln -s "$HOME/Library/Keychains" "$fh/Library/Keychains"
+          cp "$HOME/.grok/auth.json" "$fh/.grok/"
+          HOME="$fh" GROK_HOME="$fh/.grok" GIT_AUTHOR_NAME=eval GIT_AUTHOR_EMAIL=eval@example.invalid \
+            GIT_COMMITTER_NAME=eval GIT_COMMITTER_EMAIL=eval@example.invalid \
+            grok --output-format json --always-approve -p "$prompt" < /dev/null > "$out/$tag.jsonl" 2> "$out/$tag.err" ;;
 esac
 echo "$tag rc=$? $(( $(date +%s) - start ))s" >> "$out/runs.log"
