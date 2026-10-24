@@ -39,8 +39,8 @@ and fix what it prints until it prints `ok`.
 
 **Invocation of this skill for delivery/repair is a full-autonomy grant** inside
 the admitted Final Goal: advance every Spec Kit phase and remaining numbered
-features without a human phase quiz. The [phase card](references/phase-card.md)
-maps each phase to its execution.
+features without a human phase quiz. See [pstack integration](references/pstack-integration.md)
+for autonomy rules and phase→execution mapping.
 
 ## Host bootstrap (required)
 
@@ -170,8 +170,7 @@ the per-host dispatch detail.
   material finding on the same spec carries over to the next small spec.
   Bugs → return to `fix` → `test` → REA again (do not append feature tasks unless
   the defect is new scope). Prior Evidence IDs are stale after the edit.
-  Common path: [phase card](references/phase-card.md); install failures and web
-  capture: [REA closeout](references/rea-closeout.md).
+  Details: [REA closeout](references/rea-closeout.md).
 - Before the next feature, review every acceptance condition with
   [direction keeping](references/direction-keeper.md).
 - Finish only when Spec Kit evidence is current and REA disposition is `pass`
