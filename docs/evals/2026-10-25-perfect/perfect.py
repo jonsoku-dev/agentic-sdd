@@ -28,7 +28,11 @@ def spawned_reviewer(host, jl: Path):
         return t["spawn_counts"]["review"] > 0, t
     if host == "codex":
         return '"type": "collab_tool_call"' in raw or '"type":"collab_tool_call"' in raw, None
-    return "spawn_subagent" in raw, None
+    # grok -p --output-format json returns only the final text; tool calls live in the session log
+    tag = jl.stem
+    sessions = jl.parents[1] / f"fakehome-{tag}" / ".grok" / "sessions"
+    return any('"tool_name":"spawn_subagent"' in p.read_text(errors="replace")
+               for p in sessions.rglob("events.jsonl")), None
 
 
 def judge(sl: Path, outdir: str):

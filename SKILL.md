@@ -230,8 +230,10 @@ review), and name the trigger in the breadcrumb. Never split by role
 the host poteto agent (`poteto-agent` on Cursor; port equivalent on Claude);
 the parent verifies its returned claims against the real artifacts. Leaves do
 not delegate. When the parent needs a reviewer's or leaf's result before its
-next step, launch them together in one message in the foreground; never park
-the critical path behind `ScheduleWakeup`, a sleep, or a poll. To wait for an
+next step, launch them together in one message in the foreground (on Claude
+pass `run_in_background: false`); never park the critical path behind
+`ScheduleWakeup`, a sleep, or a poll, including a "fallback heartbeat" wakeup:
+in a headless run it keeps the session alive until it fires. To wait for an
 agent already in the background, end the turn; its completion notice resumes
 you. Never spawn a placeholder agent to block. If unavailable, do explicit self-review and record the limit —
 never claim independent consensus. See [single loop](references/single-loop-default.md).
