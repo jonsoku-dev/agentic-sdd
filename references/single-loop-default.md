@@ -93,6 +93,16 @@ The single loop is open-ended inside fixed limits that agentic-sdd already has:
 - Knowledge (specs, logs, prior evidence) is read on demand by path, never
   pasted into a prompt or a leaf's brief. Leaves get file pointers.
 
+## Waiting on a subagent
+
+A reviewer or leaf whose result gates the parent's next step is on the critical
+path. Launch the batch in one message in the foreground; the calls run in
+parallel and return together. Background only while the parent has other
+admitted work, and the harness notifies on completion. Never `ScheduleWakeup`,
+sleep, or poll for your own agents: in the 2026-10-24 A/B one run parked two
+background reviewers behind a 1200 s wakeup and idled about 19 minutes
+(`docs/evals/2026-10-24-single-loop-ab/result.md`).
+
 ## Breadcrumbs
 
 Use the existing `pstack:` line form so `scripts/harness_probe.py` L7 counts it:

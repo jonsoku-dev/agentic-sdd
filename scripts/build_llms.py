@@ -47,6 +47,7 @@ SECTIONS = [
     ]),
     ("Evidence", [
         ("docs/BENCHMARKS.md", "Method, routing table, gate-by-gate matrix of what each host invoked at every Spec Kit gate, result comparisons, A/B against plain Spec Kit"),
+        ("docs/evals/2026-10-24-single-loop-ab/result.md", "Isolated A/B of 1.1.6 vs 1.2.0 single-loop rule (no measurable gain) and the 1.2.1 fixes for parked reviewers and uncounted breadcrumbs"),
         ("docs/evals/2026-10-20-host-matrix/result.md", "Four hosts × routing prompts, a real feature, and a three-part goal; black-box, converge count, REA ids, cost"),
         ("docs/evals/2026-10-20-host-matrix/prediction.md", "Pre-registered predictions for that matrix"),
         ("docs/evals/2026-10-19-sandbox-ab/result.md", "Spec Kit alone versus this stack on one brief"),

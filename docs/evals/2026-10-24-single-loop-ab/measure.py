@@ -10,13 +10,16 @@ REVIEW = re.compile(r"review|interrogat|thermos|blast|audit|critic|verify|judge|
 
 
 def transcript(path: Path):
-    t = {"spawns": [], "skills": [], "read_single_loop": False, "result": None}
+    t = {"spawns": [], "skills": [], "read_single_loop": False, "result": None, "wakeups": 0, "active_ms": 0, "segments": 0}
     for line in path.read_text(errors="replace").splitlines():
         try:
             ev = json.loads(line)
         except ValueError:
             continue
         if ev.get("type") == "result":
+            # -p emits one result per resumed segment; cost is cumulative, duration is per segment
+            t["segments"] += 1
+            t["active_ms"] += ev.get("duration_ms") or 0
             t["result"] = {k: ev.get(k) for k in ("total_cost_usd", "duration_ms", "num_turns", "is_error", "subtype")}
             u = ev.get("usage") or {}
             t["result"]["tokens"] = {k: u.get(k) for k in ("input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens")}
@@ -32,6 +35,8 @@ def transcript(path: Path):
                 t["spawns"].append({"nested": nested, "type": inp.get("subagent_type"), "desc": inp.get("description"),
                                     "role": "review" if REVIEW.search(desc) else "work",
                                     "background": inp.get("run_in_background"), "isolation": inp.get("isolation")})
+            elif c["name"] == "ScheduleWakeup" and not inp.get("stop"):
+                t["wakeups"] += 1
             elif c["name"] == "Skill" and not nested:
                 t["skills"].append(inp.get("skill"))
             elif c["name"] == "Read" and "single-loop-default" in str(inp.get("file_path", "")):
@@ -77,7 +82,7 @@ def acceptance(repo: Path, brief: str):
         # insertion order is the reverse of every expected sort order
         sh("add", "--due", "2999-12-31", "future")
         sh("add", "--priority", "3", "low")
-        sh("add", "--priority", "1", "high", "--due", "2000-01-01")
+        sh("add", "--priority", "1", "--due", "2000-01-01", "high")
         rc, out, _ = sh("list")
         r["migration_keeps_old"] = "legacy" in out
         r["flags_parsed"] = rc == 0 and "high" in out and "--" not in out
@@ -94,6 +99,10 @@ def acceptance(repo: Path, brief: str):
         r["overdue_only"] = rc == 0 and "high" in out and "future" not in out and "low" not in out
         rc, _, _ = sh("add", "--priority", "9", "bad")
         r["priority_invalid_rejected"] = rc != 0
+        # added after the first scoring pass (disclosed in result.md): the brief does not fix flag position
+        sh("add", "late", "--priority", "2")
+        out = sh("list")[1]
+        r["extra_flags_after_text"] = "late" in out and "--priority" not in out
         return r
 
 
@@ -110,6 +119,7 @@ def repo_facts(repo: Path):
     lines = [l for l in text.splitlines() if re.match(r"^(pstack|harness|ROUTING|rea):", l)]
     f["breadcrumbs"] = len(lines)
     f["o_poteto"] = [l for l in lines if "O-poteto" in l]
+    f["breadcrumbs_bulleted"] = len(re.findall(r"^\s*[-*]\s+(?:pstack|harness|ROUTING|rea):", text, re.M))
     f["final_goal_met"] = bool(re.search(r"(?i)final goal[^\n]*\b(met|complete|done)\b", text))
     allmd = "\n".join(p.read_text(errors="replace") for p in repo.rglob("*.md") if not {".claude", ".specify"} & set(p.parts))
     f["rea_evidence_ids"] = sorted(set(re.findall(r"\bev_[0-9a-f]{6,}", allmd)))
@@ -122,11 +132,13 @@ def repo_facts(repo: Path):
 
 def main(sl: Path):
     rows = []
+    log = sl / "out" / "runs.log"
+    wall = dict(re.findall(r"^(\S+) rc=\d+ (\d+)s$", log.read_text(), re.M)) if log.is_file() else {}
     for jl in sorted((sl / "out").glob("*.jsonl")):
         tag = jl.stem
         v, brief, rep = tag.split("-")
         repo = sl / "runs" / tag
-        row = {"tag": tag, "version": v, "brief": brief, "rep": rep, **transcript(jl)}
+        row = {"tag": tag, "version": v, "brief": brief, "rep": rep, "wall_s": int(wall.get(tag, 0)), **transcript(jl)}
         if repo.is_dir():
             row["acceptance"] = acceptance(repo, brief)
             row.update(repo_facts(repo))

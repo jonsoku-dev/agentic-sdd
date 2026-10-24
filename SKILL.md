@@ -53,7 +53,7 @@ Universal first actions on every host:
 3. Use installed Spec Kit phase commands — do not re-implement phases in chat.
 4. Update feature artifacts and a root `progress.md` at every meaningful stage.
 5. Compact only after flushing durable state (see [compaction](references/compaction-timing.md)).
-6. Load [pstack integration](references/pstack-integration.md) and [harness layers](references/harness-layers.md) once per feature (or on host change); run `python scripts/harness_probe.py --host <host> --project .` and record its two breadcrumbs in `progress.md`; apply the phase→obligation map for every phase entered.
+6. Load [pstack integration](references/pstack-integration.md) and [harness layers](references/harness-layers.md) once per feature (or on host change); run `python scripts/harness_probe.py --host <host> --project .` and record its two breadcrumbs in `progress.md`; apply the phase→obligation map for every phase entered. Every breadcrumb is one line starting at column 1 with `pstack:`, `harness:`, `ROUTING:`, or `rea:` (for example `pstack: O-poteto|claude|inline → T001–T004 verified`); a bulleted `- pstack:` line is not counted.
 7. While a host goal (`/goal` on Claude, Cursor, Grok) is active, echo each check command and its decisive output line into the conversation after every verification; the evaluator reads the transcript, not files.
 
 ## Establish the working contract
@@ -208,7 +208,9 @@ review), and name the trigger in the breadcrumb. Never split by role
 (write/test/review) or hand the conversation over. When a trigger holds, prefer
 the host poteto agent (`poteto-agent` on Cursor; port equivalent on Claude);
 the parent verifies its returned claims against the real artifacts. Leaves do
-not delegate. If unavailable, do explicit self-review and record the limit —
+not delegate. When the parent needs a reviewer's or leaf's result before its
+next step, launch them together in one message in the foreground; never park
+the critical path behind `ScheduleWakeup`, a sleep, or a poll. If unavailable, do explicit self-review and record the limit —
 never claim independent consensus. See [single loop](references/single-loop-default.md).
 
 ## Light path (opt-in only)
