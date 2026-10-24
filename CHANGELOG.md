@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 by [release-please](https://github.com/googleapis/release-please) from
 [Conventional Commits](https://www.conventionalcommits.org/) on `main`.
 
+## [1.3.2](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.3.1...v1.3.2) (2026-10-24)
+
+
+### Documentation
+
+* **evals:** define 'perfect' (C1-C10, two clean 14-run matrices) and its judge ([24aaecc](https://github.com/jonsoku-dev/agentic-sdd/commit/24aaecc59d1a284f312c4fe43c9fced8dfc28413))
+
 ## [1.3.1](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.3.0...v1.3.1) (2026-10-24)
 
 
