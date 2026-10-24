@@ -6,11 +6,19 @@ usage: measure.py <sl-root>   (reads <sl-root>/runs/<tag>/ and <sl-root>/out/<ta
 import json, os, re, subprocess, sys, tempfile
 from pathlib import Path
 
-REVIEW = re.compile(r"review|interrogat|thermos|blast|audit|critic|verify|judge|panel", re.I)
+REVIEW = re.compile(r"review|interrogat|thermos|blast|audit|critic|judge|panel|hygiene|sicko", re.I)
+WORK = re.compile(r"implement|\bT\d{3}\b|packet|write code", re.I)
+
+
+def role(inp):
+    typ, desc = inp.get("subagent_type") or "", inp.get("description") or ""
+    if "poteto-agent" in typ or WORK.search(desc):
+        return "work"
+    return "review" if REVIEW.search(f"{desc} {typ}") else "work"
 
 
 def transcript(path: Path):
-    t = {"spawns": [], "skills": [], "read_single_loop": False, "result": None, "wakeups": 0, "active_ms": 0, "segments": 0}
+    t = {"spawns": [], "skills": [], "read_single_loop": False, "result": None, "wakeups": 0, "active_ms": 0, "segments": 0, "skill_reads": set(), "tokens": {}}
     for line in path.read_text(errors="replace").splitlines():
         try:
             ev = json.loads(line)
@@ -22,7 +30,8 @@ def transcript(path: Path):
             t["active_ms"] += ev.get("duration_ms") or 0
             t["result"] = {k: ev.get(k) for k in ("total_cost_usd", "duration_ms", "num_turns", "is_error", "subtype")}
             u = ev.get("usage") or {}
-            t["result"]["tokens"] = {k: u.get(k) for k in ("input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens")}
+            for k in ("input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"):
+                t["tokens"][k] = t["tokens"].get(k, 0) + (u.get(k) or 0)
         if ev.get("type") != "assistant":
             continue
         nested = ev.get("parent_tool_use_id") is not None
@@ -31,9 +40,8 @@ def transcript(path: Path):
                 continue
             inp = c.get("input", {})
             if c["name"] in ("Agent", "Task"):
-                desc = f"{inp.get('description', '')} {inp.get('subagent_type', '')}"
                 t["spawns"].append({"nested": nested, "type": inp.get("subagent_type"), "desc": inp.get("description"),
-                                    "role": "review" if REVIEW.search(desc) else "work",
+                                    "role": role(inp),
                                     "background": inp.get("run_in_background"), "isolation": inp.get("isolation")})
             elif c["name"] == "ScheduleWakeup" and not inp.get("stop"):
                 t["wakeups"] += 1
@@ -41,6 +49,10 @@ def transcript(path: Path):
                 t["skills"].append(inp.get("skill"))
             elif c["name"] == "Read" and "single-loop-default" in str(inp.get("file_path", "")):
                 t["read_single_loop"] = True
+            if not nested and c["name"] in ("Read", "Bash"):
+                blob = str(inp.get("file_path", "")) + " " + str(inp.get("command", ""))
+                t["skill_reads"].update(re.findall(r"\breferences/[\w.-]+\.md", blob))
+    t["skill_reads"] = sorted(t["skill_reads"])
     sp = t["spawns"]
     t["spawn_counts"] = {"total": len(sp), "parent": sum(not s["nested"] for s in sp),
                          "work": sum(s["role"] == "work" for s in sp), "review": sum(s["role"] == "review" for s in sp)}
@@ -67,7 +79,7 @@ def acceptance(repo: Path, brief: str):
             return p.returncode, p.stdout, p.stderr
 
         r = {}
-        if brief == "S":
+        if brief.startswith("S"):
             sh("add", "alpha")
             rc, _, _ = sh("edit", "1", "beta")
             out = sh("list")[1]
@@ -140,7 +152,7 @@ def main(sl: Path):
         repo = sl / "runs" / tag
         row = {"tag": tag, "version": v, "brief": brief, "rep": rep, "wall_s": int(wall.get(tag, 0)), **transcript(jl)}
         if repo.is_dir():
-            row["acceptance"] = acceptance(repo, brief)
+            row["acceptance"] = acceptance(repo, brief[0])
             row.update(repo_facts(repo))
         rows.append(row)
     print(json.dumps(rows, indent=1, ensure_ascii=False))
