@@ -120,8 +120,9 @@ the per-host dispatch detail.
   Do not offer shorthand tokens for the human to type back.
 - When the feature is complete and the Final Goal still has admitted work,
   specify the next numbered feature and continue without a human phase quiz.
-- **Keep specs small, but split only past the threshold.** One numbered spec
-  per Final Goal slice by default. Decide at `tasks`, not before: split when
+- **Keep specs small, but split only past the threshold.** Plan the whole
+  Final Goal as one numbered spec, even when it names several commands or
+  behaviours. Decide at `tasks`, not before: split when
   `tasks.md` exceeds about 12 tasks or the work would span more than two
   compactions (`O-sequence`). A happy path and its error cases are one spec.
   Each extra spec costs a full converge, review, and REA round. A `closed-carryover`
