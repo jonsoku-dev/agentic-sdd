@@ -10,11 +10,41 @@ REVIEW = re.compile(r"review|interrogat|thermos|blast|audit|critic|judge|panel|h
 WORK = re.compile(r"implement|\bT\d{3}\b|packet|write code", re.I)
 
 
+PLACEHOLDER = re.compile(r"\bnoop\b|\bwait\b|reply with|say ok|single word", re.I)
+
+
 def role(inp):
     typ, desc = inp.get("subagent_type") or "", inp.get("description") or ""
+    if len(inp.get("prompt") or "") < 80 or PLACEHOLDER.search(desc):
+        return "placeholder"
     if "poteto-agent" in typ or WORK.search(desc):
         return "work"
     return "review" if REVIEW.search(f"{desc} {typ}") else "work"
+
+
+def codex_transcript(path: Path):
+    """Codex `exec --json`: count spawn_agent calls and sum turn usage."""
+    t = {"spawns": [], "skills": [], "read_single_loop": False, "result": None, "wakeups": 0, "active_ms": 0,
+         "segments": 0, "skill_reads": [], "tokens": {}}
+    for line in path.read_text(errors="replace").splitlines():
+        try:
+            ev = json.loads(line)
+        except ValueError:
+            continue
+        if ev.get("type") == "turn.completed":
+            t["segments"] += 1
+            for k, v in (ev.get("usage") or {}).items():
+                t["tokens"][k] = t["tokens"].get(k, 0) + (v or 0)
+        it = ev.get("item") or {}
+        if ev.get("type") == "item.started" and "spawn" in json.dumps(it):
+            blob = json.dumps(it)
+            t["spawns"].append({"nested": False, "type": it.get("type"), "desc": blob[:160],
+                                "role": "review" if REVIEW.search(blob) else "work", "background": None, "isolation": None})
+    sp = t["spawns"]
+    t["spawn_counts"] = {"total": len(sp), "parent": len(sp), "work": sum(s["role"] == "work" for s in sp),
+                         "review": sum(s["role"] == "review" for s in sp), "placeholder": 0}
+    t["result"] = {"total_cost_usd": None}
+    return t
 
 
 def transcript(path: Path):
@@ -55,8 +85,41 @@ def transcript(path: Path):
     t["skill_reads"] = sorted(t["skill_reads"])
     sp = t["spawns"]
     t["spawn_counts"] = {"total": len(sp), "parent": sum(not s["nested"] for s in sp),
-                         "work": sum(s["role"] == "work" for s in sp), "review": sum(s["role"] == "review" for s in sp)}
+                         "work": sum(s["role"] == "work" for s in sp), "review": sum(s["role"] == "review" for s in sp),
+                         "placeholder": sum(s["role"] == "placeholder" for s in sp)}
     return t
+
+
+def kv_acceptance(repo: Path, store_dir: str):
+    """Black-box checks for the kv TTL brief (base2)."""
+    import time
+    store = os.path.join(store_dir, "kv.json")
+    env = dict(os.environ, KV_FILE=store)
+
+    def kv(*a):
+        p = subprocess.run(["node", "src/cli.js", *a], cwd=repo, capture_output=True, text=True, env=env, timeout=30)
+        return p.returncode, p.stdout.strip(), p.stderr.strip()
+
+    r = {}
+    Path(store).write_text(json.dumps({"entries": {"old": {"value": "v"}}}))
+    r["legacy_store_reads"] = kv("get", "old")[:2] == (0, "v")
+    kv("set", "short", "1", "--ttl", "1")
+    kv("set", "keep", "2")
+    rc, out, _ = kv("get", "short")
+    r["ttl_key_readable_before_expiry"] = rc == 0 and out == "1"
+    rc, out, _ = kv("ttl", "short")
+    r["ttl_prints_seconds"] = rc == 0 and out.isdigit() and int(out) <= 1
+    rc, _, err = kv("ttl", "keep")
+    r["ttl_without_expiry_fails"] = rc == 1 and bool(err)
+    rc, _, err = kv("ttl", "missing")
+    r["ttl_missing_fails"] = rc == 1 and bool(err)
+    time.sleep(1.6)
+    rc, _, err = kv("get", "short")
+    live = r["ttl_key_readable_before_expiry"]
+    r["expired_get_fails"] = live and rc == 1 and bool(err)
+    rc, out, _ = kv("list")
+    r["expired_absent_from_list"] = live and rc == 0 and "keep" in out.split() and "short" not in out.split() and "old" in out.split()
+    return r
 
 
 def entry(repo: Path):
@@ -67,6 +130,9 @@ def entry(repo: Path):
 
 
 def acceptance(repo: Path, brief: str):
+    if brief.startswith("K"):
+        with tempfile.TemporaryDirectory() as d:
+            return kv_acceptance(repo, store_dir=d)
     cmd = entry(repo)
     if not cmd:
         return {"entry": None}
@@ -120,10 +186,10 @@ def acceptance(repo: Path, brief: str):
 
 def repo_facts(repo: Path):
     f = {}
-    p = subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "tests"], cwd=repo,
-                       capture_output=True, text=True, timeout=300)
+    cmd = ["npm", "test", "--silent"] if (repo / "package.json").is_file() else [sys.executable, "-m", "unittest", "discover", "-s", "tests"]
+    p = subprocess.run(cmd, cwd=repo, capture_output=True, text=True, timeout=300)
     tail = (p.stdout + p.stderr).strip().splitlines()
-    f["tests"] = {"rc": p.returncode, "summary": " ".join(l for l in tail if l.startswith(("Ran ", "OK", "FAILED")))}
+    f["tests"] = {"rc": p.returncode, "summary": " ".join(l for l in tail if l.startswith(("Ran ", "OK", "FAILED", "ℹ pass", "ℹ fail", "# pass", "# fail")))}
     f["specs"] = sorted({s.parent.name for s in [*repo.glob("specs/*/spec.md"), *repo.glob(".specify/specs/*/spec.md")]})
     f["converge_files"] = len([*repo.glob("specs/*/converge.md"), *repo.glob(".specify/specs/*/converge.md")])
     prog = repo / "progress.md"
@@ -144,15 +210,18 @@ def repo_facts(repo: Path):
     return f
 
 
-def main(sl: Path):
+def main(sl: Path, outdir: str = "out"):
     rows = []
-    log = sl / "out" / "runs.log"
+    log = sl / outdir / "runs.log"
     wall = dict(re.findall(r"^(\S+) rc=\d+ (\d+)s$", log.read_text(), re.M)) if log.is_file() else {}
-    for jl in sorted((sl / "out").glob("*.jsonl")):
+    for jl in sorted((sl / outdir).glob("*.jsonl")):
         tag = jl.stem
-        v, brief, rep = tag.split("-")
+        parts = tag.split("-")
+        host = parts[0] if parts[0] in ("claude", "codex") else "claude"
+        v, brief, rep = parts[-3:]
         repo = sl / "runs" / tag
-        row = {"tag": tag, "version": v, "brief": brief, "rep": rep, "wall_s": int(wall.get(tag, 0)), **transcript(jl)}
+        parse = codex_transcript if host == "codex" else transcript
+        row = {"tag": tag, "host": host, "version": v, "brief": brief, "rep": rep, "wall_s": int(wall.get(tag, 0)), **parse(jl)}
         if repo.is_dir():
             row["acceptance"] = acceptance(repo, brief[0])
             row.update(repo_facts(repo))
@@ -161,4 +230,4 @@ def main(sl: Path):
 
 
 if __name__ == "__main__":
-    main(Path(sys.argv[1]))
+    main(Path(sys.argv[1]), *sys.argv[2:3])

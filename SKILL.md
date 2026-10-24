@@ -224,7 +224,9 @@ the host poteto agent (`poteto-agent` on Cursor; port equivalent on Claude);
 the parent verifies its returned claims against the real artifacts. Leaves do
 not delegate. When the parent needs a reviewer's or leaf's result before its
 next step, launch them together in one message in the foreground; never park
-the critical path behind `ScheduleWakeup`, a sleep, or a poll. If unavailable, do explicit self-review and record the limit —
+the critical path behind `ScheduleWakeup`, a sleep, or a poll. To wait for an
+agent already in the background, end the turn; its completion notice resumes
+you. Never spawn a placeholder agent to block. If unavailable, do explicit self-review and record the limit —
 never claim independent consensus. See [single loop](references/single-loop-default.md).
 
 ## Light path (opt-in only)

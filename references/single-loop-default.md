@@ -98,8 +98,10 @@ The single loop is open-ended inside fixed limits that agentic-sdd already has:
 A reviewer or leaf whose result gates the parent's next step is on the critical
 path. Launch the batch in one message in the foreground; the calls run in
 parallel and return together. Background only while the parent has other
-admitted work, and the harness notifies on completion. Never `ScheduleWakeup`,
-sleep, or poll for your own agents: in the 2026-10-24 A/B one run parked two
+admitted work, and the harness notifies on completion. To wait for an agent
+already in the background, end the turn; the completion notice resumes you.
+Never `ScheduleWakeup`, sleep, poll, or spawn a placeholder ("reply ok") agent
+to block on your own agents: in the 2026-10-24 A/B one run parked two
 background reviewers behind a 1200 s wakeup and idled about 19 minutes
 (`docs/evals/2026-10-24-single-loop-ab/result.md`).
 
