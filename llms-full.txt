@@ -4628,6 +4628,49 @@ runs, identical to release 1.2.3, same runner and prompts.
 
 Kept. Round 4 spend: $7.62.
 
+## Round 5: one-page phase card (progressive disclosure)
+
+Pre-registered in `prediction-5.md` (bb7afd6). Baseline: round 4 "split".
+
+### First card (bb7afd6)
+
+| Cell | Opened `pstack-integration.md` | Opened `rea-closeout.md` | Mean cost | Mean cache-read |
+|---|---|---|---|---|
+| sonnet S | 2/2 → **0/2** | 2/2 → 1/2 | $0.68 → $0.67 | 1.49 M → 1.32 M |
+| opus K | 2/2 → **0/2** | 2/2 → **0/2** | $2.29 → $1.77 (−23%) | 2.53 M → 1.73 M |
+| sonnet K | 1/2 → **0/2** | 2/2 → **0/2** | $0.84 → $0.86 | 1.80 M → 1.82 M |
+
+All checks, gate lines, and reviewers held (one sonnet run's reviewer was a
+`poteto-agent-medium` described as "Independent review"; the scorer counted it
+as work until 17939e7 fixed the classification). Prediction 1 holds (0/6 and
+1/6). Prediction 2 holds only for opus K.
+
+Regression the predictions did not name: both sonnet kv runs planned two specs
+at sharpen again, undoing round 4. The card's sharpen row did not carry the
+one-spec default, and "one spec per Final Goal slice" was read as one spec per
+command.
+
+### Fixes and reruns
+
+- 17939e7: sharpen row says plan one spec. Rerun sonnet K ×3: 1 of 3 still
+  pre-planned two specs ("001 … 002 …" in its first plan line).
+- 65f17cb: "plan the whole Final Goal as one spec, even when it names several
+  commands; split only at `tasks`, past ~12 tasks", in both the card and
+  `SKILL.md`.
+
+| Run (65f17cb) | Specs (tasks) | Cost | Checks | Gate lines | Reviewer | Long references opened |
+|---|---|---|---|---|---|---|
+| sonnet K 1 | 1 (10) | $0.70 | 7/7 | both | 1 | none |
+| sonnet K 2 | 1 (10) | $0.74 | 7/7 | both | 1 | none |
+| sonnet K 3 | 1 (10) | $0.78 | 7/7 | both | 1 | none |
+| opus todo L | 1 (14) | $1.79 | 9/9 | both | 1 | none |
+
+Sonnet K mean $0.74 against round 4's $0.84. The opus large brief stayed in
+one spec at 14 tasks, just past "about 12", with every check passing, at $1.79
+against $2.67 for 1.1.6 in round 1; recorded, not acted on.
+
+Kept. Round 5 spend: $12.83.
+
 ---
 
 <!-- file: docs/evals/2026-10-20-host-matrix/result.md -->
