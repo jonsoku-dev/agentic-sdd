@@ -594,9 +594,11 @@ handing off. Read [pstack integration](references/pstack-integration.md) for
   Do not offer shorthand tokens for the human to type back.
 - When the feature is complete and the Final Goal still has admitted work,
   specify the next numbered feature and continue without a human phase quiz.
-- **Keep specs small.** Prefer several short numbered specs over one long one.
-  Split before `implement` when `tasks.md` exceeds about 12 tasks or the work
-  would span more than two compactions (`O-sequence`). A `closed-carryover`
+- **Keep specs small, but split only past the threshold.** One numbered spec
+  per Final Goal slice by default. Decide at `tasks`, not before: split when
+  `tasks.md` exceeds about 12 tasks or the work would span more than two
+  compactions (`O-sequence`). A happy path and its error cases are one spec.
+  Each extra spec costs a full converge, review, and REA round. A `closed-carryover`
   feature's gaps become the next spec's scope; the Final Goal stays open until
   the last spec reaches REA `pass`.
 
