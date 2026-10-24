@@ -40,6 +40,7 @@ SECTIONS = [
     ("Templates and scripts", [
         ("templates/playbooks/agentic-sdd.md", "pstack project playbook: three Spec Kit handoffs anchored on Feature and Bug fix steps (pstack-claude port)"),
         ("templates/cursor-rules/agentic-sdd.mdc", "Cursor project rule carrying the same handoffs; Cursor's plugin cannot invoke poteto-mode itself"),
+        ("scripts/progress_gate.py", "Completion gate over progress.md: review line, rea pass line per feature, misformatted breadcrumbs"),
         ("scripts/harness_probe.py", "Readiness probe for the seven harness layers per host; prints the progress.md breadcrumbs"),
         ("scripts/setup.py", "One-shot setup: detect, plan, confirm, apply, verify"),
         ("scripts/deps.py", "Installed-vs-latest check and unattended update for Spec Kit, pstack per host, REA pins, host CLIs"),

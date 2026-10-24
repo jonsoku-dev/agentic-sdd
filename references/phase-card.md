@@ -45,6 +45,9 @@ ROUTING: <role> → <model>@<level> (source: sheet|default|parent) observed: …
 No reviewer can run → `pstack: O-interrogate|<host>|BLOCKED: independent review`,
 and the Final Goal stays open.
 
+Before "Final Goal met": `python3 <this skill>/scripts/progress_gate.py progress.md`
+must print `ok` (it names any bulleted or backticked breadcrumb to rewrite).
+
 ## REA closeout, common path
 
 1. Use the REA MCP tools when connected, else the `rea` CLI. Missing both in
