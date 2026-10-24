@@ -290,3 +290,49 @@ one spec at 14 tasks, just past "about 12", with every check passing, at $1.79
 against $2.67 for 1.1.6 in round 1; recorded, not acted on.
 
 Kept. Round 5 spend: $12.83.
+
+## Round 6: 1.3.0 on the large brief, Codex, Grok, and extra reps
+
+Pre-registered in `prediction-6.md` (d259251).
+
+| Run | Host / model | Specs (tasks) | Checks | Gate (progress_gate.py) | Reviewer |
+|---|---|---|---|---|---|
+| L l1 | Claude opus | 2 (11, 7) | 9/9 scored, flag-position extra failed | ok | thermo-nuclear-review ×2 |
+| L l2 | Claude opus | 1 (13) | 9/9 | ok | thermo-nuclear-review |
+| S r1 | Claude sonnet | 1 (5) | 2/2 | ok | thermo-nuclear-review |
+| K r1 | Claude opus | 1 (9) | 7/7 | ok | thermo-nuclear-review |
+| S c1 | Codex | 1 (4) | 2/2 | **open**: lines written as "- \`pstack: …\`" | reviewer spawned |
+| S c2 | Codex | 1 (3) | 2/2 | ok | reviewer spawned |
+| K c1 | Codex | 1 (8) | 7/7 | ok | reviewers spawned |
+| S g1 | Grok | 1 (7) | 2/2 | ok | spawn_subagent |
+
+- Prediction 1: both large runs pass; one split at 18 tasks, one stayed whole
+  at 13. The "about 12" threshold behaves as written and stays.
+- Prediction 2 fails once: Codex S c1 did the work but wrote its breadcrumbs
+  as bulleted code spans, the format defect that text fixed in round 2.
+- Prediction 3 holds (1 of 4 Codex/Grok runs opened `pstack-integration.md`).
+
+### Fix: a script instead of a sentence (f122672)
+
+`scripts/progress_gate.py` fails when the `O-interrogate` line or a
+per-feature `rea: <feature>|pass|ev_…` line is missing or the review is
+BLOCKED, and names every bulleted or backticked breadcrumb to rewrite.
+`SKILL.md` and the phase card require it to print `ok` before "Final Goal
+met". On the eight round-6 runs it flags only Codex S c1.
+
+| Run (f122672) | Gate script run | Gate | Checks | Specs |
+|---|---|---|---|---|
+| Codex S ×3 | 3/3 | ok ×3 | 2/2 ×3 | 1 ×3 |
+| Claude sonnet S | yes | ok | 2/2 | 1 |
+| Claude sonnet K | yes | ok | 7/7 | 1 |
+
+### Tried and reverted (ff06fcc → 2a12889)
+
+Codex opened `rea-closeout.md` in 6 of 6 runs and `pstack-integration.md` in
+3 of 6 even with the card. Pointing the two remaining `SKILL.md` detail links
+at the card changed nothing (3 of 3 and 3 of 3 afterwards, checks still
+passing), so the change was reverted. Codex reads the skill folder broadly;
+Claude opened only the card in all 7 Claude runs of this round.
+
+Round 6 spend: $9.26 (Claude and Grok; Codex on subscription). All rounds:
+$91.91.
