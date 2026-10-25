@@ -13,7 +13,7 @@ files and transcripts, never from an agent's summary.
 | Claude Code / sonnet | todo S, kv K | 2 + 2 |
 | Claude Code / opus | kv K, todo L | 2 + 2 |
 | Codex / gpt-6-luna | todo S, kv K | 2 + 2 |
-| Grok / grok-4.7-build (pstack absent) | todo S | 2 |
+| Grok / grok-4.7-build (pstack absent) | todo S | 6 (amendment below) |
 
 Cursor is out of scope: account-synced rules reach every isolated config dir.
 
@@ -34,6 +34,12 @@ Cursor is out of scope: account-synced rules reach every isolated config dir.
 
 C10 is relative: the first matrix fixes the baseline; later fixes may not buy
 correctness with more than 15% extra spend.
+
+Amendment (after matrix 2, before matrix 3; disclosed in result.md): C10 is
+judged on all runs of a cell, with at least 6 per version on Grok. Same-version
+Grok runs ranged $0.86–$1.62, and a same-time pair reversed the sign of a +28%
+gap seen across different hours, so 2–4 Grok runs cannot separate a 15%
+change from noise.
 
 ## Loop
 

@@ -5,8 +5,8 @@ mkdir -p $O
 for n in 1 2; do
   sh $R $SL claude base $v S so$n $O sonnet & sh $R $SL claude base2 $v K so$n $O sonnet &
   sh $R $SL claude base2 $v K op$n $O opus & sh $R $SL claude base $v L op$n $O opus &
-  sh $R $SL grok base $v S gk$n $O &
 done
+for n in 1 2 3 4 5 6; do sh $R $SL grok base $v S gk$n $O & done
 (sh $R $SL codex base $v S cx1 $O; sh $R $SL codex base $v S cx2 $O) &
 (sh $R $SL codex base2 $v K cx1 $O; sh $R $SL codex base2 $v K cx2 $O) &
 wait
