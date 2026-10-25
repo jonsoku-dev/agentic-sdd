@@ -1,0 +1,34 @@
+{
+  "name": "agentic-sdd",
+  "version": "1.3.2",
+  "description": "Spec Kit delivery driven to the Final Goal: phase contracts, a one-page phase card, a completion gate script, REA closeout, a local dashboard and tracking reports. Hook-free edition: safe where plugin hooks are blocked.",
+  "author": {
+    "name": "jonsoku-dev"
+  },
+  "homepage": "https://github.com/jonsoku-dev/agentic-sdd",
+  "repository": "https://github.com/jonsoku-dev/agentic-sdd",
+  "license": "MIT",
+  "keywords": [
+    "spec-kit",
+    "sdd",
+    "agentic",
+    "skills",
+    "quality-gate"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Agentic SDD",
+    "shortDescription": "Spec Kit delivery to the Final Goal",
+    "longDescription": "Spec Kit delivery driven to the Final Goal: phase contracts, a one-page phase card, a completion gate script, REA closeout, a local dashboard and tracking reports. Hook-free edition: safe where plugin hooks are blocked.",
+    "developerName": "jonsoku-dev",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Deliver this Final Goal with agentic-sdd."
+    ]
+  }
+}

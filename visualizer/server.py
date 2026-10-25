@@ -19,10 +19,15 @@ import re
 import sys
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 PORT_DEFAULT = 8765
 VISUALIZER_DIR = Path(__file__).resolve().parent
+REPORT_NAME = re.compile(r"[0-9]{8}T[0-9]{6}Z\.md")
+
+# sdd_status lives in ../scripts in the repository and in the bundled skill
+sys.path.insert(0, str(VISUALIZER_DIR.parent / "scripts"))
+import sdd_status  # noqa: E402
 
 
 def looks_like_project(root: Path) -> bool:
@@ -170,20 +175,33 @@ def make_handler(project: Path):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, directory=str(VISUALIZER_DIR), **kwargs)
 
+        def send_body(self, code: int, body: bytes, ctype: str) -> None:
+            # no CORS header: other origins must not read local project data
+            self.send_response(code)
+            self.send_header("Content-Type", ctype)
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(body)
+
         def do_GET(self):
             parsed = urlparse(self.path)
             if parsed.path == "/api/board":
-                data = collect_data(project)
-                payload = json.dumps(data).encode()
-                self.send_response(200)
-                self.send_header("Content-Type", "application/json")
-                self.send_header("Access-Control-Allow-Origin", "*")
-                self.send_header("Content-Length", str(len(payload)))
-                self.end_headers()
-                self.wfile.write(payload)
-                return
-            if parsed.path in {"/", "/index.html"}:
+                return self.send_body(200, json.dumps(collect_data(project)).encode(), "application/json")
+            if parsed.path == "/api/status":
+                return self.send_body(200, json.dumps(sdd_status.snapshot(project)).encode(), "application/json")
+            if parsed.path == "/api/report":
+                name = parse_qs(parsed.query).get("name", [""])[0]
+                path = project / ".agentic-sdd" / "reports" / name
+                if not REPORT_NAME.fullmatch(name) or not path.is_file():
+                    return self.send_body(404, b"no such report", "text/plain; charset=utf-8")
+                return self.send_body(200, path.read_bytes(), "text/plain; charset=utf-8")
+            if parsed.path in {"/", "/dashboard.html"}:
+                self.path = "/dashboard.html"
+            elif parsed.path in {"/kanban", "/index.html"}:
                 self.path = "/index.html"
+            else:
+                return self.send_body(404, b"not found", "text/plain; charset=utf-8")
             return super().do_GET()
 
         def log_message(self, format, *args):
@@ -214,7 +232,7 @@ def main() -> None:
 
     handler = make_handler(project)
     server = HTTPServer((args.bind, args.port), handler)
-    print(f"Agentic SDD Kanban at http://{args.bind}:{args.port}")
+    print(f"Agentic SDD dashboard at http://{args.bind}:{args.port}  (Kanban: /kanban)")
     print(f"Reading project from: {project}")
     print(f"UI assets from: {VISUALIZER_DIR}")
     print("Press Ctrl+C to stop")

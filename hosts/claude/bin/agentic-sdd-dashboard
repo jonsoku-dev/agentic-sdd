@@ -1,0 +1,3 @@
+#!/bin/sh
+# Local read-only dashboard on 127.0.0.1 (default port 8765).
+exec python3 "$(dirname "$0")/../skills/agentic-sdd/visualizer/server.py" --project "${1:-.}"

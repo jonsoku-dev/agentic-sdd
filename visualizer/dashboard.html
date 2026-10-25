@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agentic SDD Dashboard</title>
+<style>
+  :root { --bg:#0f1419; --surface:#1a2332; --card:#243044; --border:#2d3a4d; --text:#e7ecf3;
+          --muted:#8b9cb3; --accent:#5b9cff; --ok:#51cf66; --bad:#ff6b6b; --warn:#fcc419; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--text); }
+  header { padding:14px 24px; border-bottom:1px solid var(--border); display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+  h1 { font-size:1.05rem; margin:0; }
+  .muted { color:var(--muted); font-size:.85rem; }
+  nav { display:flex; gap:6px; flex-wrap:wrap; }
+  nav button, nav a { background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:6px;
+          padding:6px 12px; cursor:pointer; font:inherit; text-decoration:none; }
+  nav button.on { border-color:var(--accent); color:var(--accent); }
+  main { padding:20px 24px; max-width:1200px; }
+  section { display:none; } section.on { display:block; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:18px; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:12px 14px; }
+  .card .v { font-size:1.4rem; font-weight:600; margin-top:4px; }
+  table { width:100%; border-collapse:collapse; background:var(--surface); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--border); font-size:.88rem; vertical-align:top; }
+  th { color:var(--muted); font-weight:500; }
+  .pill { display:inline-block; padding:1px 8px; border-radius:10px; font-size:.78rem; border:1px solid var(--border); }
+  .ok { color:var(--ok); border-color:var(--ok); } .bad { color:var(--bad); border-color:var(--bad); } .warn { color:var(--warn); border-color:var(--warn); }
+  .phases { display:flex; gap:4px; } .ph { padding:2px 6px; border-radius:4px; font-size:.75rem; background:var(--card); color:var(--muted); }
+  .ph.done { background:#1f3a2a; color:var(--ok); }
+  pre { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:14px; white-space:pre-wrap; font-size:.85rem; }
+  code { font-family:ui-monospace,monospace; font-size:.82rem; }
+  ul.plain { list-style:none; padding:0; margin:0; } ul.plain li { padding:6px 0; border-bottom:1px solid var(--border); }
+  @media (max-width:640px){ header, main { padding-left:16px; padding-right:16px; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Agentic SDD</h1>
+  <span class="muted" id="project"></span>
+  <nav>
+    <button data-tab="flow" class="on">흐름</button>
+    <button data-tab="gates">게이트</button>
+    <button data-tab="tokens">토큰</button>
+    <button data-tab="reports">리포트</button>
+    <a href="/kanban">Kanban</a>
+  </nav>
+  <span class="muted" id="updated"></span>
+</header>
+<main>
+  <section id="flow" class="on">
+    <div class="cards" id="flow-cards"></div>
+    <table><thead><tr><th>Feature</th><th>Phase</th><th>Tasks</th><th>Progress</th></tr></thead><tbody id="features"></tbody></table>
+    <h3>Breadcrumbs</h3>
+    <ul class="plain" id="crumbs"></ul>
+  </section>
+  <section id="gates">
+    <div class="cards" id="gate-cards"></div>
+    <table><thead><tr><th>Check</th><th>Result</th></tr></thead><tbody id="gate-rows"></tbody></table>
+    <h3>Hook ledger (guarded plugin)</h3>
+    <table><thead><tr><th>Time</th><th>Event</th><th>Detail</th></tr></thead><tbody id="ledger"></tbody></table>
+  </section>
+  <section id="tokens">
+    <div class="cards" id="token-cards"></div>
+    <table><thead><tr><th>Session</th><th>Start</th><th>Turns</th><th>Input</th><th>Output</th><th>Cache read</th><th>Cache write</th><th>Subagents</th><th>Models</th></tr></thead><tbody id="sessions"></tbody></table>
+    <p class="muted">Claude Code transcripts for this project only; token counts, no prompt text. Codex and Grok sessions are not read.</p>
+  </section>
+  <section id="reports">
+    <p class="muted">Write a new one with <code>agentic-sdd-report</code> (or <code>python3 scripts/report.py --project .</code>).</p>
+    <ul class="plain" id="report-list"></ul>
+    <pre id="report-body" hidden></pre>
+  </section>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const PHASES = ["specify","plan","tasks","implement","converge","rea"];
+const n = v => (v || 0).toLocaleString();
+function el(tag, attrs = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) k === "class" ? e.className = v : e.setAttribute(k, v);
+  for (const k of kids) e.append(k instanceof Node ? k : document.createTextNode(String(k)));
+  return e;
+}
+function card(label, value, cls = "") { return el("div", {class:"card"}, el("div", {class:"muted"}, label), el("div", {class:"v " + cls}, value)); }
+function fill(id, rows) { const t = $(id); t.replaceChildren(...rows); }
+
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("nav button, section").forEach(x => x.classList.remove("on"));
+  b.classList.add("on"); $(b.dataset.tab).classList.add("on");
+});
+
+function render(s) {
+  $("project").textContent = s.project;
+  $("updated").textContent = "updated " + new Date().toLocaleTimeString();
+  const closed = s.features.filter(f => f.phase === "closed").length;
+  const done = s.features.reduce((a, f) => a + f.tasks_done, 0), total = s.features.reduce((a, f) => a + f.tasks_total, 0);
+  fill("flow-cards", [card("Features closed", `${closed} / ${s.features.length}`), card("Tasks", `${done} / ${total}`),
+    card("Gate", s.gate.ok ? "ok" : "open", s.gate.ok ? "ok" : "bad"),
+    card("Final Goal", s.final_goal_claimed ? (s.gate.ok ? "met" : "claimed, gate open") : "open",
+         s.final_goal_claimed ? (s.gate.ok ? "ok" : "bad") : "warn")]);
+  fill("features", s.features.map(f => el("tr", {}, el("td", {}, f.name), el("td", {}, f.phase),
+    el("td", {}, `${f.tasks_done}/${f.tasks_total}`),
+    el("td", {}, el("div", {class:"phases"}, ...PHASES.map(p => el("span", {class:"ph" + (f.phases[p] ? " done" : "")}, p)))))));
+  fill("crumbs", s.breadcrumbs.length ? s.breadcrumbs.map(b => el("li", {}, el("code", {}, `${b.kind}: ${b.text}`)))
+                                       : [el("li", {class:"muted"}, "no column-1 breadcrumbs in progress.md")]);
+
+  const spawns = s.ledger.filter(e => e.event === "spawn").length, blocks = s.ledger.filter(e => e.event === "gate_blocked").length;
+  fill("gate-cards", [card("Gate", s.gate.ok ? "ok" : "open", s.gate.ok ? "ok" : "bad"), card("Problems", s.gate.problems.length),
+    card("Spawns logged", spawns), card("Gate blocks", blocks, blocks ? "warn" : "")]);
+  const rows = [el("tr", {}, el("td", {}, "progress_gate.py"), el("td", {}, el("span", {class:"pill " + (s.gate.ok ? "ok" : "bad")}, s.gate.ok ? "ok" : "open")))];
+  s.gate.problems.forEach(p => rows.push(el("tr", {}, el("td", {}, "problem"), el("td", {}, p))));
+  s.features.forEach(f => rows.push(el("tr", {}, el("td", {}, `REA ${f.name}`),
+    el("td", {}, f.rea ? el("span", {class:"pill " + (f.rea.disposition === "pass" ? "ok" : "warn")}, `${f.rea.disposition} ${f.rea.evidence.slice(0, 20)}`)
+                       : el("span", {class:"pill bad"}, "missing")))));
+  fill("gate-rows", rows);
+  fill("ledger", s.ledger.length ? s.ledger.slice(-200).reverse().map(e => el("tr", {},
+      el("td", {}, new Date(e.ts * 1000).toLocaleString()), el("td", {}, e.event),
+      el("td", {}, [e.subagent_type, e.description, (e.problems || []).join("; ")].filter(Boolean).join(" · "))))
+    : [el("tr", {}, el("td", {colspan:3, class:"muted"}, "no ledger: the hook-free plugin or standalone skill does not write one"))]);
+
+  const sum = k => s.sessions.reduce((a, x) => a + x.tokens[k] + x.subagent_tokens[k], 0);
+  fill("token-cards", [card("Sessions", s.sessions.length), card("Input", n(sum("input"))), card("Output", n(sum("output"))),
+    card("Cache read", n(sum("cache_read"))), card("Cache write", n(sum("cache_write")))]);
+  fill("sessions", s.sessions.map(x => el("tr", {}, el("td", {}, x.id.slice(0, 8)), el("td", {}, x.start || "—"), el("td", {}, x.turns),
+    el("td", {}, n(x.tokens.input + x.subagent_tokens.input)), el("td", {}, n(x.tokens.output + x.subagent_tokens.output)),
+    el("td", {}, n(x.tokens.cache_read + x.subagent_tokens.cache_read)), el("td", {}, n(x.tokens.cache_write + x.subagent_tokens.cache_write)),
+    el("td", {}, x.subagents), el("td", {}, x.models.join(", ")))));
+
+  fill("report-list", s.reports.length ? s.reports.slice().reverse().map(r => {
+      const a = el("a", {href:"#"}, r); a.onclick = async ev => { ev.preventDefault();
+        const body = await (await fetch("/api/report?name=" + encodeURIComponent(r))).text();
+        $("report-body").textContent = body; $("report-body").hidden = false; };
+      return el("li", {}, a); })
+    : [el("li", {class:"muted"}, "no reports yet")]);
+}
+
+async function load() {
+  try { render(await (await fetch("/api/status")).json()); }
+  catch (e) { $("updated").textContent = "failed to load: " + e; }
+}
+load(); setInterval(load, 10000);
+</script>
+</body>
+</html>

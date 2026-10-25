@@ -1,0 +1,3 @@
+#!/bin/sh
+# Write a tracking report into <project>/.agentic-sdd/reports/ and print its path.
+exec python3 "$(dirname "$0")/../skills/agentic-sdd/scripts/report.py" --project "${1:-.}"

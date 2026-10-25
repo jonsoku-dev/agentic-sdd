@@ -1,0 +1,3 @@
+#!/bin/sh
+# Completion gate over progress.md (exit 0 ok, 1 open, 2 no progress.md).
+exec python3 "$(dirname "$0")/../skills/agentic-sdd/scripts/progress_gate.py" "${1:-progress.md}"

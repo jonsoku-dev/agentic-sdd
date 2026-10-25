@@ -27,6 +27,7 @@ numbered feature without a phase quiz. It asks once only at hard boundaries
 
 - [Quick start](#quick-start)
 - [How a run looks](#how-a-run-looks)
+- [Plugins (Claude Code and Codex)](#plugins-claude-code-and-codex)
 - [Per host: Claude Code](#claude-code)
 - [Per host: Codex](#codex)
 - [Per host: Cursor](#cursor)
@@ -158,6 +159,64 @@ Every obligation leaves one line in `progress.md`, for example
 `pstack: O-interrogate|claude|2x pstack:effort-low (opus, haiku) -> 1 act-on -> T004 appended`,
 plus `ROUTING:` lines that record requested versus observed model and effort.
 The full phase → obligation map is in `references/pstack-integration.md`.
+
+## Plugins (Claude Code and Codex)
+
+The same skill also ships as plugins from this repository's marketplace, in two
+editions. Pick one; do not enable both, and do not also link the standalone
+skill, or the skill loads twice.
+
+| Edition | Hosts | Hooks | Use when |
+|---|---|---|---|
+| `agentic-sdd` | Claude Code, Codex | none | Your organization blocks plugin hooks (`allowManagedHooksOnly`, `disableAllHooks`), or you want nothing to run outside the model's own tool calls |
+| `agentic-sdd-guarded` | Claude Code | `Stop`, `PreToolUse` (`ScheduleWakeup`), `PostToolUse` (`Agent`/`Task`, async) | You want the harness, not the model, to enforce the completion gate |
+
+```sh
+claude plugin marketplace add jonsoku-dev/agentic-sdd
+claude plugin install agentic-sdd@agentic-sdd            # hook-free
+claude plugin install agentic-sdd-guarded@agentic-sdd    # or: guarded
+```
+
+```sh
+codex plugin marketplace add jonsoku-dev/agentic-sdd
+codex plugin add agentic-sdd@agentic-sdd
+```
+
+Both editions carry the skill plus three small skills, named after the edition
+(`/agentic-sdd:gate` or `/agentic-sdd-guarded:gate`): `gate` (runs
+`progress_gate.py`), `report` (writes a tracking report), and `dashboard`
+(starts the local dashboard; user-invoked only). On
+Claude Code the plugin's `bin/` puts `agentic-sdd-gate`, `agentic-sdd-report`
+and `agentic-sdd-dashboard` on the Bash PATH.
+
+What the guarded hooks do, all in Python with no network access:
+
+- **Stop** blocks a turn whose `progress.md` says "Final Goal met" while
+  `progress_gate.py` fails or no reviewer subagent was spawned, and tells the
+  model what to fix. It blocks at most twice per session, then lets the turn
+  end and records the release, so a gate that cannot clear never traps you.
+- **PreToolUse** denies `ScheduleWakeup` inside an agentic-sdd project.
+- **PostToolUse** (async) appends each subagent spawn (type and description,
+  never the prompt) to `<project>/.agentic-sdd/ledger.jsonl`.
+
+The hooks act only in a directory whose `progress.md` mentions a Final Goal.
+Plugin hooks run with your user permissions outside the sandbox; read
+`plugins/agentic-sdd-guarded/hooks/` before installing.
+
+### Dashboard and reports
+
+```sh
+python3 visualizer/server.py --project /path/to/repo   # or agentic-sdd-dashboard from the repo root
+python3 scripts/report.py --project /path/to/repo      # or agentic-sdd-report
+```
+
+The dashboard serves on 127.0.0.1 only, reads files only, and sends no CORS
+header. Tabs: flow (phase per feature, breadcrumbs), gates (`progress_gate.py`,
+REA evidence per feature, the hook ledger), tokens (Claude Code transcripts for
+this project, token counts only), reports, and the Kanban board at `/kanban`.
+`report.py` writes `<project>/.agentic-sdd/reports/<UTC stamp>.md` with a JSON
+twin and lists what changed since the previous report; commit the reports to
+track progress. Codex and Grok sessions are not read for tokens yet.
 
 ## Claude Code
 
@@ -395,12 +454,14 @@ every Spec Kit gate, result comparisons, and the A/B against plain Spec Kit.
 | `templates/playbooks/` | pstack project playbook (port hosts) |
 | `templates/cursor-rules/` | Cursor project rule |
 | `hosts/cursor/` | `sdd-continue` hooks and the `hooks.json` snippet |
+| `hosts/claude/` | Plugin sources: guarded hooks, the gate/report/dashboard skills, `bin/` wrappers |
+| `plugins/`, `.claude-plugin/marketplace.json` | Generated plugin editions and marketplace; rebuild with `python3 scripts/build_plugins.py` (the tests fail when they are stale) |
 | `npx agentic-sdd` | Link, configure, update, and uninstall per host |
 | `tests/` | `python3 -m unittest discover -s tests -p 'test_*.py'` |
 | `evals/` | Behavioral eval cases |
 | `personas/` | Provider personas, loaded only when a host asks for one |
 | `agents/openai.yaml` | Codex skill metadata |
-| `visualizer/` | Optional Kanban over Spec Kit artifacts: `python3 visualizer/server.py --project /path/to/repo` |
+| `visualizer/` | Local dashboard (flow, gates, tokens, reports) and Kanban: `python3 visualizer/server.py --project /path/to/repo` |
 | `docs/evals/` | Measured runs and their artifacts |
 | `llms.txt`, `llms-full.txt` | [llms.txt](https://llmstxt.org/) index and full inline copy of the docs for agents; regenerate with `python3 scripts/build_llms.py` (the test suite fails when they are stale) |
 

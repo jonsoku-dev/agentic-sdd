@@ -1,0 +1,14 @@
+{
+  "description": "agentic-sdd-guarded: completion gate on Stop, no ScheduleWakeup during a run, local spawn ledger",
+  "hooks": {
+    "Stop": [
+      {"hooks": [{"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/stop_gate.py\"", "timeout": 30}]}
+    ],
+    "PreToolUse": [
+      {"matcher": "ScheduleWakeup", "hooks": [{"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/block_wakeup.py\"", "timeout": 10}]}
+    ],
+    "PostToolUse": [
+      {"matcher": "Agent|Task", "hooks": [{"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/ledger.py\"", "timeout": 10, "async": true}]}
+    ]
+  }
+}
