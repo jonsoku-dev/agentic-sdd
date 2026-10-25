@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 by [release-please](https://github.com/googleapis/release-please) from
 [Conventional Commits](https://www.conventionalcommits.org/) on `main`.
 
+## [1.5.0](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.4.0...v1.5.0) (2026-10-25)
+
+
+### Features
+
+* guarded edition blocks out-of-authority git; gate rejects leaked secrets ([de88c5b](https://github.com/jonsoku-dev/agentic-sdd/commit/de88c5bcb54e3b87691786f04be59e0554432d01))
+
 ## [1.4.0](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.3.2...v1.4.0) (2026-10-25)
 
 

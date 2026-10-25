@@ -9,13 +9,13 @@
       "name": "agentic-sdd",
       "source": "./plugins/agentic-sdd",
       "description": "Spec Kit delivery driven to the Final Goal: phase contracts, a one-page phase card, a completion gate script, REA closeout, a local dashboard and tracking reports. Hook-free edition: safe where plugin hooks are blocked.",
-      "version": "1.4.0"
+      "version": "1.5.0"
     },
     {
       "name": "agentic-sdd-guarded",
       "source": "./plugins/agentic-sdd-guarded",
       "description": "Spec Kit delivery driven to the Final Goal: phase contracts, a one-page phase card, a completion gate script, REA closeout, a local dashboard and tracking reports. Guarded edition: hooks block a false 'Final Goal met', ScheduleWakeup during a run, and log subagent spawns.",
-      "version": "1.4.0"
+      "version": "1.5.0"
     }
   ]
 }
