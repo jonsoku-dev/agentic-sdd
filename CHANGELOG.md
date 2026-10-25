@@ -6,6 +6,32 @@ All notable changes to this project are documented here. The format follows
 by [release-please](https://github.com/googleapis/release-please) from
 [Conventional Commits](https://www.conventionalcommits.org/) on `main`.
 
+## [1.4.0](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.3.2...v1.4.0) (2026-10-25)
+
+
+### Features
+
+* Claude Code and Codex plugins in two editions, local dashboard, tracking reports ([c1e1874](https://github.com/jonsoku-dev/agentic-sdd/commit/c1e18749012ddff1507c06cba3f1d11ae021cfb2))
+
+
+### Bug fixes
+
+* "Final Goal NOT met" no longer reads as a completion claim ([459b902](https://github.com/jonsoku-dev/agentic-sdd/commit/459b902ae37243cfeaa9d635bf15dd38dd52dbef))
+* a user ban on subagents keeps the Final Goal open instead of passing a self-review ([16c8e47](https://github.com/jonsoku-dev/agentic-sdd/commit/16c8e471081e73495e62ea2a225bbe8122364cf7))
+* **evals:** kv checker uses a 3 s TTL so node start-up cannot expire the key mid-check ([35f854b](https://github.com/jonsoku-dev/agentic-sdd/commit/35f854b092d49d4f61aa41353349f4e59cef282b))
+* invoking the skill counts as the user's request for the converge reviewer ([101d02c](https://github.com/jonsoku-dev/agentic-sdd/commit/101d02c9460e7a21c13385177ba55bfa478f6c26))
+* progress_gate.py rejects a review line that describes a self-review ([16f93d0](https://github.com/jonsoku-dev/agentic-sdd/commit/16f93d02df2fcf08c71362fa1b2bbb277c5a0c29))
+* remove a leaf's git worktree once its diff is merged ([bfea069](https://github.com/jonsoku-dev/agentic-sdd/commit/bfea069dd81decf79560cc34dc855098a917b42f))
+
+
+### Documentation
+
+* **evals:** plugin editions meet the bar — 132/132 runs pass C1-C9, C10 holds across versions ([42f201b](https://github.com/jonsoku-dev/agentic-sdd/commit/42f201b33c0329becc26a56b32f6a057a5e0f50b))
+* **evals:** plugin matrix runs opus L six times; plugin C10 baselined on plugin matrix 1 ([3a329f5](https://github.com/jonsoku-dev/agentic-sdd/commit/3a329f545a6c7ccac8622103f66635bf9050c77f))
+* **evals:** plugin-edition bar, C10 by coefficient of variation, Codex C4 from rollouts ([2661075](https://github.com/jonsoku-dev/agentic-sdd/commit/266107519a0ae21648c57eb3fe2684f46ed948e0))
+* **evals:** pre-register plugin-edition runs; runner loads plugin editions ([6f9d404](https://github.com/jonsoku-dev/agentic-sdd/commit/6f9d4044406ebd83b7ec49f9e68ec8102706d352))
+* **evals:** setup.sh rebuilds the isolated eval workspace (bases, pstack, REA, Codex homes, plugin snapshot) ([d065d21](https://github.com/jonsoku-dev/agentic-sdd/commit/d065d213c7c2b66ed2eac284d9120cfec3a3a2c6))
+
 ## [1.3.2](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.3.1...v1.3.2) (2026-10-25)
 
 
