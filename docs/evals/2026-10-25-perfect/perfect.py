@@ -29,7 +29,16 @@ def spawned_reviewer(host, jl: Path):
         t = measure.transcript(jl)
         return t["spawn_counts"]["review"] > 0, t
     if host == "codex":
-        return '"type": "collab_tool_call"' in raw or '"type":"collab_tool_call"' in raw, None
+        # codex exec --json drops spawn events; each subagent writes its own rollout whose
+        # session_meta cwd is the run directory, so two or more rollouts mean a spawn happened
+        run_dir = str(jl.parents[1] / "runs" / jl.stem)
+        rollouts = 0
+        for home in jl.parents[1].glob("codex-home*"):
+            for r in (home / "sessions").rglob("rollout-*.jsonl"):
+                with r.open(errors="replace") as f:
+                    if f'"cwd":"{run_dir}"' in f.readline():
+                        rollouts += 1
+        return rollouts >= 2, None
     # grok -p --output-format json returns only the final text; tool calls live in the session log
     tag = jl.stem
     sessions = jl.parents[1] / f"fakehome-{tag}" / ".grok" / "sessions"

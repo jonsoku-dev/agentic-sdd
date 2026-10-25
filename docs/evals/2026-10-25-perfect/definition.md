@@ -48,3 +48,22 @@ change from noise.
    (text or a check script), rerun only the failing cells until they pass.
 3. Then run the full matrix again; repeat 2–3 until two consecutive full
    matrices pass with no fix in between.
+
+## Plugin editions (added after the skill-copy bar was met)
+
+The same bar applies to each plugin edition: two consecutive full plugin
+matrices with no skill or plugin change in between. Plugin matrix per run:
+
+| Cell | Hook-free | Guarded |
+|---|---|---|
+| Claude sonnet, todo S | 6 | 6 |
+| Claude sonnet, kv K | 6 | 6 |
+| Claude opus, kv K | 2 | 2 |
+| Claude opus, todo L | 2 | 2 |
+| Codex, todo S / kv K | 2 / 2 | — |
+
+C10 generalised: a cell whose same-version cost varies by more than 15% of its
+mean (coefficient of variation) is judged on at least six runs. Sonnet cells
+showed 12–28%, Grok up to 25%. Codex C4 is judged from rollout files (a
+subagent writes its own rollout with the run's cwd); `codex exec --json` omits
+spawn events, which made the judge report two real Codex reviews as missing.
