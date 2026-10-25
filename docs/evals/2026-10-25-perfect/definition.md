@@ -74,3 +74,8 @@ runs invoked the installed `speckit-*` commands in most runs (4–6 calls), as
 `SKILL.md` asks; skill-copy runs mostly read the templates directly (0 calls).
 That costs 13–18% more on sonnet kv at equal quality, so m3 is not a like-for-
 like baseline for a loader that follows the rule more often.
+
+C10 by median (after plugin matrix 2, disclosed in result.md): cells compare the
+median cost with 1.15 × the baseline median. One run that legitimately split a
+20-task goal into two specs cost $4.42 against $1.76–$2.44 for the other five
+runs of its cell, and moved the mean past the bound on its own.

@@ -241,7 +241,9 @@ acceptance check, return format). Rules that hold everywhere:
   process). Stop an abandoned agent first and confirm it stopped.
 - **Writers get their own worktree or exclusive branch.** This is the same
   rule as agentic-sdd's "one writer per checkout": each worktree is a checkout.
-  The parent never writes a leaf's worktree while the leaf holds it.
+  The parent never writes a leaf's worktree while the leaf holds it. After
+  merging a leaf's diff, run `git worktree remove <path>` (and delete its
+  branch); no leaf worktree may remain registered when the feature closes.
 - **Leaves do not delegate.** File pointers, not inlined context.
 - **Model and effort:** role line from the pstack sheet when present, else the
   skill's default; the chosen level becomes the leaf's effort (see

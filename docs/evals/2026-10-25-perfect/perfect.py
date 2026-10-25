@@ -4,7 +4,7 @@
 Prints one line per run with failed criteria, then per-cell cost, then PASS or FAIL.
 Writes <sl-root>/<outdir>.perfect.json (feed it as baseline.json to a later matrix for C10).
 """
-import json, re, subprocess, sys
+import json, re, statistics, subprocess, sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -101,15 +101,16 @@ def main():
         costs = [r["cost"] for r in rs if r["cost"] is not None]
         bc = base.get(c) or base.get(c.split("[")[0])
         if costs and bc:
-            limit = 1.15 * sum(bc) / len(bc)
-            if sum(costs) / len(costs) > limit:
+            # medians: one legitimate spec split can double a single run's cost
+            limit = 1.15 * statistics.median(bc)
+            if statistics.median(costs) > limit:
                 for r in rs:
                     r["fails"].append("C10")
     for r in rows:
         print(f"{r['tag']:30} tasks {r['tasks']} cost {r['cost']} {'ok' if not r['fails'] else 'FAIL ' + ','.join(r['fails'])}")
     for c, rs in sorted(cells.items()):
         costs = [r["cost"] for r in rs if r["cost"] is not None]
-        print(f"cell {c}: runs {len(rs)} mean cost {sum(costs)/len(costs):.2f}" if costs else f"cell {c}: runs {len(rs)} (no cost)")
+        print(f"cell {c}: runs {len(rs)} median cost {statistics.median(costs):.2f}" if costs else f"cell {c}: runs {len(rs)} (no cost)")
     (sl / f"{outdir}.perfect.json").write_text(json.dumps(rows, indent=1))
     bad = [r for r in rows if r["fails"]]
     print("PASS" if not bad else f"FAIL: {len(bad)} of {len(rows)} runs")
