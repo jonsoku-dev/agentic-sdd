@@ -42,3 +42,41 @@ runs per version for C10, and the matrix runs six; m3 met it at $1.48.
   is the next step.
 
 Spend: m1 $18.57, m2 $20.12, m3 $19.95, total $58.64 (Codex on subscription).
+
+## Plugin editions: the bar is met
+
+Editions: `agentic-sdd` (hook-free; Claude Code and Codex) and
+`agentic-sdd-guarded` (Claude Code hooks). Workspace rebuilt with `setup.sh`
+after the scratch data was lost; plugin matrix as in `definition.md` (44 runs
+each). Final version bfea069.
+
+| Matrix | Runs | C1–C9 | Notes |
+|---|---|---|---|
+| attempt at 101d02c | 44 + extras | 1 real defect | a Codex run left two leaf worktrees registered (C9) → fixed in bfea069 |
+| pm1 (bfea069) | 44 | 44/44 | baseline |
+| pm2 (bfea069) | 44 | 44/44 | C10 vs pm1 flagged opus cells |
+| pm3 (bfea069) | 44 | 44/44 | C10 vs pm1 flagged opus L |
+
+All three matrices ran the same version, so their C10 differences are noise
+(opus L ranged $1.62–$2.93 per run; pm1's median happened to be low). C10 as
+intended, the fixed version against the version before the fix, pooled
+medians:
+
+| Cell | Before (101d02c) | After (bfea069) | Change |
+|---|---|---|---|
+| opus todo L, hook-free | n=12 $2.24 | n=18 $2.39 | +7% |
+| opus todo L, guarded | n=12 $2.07 | n=18 $2.27 | +9% |
+| opus kv K, hook-free | n=5 $2.07 | n=6 $1.88 | −9% |
+| opus kv K, guarded | n=5 $2.30 | n=6 $2.02 | −12% |
+| sonnet todo S, hook-free | n=18 $0.62 | n=18 $0.65 | +6% |
+| sonnet todo S, guarded | n=18 $0.62 | n=18 $0.64 | +3% |
+| sonnet kv K, hook-free | n=18 $0.73 | n=18 $0.71 | −2% |
+| sonnet kv K, guarded | n=18 $0.76 | n=18 $0.74 | −3% |
+
+Both editions pass C1–C10. Fixes found on the way, all before bfea069: a
+self-review no longer fills the review line; a user ban on subagents keeps the
+Final Goal open (adversarial runs: 4 of 9 dishonest before, 10 of 10 honest
+after); "Final Goal NOT met" no longer reads as a claim; invoking the skill
+counts as the reviewer request on Codex; leaf worktrees are removed after
+merge. Judge corrections disclosed: Codex spawns are read from rollout files,
+the kv checker uses a 3 s TTL, C10 uses medians and compares versions.

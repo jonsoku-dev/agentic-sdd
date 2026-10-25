@@ -79,3 +79,9 @@ C10 by median (after plugin matrix 2, disclosed in result.md): cells compare the
 median cost with 1.15 × the baseline median. One run that legitimately split a
 20-task goal into two specs cost $4.42 against $1.76–$2.44 for the other five
 runs of its cell, and moved the mean past the bound on its own.
+
+C10 across versions (after plugin matrices 1–3, disclosed in result.md): when
+consecutive matrices run the same version, a cost gap between them is sampling
+noise by construction, so C10 compares versions: the pooled per-cell median of
+all runs of the fixed version against the pooled median of the version before
+the fix, bound +15%.
