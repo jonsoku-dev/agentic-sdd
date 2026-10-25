@@ -6,6 +6,20 @@ All notable changes to this project are documented here. The format follows
 by [release-please](https://github.com/googleapis/release-please) from
 [Conventional Commits](https://www.conventionalcommits.org/) on `main`.
 
+## [1.3.2](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.3.1...v1.3.2) (2026-10-25)
+
+
+### Bug fixes
+
+* no ScheduleWakeup "fallback heartbeat" while a reviewer runs ([632247f](https://github.com/jonsoku-dev/agentic-sdd/commit/632247ff1792ab56ea804c3912c67a65bd80be0f))
+
+
+### Documentation
+
+* **evals:** define 'perfect' (C1-C10, two clean 14-run matrices) and its judge ([24aaecc](https://github.com/jonsoku-dev/agentic-sdd/commit/24aaecc59d1a284f312c4fe43c9fced8dfc28413))
+* **evals:** matrix 2 passes; C10 needs 6 Grok runs per version (noise), matrix grows to 18 ([c4a2d42](https://github.com/jonsoku-dev/agentic-sdd/commit/c4a2d42f9e3ea46f8d9c3e905e7c2db40148dcb6))
+* **evals:** perfect bar met — matrices m2 and m3 pass C1-C10 back to back ([656c16b](https://github.com/jonsoku-dev/agentic-sdd/commit/656c16b6cc06a01a2df71e55d411a463bf904aec))
+
 ## [1.3.1](https://github.com/jonsoku-dev/agentic-sdd/compare/v1.3.0...v1.3.1) (2026-10-24)
 
 
