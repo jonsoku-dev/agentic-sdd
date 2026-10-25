@@ -15,6 +15,9 @@ from pathlib import Path
 
 PREFIX = r"(?:pstack|harness|ROUTING|rea):"
 SELF_REVIEW = re.compile(r"(?i)self[- ]review|no (?:sub)?agent|not independent|without (?:a )?(?:sub)?agent|primary (?:self|own)|\|inline\b")
+# high-confidence token shapes only; progress.md is copied into reports and the dashboard
+SECRET = re.compile(r"AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{40,}|sk-ant-[A-Za-z0-9_-]{20,}"
+                    r"|sk-(?:proj-)?[A-Za-z0-9_-]{32,}|xox[abposr]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----")
 MISFORMED = re.compile(rf"^\s*(?:[-*]\s+|\d+[.)]\s+)?`?{PREFIX}|^\s+{PREFIX}")
 
 
@@ -32,6 +35,8 @@ def check(progress: Path) -> list[str]:
     lines = text.splitlines()
     problems = [f"line {n}: rewrite at column 1 without bullet or backticks: {l.strip()[:120]}"
                 for n, l in enumerate(lines, 1) if MISFORMED.match(l) and not re.match(PREFIX, l)]
+    problems += [f"line {n}: looks like a secret; replace it with <REDACTED> and keep the value in the environment"
+                 for n, l in enumerate(lines, 1) if SECRET.search(l)]
     reviews = [l for l in lines if l.startswith("pstack: O-interrogate|")]
     if not reviews:
         problems.append("missing: pstack: O-interrogate|<host>|<reviewer subagent_type> → <n> findings")

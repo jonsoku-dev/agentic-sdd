@@ -45,6 +45,11 @@ class ProgressGateTest(unittest.TestCase):
             text = GOOD.replace("pstack: O-interrogate|claude|pstack:effort-medium → 2 findings", line)
             self.assertTrue(any("self-review" in p for p in self.run_gate(text)), line)
 
+    def test_secret_shapes_are_flagged_but_evidence_ids_are_not(self):
+        leaked = GOOD + "harness: token ghp_" + "a" * 36 + "\n"
+        self.assertTrue(any("looks like a secret" in p for p in self.run_gate(leaked)))
+        self.assertEqual(self.run_gate(GOOD.replace("ev_adf6e4ce87099f67", "ev_" + "ab12" * 16)), [])
+
     def test_claims_met_ignores_negations(self):
         self.assertTrue(claims_met("Status: Final Goal met — specs closed"))
         self.assertTrue(claims_met("The Final Goal is met."))

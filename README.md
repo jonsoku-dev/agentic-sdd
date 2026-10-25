@@ -169,7 +169,7 @@ skill, or the skill loads twice.
 | Edition | Hosts | Hooks | Use when |
 |---|---|---|---|
 | `agentic-sdd` | Claude Code, Codex | none | Your organization blocks plugin hooks (`allowManagedHooksOnly`, `disableAllHooks`), or you want nothing to run outside the model's own tool calls |
-| `agentic-sdd-guarded` | Claude Code | `Stop`, `PreToolUse` (`ScheduleWakeup`), `PostToolUse` (`Agent`/`Task`, async) | You want the harness, not the model, to enforce the completion gate |
+| `agentic-sdd-guarded` | Claude Code | `Stop`, `PreToolUse` (`ScheduleWakeup`, git `Bash`), `PostToolUse` (`Agent`/`Task`, async) | You want the harness, not the model, to enforce the completion gate |
 
 ```sh
 claude plugin marketplace add jonsoku-dev/agentic-sdd
@@ -195,7 +195,12 @@ What the guarded hooks do, all in Python with no network access:
   `progress_gate.py` fails or no reviewer subagent was spawned, and tells the
   model what to fix. It blocks at most twice per session, then lets the turn
   end and records the release, so a gate that cannot clear never traps you.
-- **PreToolUse** denies `ScheduleWakeup` inside an agentic-sdd project.
+- **PreToolUse** denies `ScheduleWakeup` inside an agentic-sdd project, and
+  denies the git commands the skill has no authority for (`push`,
+  `reset --hard`, `clean -f`, `branch -D`, `stash`, and `checkout`/`restore .`
+  that discard the working tree), parsed per git subcommand so commits and
+  ordinary checkouts pass. Adapted from mattpocock/skills
+  `git-guardrails-claude-code` (MIT).
 - **PostToolUse** (async) appends each subagent spawn (type and description,
   never the prompt) to `<project>/.agentic-sdd/ledger.jsonl`.
 

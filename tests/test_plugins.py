@@ -54,6 +54,8 @@ class EditionsTest(unittest.TestCase):
 
     def test_editions_differ_only_where_intended(self):
         self.assertFalse((FREE / "hooks").exists())
+        policy = (FREE / "skills" / "dashboard" / "agents" / "openai.yaml").read_text()
+        self.assertIn("allow_implicit_invocation: false", policy)
         self.assertTrue((GUARDED / "hooks" / "hooks.json").is_file())
         self.assertTrue((FREE / ".codex-plugin" / "plugin.json").is_file())
         self.assertFalse((GUARDED / ".codex-plugin").exists())
@@ -120,6 +122,16 @@ class WakeupTest(unittest.TestCase):
         out = hook("block_wakeup.py", {"cwd": str(root / "specs"), "session_id": "s"})
         self.assertEqual(out["hookSpecificOutput"]["permissionDecision"], "deny")
         self.assertEqual(hook("block_wakeup.py", {"cwd": tempfile.mkdtemp(), "session_id": "s"}), {})
+
+
+class GitGuardTest(unittest.TestCase):
+    def test_denies_out_of_authority_git_only_in_a_project(self):
+        root = project(PROGRESS_MET)
+        deny = hook("git_guard.py", {"cwd": str(root), "session_id": "s", "tool_input": {"command": "git add -A && git push origin main"}})
+        self.assertEqual(deny["hookSpecificOutput"]["permissionDecision"], "deny")
+        for ok in ("git commit -m done", "echo 'git push'", "git checkout ./todo.py", "git branch -d merged"):
+            self.assertEqual(hook("git_guard.py", {"cwd": str(root), "session_id": "s", "tool_input": {"command": ok}}), {}, ok)
+        self.assertEqual(hook("git_guard.py", {"cwd": tempfile.mkdtemp(), "tool_input": {"command": "git push"}}), {})
 
 
 class ReportAndDashboardTest(unittest.TestCase):

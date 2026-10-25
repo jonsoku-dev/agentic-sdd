@@ -269,7 +269,10 @@ See [kanban board](references/kanban-board.md).
 Require explicit confirmation before:
 
 - Destructive operations (delete data, drop tables, force push, etc.)
-- Handling secrets or credentials
+- Handling secrets or credentials. Never write one into `progress.md`, specs,
+  evidence, or reports: put `<REDACTED>`, keep the value in an environment
+  variable, and quote only the lines that carry the signal (`progress_gate.py`
+  fails on known token shapes)
 - Changing scope beyond the agreed Final Goal
 - Installing Spec Kit extensions/presets/integrations
 

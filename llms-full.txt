@@ -180,7 +180,7 @@ skill, or the skill loads twice.
 | Edition | Hosts | Hooks | Use when |
 |---|---|---|---|
 | `agentic-sdd` | Claude Code, Codex | none | Your organization blocks plugin hooks (`allowManagedHooksOnly`, `disableAllHooks`), or you want nothing to run outside the model's own tool calls |
-| `agentic-sdd-guarded` | Claude Code | `Stop`, `PreToolUse` (`ScheduleWakeup`), `PostToolUse` (`Agent`/`Task`, async) | You want the harness, not the model, to enforce the completion gate |
+| `agentic-sdd-guarded` | Claude Code | `Stop`, `PreToolUse` (`ScheduleWakeup`, git `Bash`), `PostToolUse` (`Agent`/`Task`, async) | You want the harness, not the model, to enforce the completion gate |
 
 ```sh
 claude plugin marketplace add jonsoku-dev/agentic-sdd
@@ -206,7 +206,12 @@ What the guarded hooks do, all in Python with no network access:
   `progress_gate.py` fails or no reviewer subagent was spawned, and tells the
   model what to fix. It blocks at most twice per session, then lets the turn
   end and records the release, so a gate that cannot clear never traps you.
-- **PreToolUse** denies `ScheduleWakeup` inside an agentic-sdd project.
+- **PreToolUse** denies `ScheduleWakeup` inside an agentic-sdd project, and
+  denies the git commands the skill has no authority for (`push`,
+  `reset --hard`, `clean -f`, `branch -D`, `stash`, and `checkout`/`restore .`
+  that discard the working tree), parsed per git subcommand so commits and
+  ordinary checkouts pass. Adapted from mattpocock/skills
+  `git-guardrails-claude-code` (MIT).
 - **PostToolUse** (async) appends each subagent spawn (type and description,
   never the prompt) to `<project>/.agentic-sdd/ledger.jsonl`.
 
@@ -806,7 +811,10 @@ See [kanban board](references/kanban-board.md).
 Require explicit confirmation before:
 
 - Destructive operations (delete data, drop tables, force push, etc.)
-- Handling secrets or credentials
+- Handling secrets or credentials. Never write one into `progress.md`, specs,
+  evidence, or reports: put `<REDACTED>`, keep the value in an environment
+  variable, and quote only the lines that carry the signal (`progress_gate.py`
+  fails on known token shapes)
 - Changing scope beyond the agreed Final Goal
 - Installing Spec Kit extensions/presets/integrations
 
@@ -941,7 +949,8 @@ No reviewer can run → `pstack: O-interrogate|<host>|BLOCKED: independent revie
 and the Final Goal stays open.
 
 Before "Final Goal met": `python3 <this skill>/scripts/progress_gate.py progress.md`
-must print `ok` (it names any bulleted or backticked breadcrumb to rewrite).
+must print `ok` (it names any bulleted or backticked breadcrumb to rewrite, and
+any line that looks like a secret: write `<REDACTED>` instead).
 
 ## REA closeout, common path
 

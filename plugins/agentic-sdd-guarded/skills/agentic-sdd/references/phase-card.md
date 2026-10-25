@@ -46,7 +46,8 @@ No reviewer can run → `pstack: O-interrogate|<host>|BLOCKED: independent revie
 and the Final Goal stays open.
 
 Before "Final Goal met": `python3 <this skill>/scripts/progress_gate.py progress.md`
-must print `ok` (it names any bulleted or backticked breadcrumb to rewrite).
+must print `ok` (it names any bulleted or backticked breadcrumb to rewrite, and
+any line that looks like a secret: write `<REDACTED>` instead).
 
 ## REA closeout, common path
 

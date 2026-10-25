@@ -1,0 +1,6 @@
+interface:
+  display_name: "Agentic SDD dashboard"
+  short_description: "Start the local read-only dashboard for this project"
+
+policy:
+  allow_implicit_invocation: false
