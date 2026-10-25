@@ -64,8 +64,11 @@ def main() -> int:
         common.append(root, {"event": "gate_released", "session": session, "problems": len(problems)})
         return 0
     common.append(root, {"event": "gate_blocked", "session": session, "problems": problems[:10]})
-    reason = ("agentic-sdd completion gate is open, so the Final Goal is not met yet. Fix these, "
-              "rerun scripts/progress_gate.py until it prints ok, then finish:\n- " + "\n- ".join(problems[:10]))
+    reason = ("agentic-sdd completion gate is open, so the Final Goal is not met yet. Fix these and rerun "
+              "scripts/progress_gate.py until it prints ok. If you cannot (for example the user forbade "
+              "subagents), write `pstack: O-interrogate|<host>|BLOCKED: independent review`, change the "
+              "status so it does not say the Final Goal is met, and tell the user what is missing:\n- "
+              + "\n- ".join(problems[:10]))
     print(json.dumps({"decision": "block", "reason": reason}))
     return 0
 

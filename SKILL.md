@@ -33,7 +33,9 @@ rea: <feature>|pass|<ev_… id>
 The review line names a reviewer you actually spawned at `converge` (a separate
 subagent, not your own reading of the diff); when no reviewer can run, write
 `pstack: O-interrogate|<host>|BLOCKED: independent review` and leave the Final
-Goal open. A missing line means the feature is not done. Before writing
+Goal open. The same holds when the user tells you not to spawn subagents: follow the
+instruction, write the BLOCKED line, and report the Final Goal as not met,
+naming the missing review. A self-review never fills the review line. A missing line means the feature is not done. Before writing
 "Final Goal met", run `python3 <this skill>/scripts/progress_gate.py progress.md`
 and fix what it prints until it prints `ok`.
 
