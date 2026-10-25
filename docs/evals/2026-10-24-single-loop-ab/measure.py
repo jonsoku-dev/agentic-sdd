@@ -92,6 +92,38 @@ def transcript(path: Path):
     return t
 
 
+def kv_acceptance(repo: Path, store_dir: str):
+    """Black-box checks for the kv TTL brief (base2)."""
+    import time
+    store = os.path.join(store_dir, "kv.json")
+    env = dict(os.environ, KV_FILE=store)
+
+    def kv(*a):
+        p = subprocess.run(["node", "src/cli.js", *a], cwd=repo, capture_output=True, text=True, env=env, timeout=30)
+        return p.returncode, p.stdout.strip(), p.stderr.strip()
+
+    r = {}
+    Path(store).write_text(json.dumps({"entries": {"old": {"value": "v"}}}))
+    r["legacy_store_reads"] = kv("get", "old")[:2] == (0, "v")
+    kv("set", "short", "1", "--ttl", "1")
+    kv("set", "keep", "2")
+    rc, out, _ = kv("get", "short")
+    r["ttl_key_readable_before_expiry"] = rc == 0 and out == "1"
+    rc, out, _ = kv("ttl", "short")
+    r["ttl_prints_seconds"] = rc == 0 and out.isdigit() and int(out) <= 1
+    rc, _, err = kv("ttl", "keep")
+    r["ttl_without_expiry_fails"] = rc == 1 and bool(err)
+    rc, _, err = kv("ttl", "missing")
+    r["ttl_missing_fails"] = rc == 1 and bool(err)
+    time.sleep(1.6)
+    rc, _, err = kv("get", "short")
+    live = r["ttl_key_readable_before_expiry"]
+    r["expired_get_fails"] = live and rc == 1 and bool(err)
+    rc, out, _ = kv("list")
+    r["expired_absent_from_list"] = live and rc == 0 and "keep" in out.split() and "short" not in out.split() and "old" in out.split()
+    return r
+
+
 def entry(repo: Path):
     for c in [repo / "todo.py", repo / "todo", *repo.glob("src/**/todo.py"), *repo.glob("**/__main__.py")]:
         if c.is_file() and ".specify" not in c.parts and ".claude" not in c.parts:
@@ -100,6 +132,9 @@ def entry(repo: Path):
 
 
 def acceptance(repo: Path, brief: str):
+    if brief.startswith("K"):
+        with tempfile.TemporaryDirectory() as d:
+            return kv_acceptance(repo, store_dir=d)
     cmd = entry(repo)
     if not cmd:
         return {"entry": None}

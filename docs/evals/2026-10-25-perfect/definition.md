@@ -10,9 +10,9 @@ files and transcripts, never from an agent's summary.
 
 | Host / model | Briefs | Runs |
 |---|---|---|
-| Claude Code / sonnet | todo S, todo L | 2 + 2 |
-| Claude Code / opus | todo L | 4 |
-| Codex / gpt-6-luna | todo S, todo L | 2 + 2 |
+| Claude Code / sonnet | todo S, kv K | 2 + 2 |
+| Claude Code / opus | kv K, todo L | 2 + 2 |
+| Codex / gpt-6-luna | todo S, kv K | 2 + 2 |
 | Grok / grok-4.7-build (pstack absent) | todo S | 6 (amendment below) |
 
 Cursor is out of scope: account-synced rules reach every isolated config dir.
@@ -57,9 +57,10 @@ matrices with no skill or plugin change in between. Plugin matrix per run:
 | Cell | Hook-free | Guarded |
 |---|---|---|
 | Claude sonnet, todo S | 6 | 6 |
-| Claude sonnet, todo L | 6 | 6 |
+| Claude sonnet, kv K | 6 | 6 |
+| Claude opus, kv K | 2 | 2 |
 | Claude opus, todo L | 6 | 6 |
-| Codex, todo S / todo L | 2 / 2 | — |
+| Codex, todo S / kv K | 2 / 2 | — |
 
 C10 generalised: a cell whose same-version cost varies by more than 15% of its
 mean (coefficient of variation) is judged on at least six runs. Sonnet cells
@@ -71,10 +72,5 @@ Baseline amendment for the plugin editions (disclosed in result.md): C10 for
 the plugin editions uses plugin matrix 1 as its baseline, not m3. Plugin-loaded
 runs invoked the installed `speckit-*` commands in most runs (4–6 calls), as
 `SKILL.md` asks; skill-copy runs mostly read the templates directly (0 calls).
-That cost 13–18% more on the (since removed) second-repository sonnet cell at equal quality, so m3 is not a like-for-
+That costs 13–18% more on sonnet kv at equal quality, so m3 is not a like-for-
 like baseline for a loader that follows the rule more often.
-
-Removed (2026-10-25, at the user's request): the second evaluation repository
-(a small Node key-value CLI, `base2`, brief K) and its checker. Matrices now use
-only the todo repository, briefs S and L. Earlier results that mention it stay
-as recorded history.

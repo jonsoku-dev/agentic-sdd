@@ -1,5 +1,5 @@
 #!/bin/sh
-# usage: run3.sh <sl-root> <host claude|codex|grok> <base dir name> <version> <brief S|L> <rep> <outdir> [model]
+# usage: run3.sh <sl-root> <host claude|codex|grok> <base dir name> <version> <brief S|L|K> <rep> <outdir> [model]
 # One isolated headless run. Claude: --setting-sources project + --plugin-dir pstack + strict MCP.
 # Codex: HOME and CODEX_HOME point at throwaway dirs holding only auth, pstack, the pstack AGENTS.md block, and REA.
 # Grok: HOME and GROK_HOME are throwaway dirs holding only auth (keychain linked); no pstack, no REA MCP.
@@ -18,6 +18,7 @@ esac
 case $brief in
   S) goal="add a 'todo edit <id> <new text>' subcommand to this repository's todo CLI (replaces the item's text; unknown id exits non-zero with a stderr message; tests cover both)" ;;
   L) goal="extend this todo CLI with (1) priorities 1-3 via 'todo add --priority N' shown in list, (2) due dates via 'todo add --due YYYY-MM-DD', (3) 'todo list --sort due|priority' and 'todo list --overdue', (4) migration of existing stores written by the current version with no data loss, (5) tests for every new behaviour. Keep specs small: if the task list exceeds about 12 tasks, split into several numbered specs and finish them in order" ;;
+  K) goal="add key expiry to this kv CLI: 'kv set <key> <value> --ttl <seconds>' makes the key expire after that many seconds; an expired key is absent from 'kv get' (exit 1 with a stderr message) and from 'kv list'; 'kv ttl <key>' prints the remaining whole seconds, and exits 1 with a stderr message when the key is missing or has no TTL; stores written by the current version keep working; node tests cover each behaviour" ;;
 esac
 prompt="Final Goal: $goal. Deliver it as new numbered Spec Kit features end to end through the agentic-sdd skill: specify, plan, tasks, implement, converge (once per spec), then REA closeout. Fully autonomous, no questions, commit as you go. Record every breadcrumb in progress.md. Stop when progress.md states the Final Goal is met."
 cd "$dir" || exit 1
