@@ -17,8 +17,10 @@ UNSCORED = {"extra_flags_after_text"}
 
 def cell(tag):
     # tag = host-base-version-brief-rep; rep is <model letters><n>, e.g. so1 (sonnet), op2 (opus)
-    host, base, _v, brief, rep = tag.split("-")
-    return f"{host}/{rep.rstrip('0123456789')}-{base}-{brief}"
+    host, base, v, brief, rep = tag.split("-")
+    # plugin editions are separate cells; release/fix versions of the same loader share one
+    edition = f"[{v}]" if v in ("pfree", "pguard") else ""
+    return f"{host}/{rep.rstrip('0123456789')}-{base}-{brief}{edition}"
 
 
 def spawned_reviewer(host, jl: Path):
@@ -88,8 +90,9 @@ def main():
         cells.setdefault(r["cell"], []).append(r)
     for c, rs in sorted(cells.items()):
         costs = [r["cost"] for r in rs if r["cost"] is not None]
-        if costs and c in base:
-            limit = 1.15 * sum(base[c]) / len(base[c])
+        bc = base.get(c) or base.get(c.split("[")[0])
+        if costs and bc:
+            limit = 1.15 * sum(bc) / len(bc)
             if sum(costs) / len(costs) > limit:
                 for r in rs:
                     r["fails"].append("C10")

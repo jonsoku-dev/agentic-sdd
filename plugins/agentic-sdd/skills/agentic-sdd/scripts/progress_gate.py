@@ -14,6 +14,7 @@ import sys
 from pathlib import Path
 
 PREFIX = r"(?:pstack|harness|ROUTING|rea):"
+SELF_REVIEW = re.compile(r"(?i)self[- ]review|no (?:sub)?agent|not independent|without (?:a )?(?:sub)?agent|primary (?:self|own)|\|inline\b")
 MISFORMED = re.compile(rf"^\s*(?:[-*]\s+|\d+[.)]\s+)?`?{PREFIX}|^\s+{PREFIX}")
 
 
@@ -27,6 +28,9 @@ def check(progress: Path) -> list[str]:
         problems.append("missing: pstack: O-interrogate|<host>|<reviewer subagent_type> → <n> findings")
     elif any("BLOCKED" in l for l in reviews):
         problems.append("review is BLOCKED: independent review; the Final Goal stays open")
+    elif all(SELF_REVIEW.search(l) for l in reviews):
+        problems.append("the review line describes a self-review; spawn a reviewer subagent, or write "
+                        "BLOCKED: independent review and leave the Final Goal open")
     root = progress.parent
     features = sorted({d.name for d in [*root.glob("specs/*/"), *root.glob(".specify/specs/*/")] if d.is_dir()})
     for f in features:

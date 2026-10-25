@@ -39,6 +39,12 @@ class ProgressGateTest(unittest.TestCase):
         problems = self.run_gate(GOOD, features=("001-todo-edit", "002-errors"))
         self.assertEqual(problems, ["missing: rea: 002-errors|pass|<ev_… id copied verbatim>"])
 
+    def test_self_review_does_not_pass_as_independent(self):
+        for line in ("pstack: O-interrogate|claude|primary self-review, user-directed (no subagent spawned) → 0 findings",
+                     "pstack: O-interrogate|codex|inline → self-check against FR list"):
+            text = GOOD.replace("pstack: O-interrogate|claude|pstack:effort-medium → 2 findings", line)
+            self.assertTrue(any("self-review" in p for p in self.run_gate(text)), line)
+
     def test_blocked_review_keeps_gate_open(self):
         text = GOOD.replace("pstack:effort-medium → 2 findings", "BLOCKED: independent review")
         self.assertIn("review is BLOCKED: independent review; the Final Goal stays open", self.run_gate(text))
