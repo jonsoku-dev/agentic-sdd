@@ -105,17 +105,18 @@ def kv_acceptance(repo: Path, store_dir: str):
     r = {}
     Path(store).write_text(json.dumps({"entries": {"old": {"value": "v"}}}))
     r["legacy_store_reads"] = kv("get", "old")[:2] == (0, "v")
-    kv("set", "short", "1", "--ttl", "1")
+    # 3 s TTL: each node start costs ~0.6 s, and a 1 s TTL expired before the ttl check ran
+    kv("set", "short", "1", "--ttl", "3")
     kv("set", "keep", "2")
     rc, out, _ = kv("get", "short")
     r["ttl_key_readable_before_expiry"] = rc == 0 and out == "1"
     rc, out, _ = kv("ttl", "short")
-    r["ttl_prints_seconds"] = rc == 0 and out.isdigit() and int(out) <= 1
+    r["ttl_prints_seconds"] = rc == 0 and out.isdigit() and int(out) <= 3
     rc, _, err = kv("ttl", "keep")
     r["ttl_without_expiry_fails"] = rc == 1 and bool(err)
     rc, _, err = kv("ttl", "missing")
     r["ttl_missing_fails"] = rc == 1 and bool(err)
-    time.sleep(1.6)
+    time.sleep(3.6)
     rc, _, err = kv("get", "short")
     live = r["ttl_key_readable_before_expiry"]
     r["expired_get_fails"] = live and rc == 1 and bool(err)
