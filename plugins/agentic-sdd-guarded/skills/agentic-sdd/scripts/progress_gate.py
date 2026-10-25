@@ -18,6 +18,15 @@ SELF_REVIEW = re.compile(r"(?i)self[- ]review|no (?:sub)?agent|not independent|w
 MISFORMED = re.compile(rf"^\s*(?:[-*]\s+|\d+[.)]\s+)?`?{PREFIX}|^\s+{PREFIX}")
 
 
+# "Final Goal met", "The Final Goal is met", "Final Goal: complete"; not "Final Goal NOT met"
+MET = re.compile(r"(?i)\bfinal goal\b[\s:*_`'\"-]*(?:is\s+|has been\s+|was\s+)?(?:now\s+)?(?:fully\s+)?"
+                 r"(?:met|complete|completed|done|achieved)\b")
+
+
+def claims_met(text: str) -> bool:
+    return bool(MET.search(text))
+
+
 def check(progress: Path) -> list[str]:
     text = progress.read_text(errors="replace")
     lines = text.splitlines()

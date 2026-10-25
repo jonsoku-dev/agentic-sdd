@@ -104,6 +104,10 @@ class StopGateTest(unittest.TestCase):
         self.assertEqual(hook("stop_gate.py", {"cwd": str(root), "session_id": "new"}), {})
         self.assertNotIn("SECRET", (root / ".agentic-sdd" / "ledger.jsonl").read_text())
 
+    def test_honest_not_met_status_is_not_blocked(self):
+        root = project(PROGRESS_MET.replace("Status: Final Goal met", "Status: Final Goal NOT met: review BLOCKED"))
+        self.assertEqual(hook("stop_gate.py", {"cwd": str(root), "session_id": "s"}), {})
+
     def test_unfinished_goal_and_foreign_dirs_are_ignored(self):
         root = project(PROGRESS_MET.replace("Status: Final Goal met", "Status: implementing"))
         self.assertEqual(hook("stop_gate.py", {"cwd": str(root), "session_id": "s"}), {})

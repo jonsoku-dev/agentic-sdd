@@ -16,7 +16,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
 
 MAX_BLOCKS = 2
-MET = re.compile(r"(?i)final goal[^\n]*\b(met|complete|done)\b")
 REVIEW = re.compile(r"(?i)review|interrogat|audit|critic|thermo")
 
 
@@ -48,11 +47,12 @@ def main() -> int:
         return 0
     progress = root / "progress.md"
     text = progress.read_text(errors="replace")
-    if not MET.search(text):
+    gate = common.gate_module()
+    if not gate.claims_met(text):
         return 0
     session = data.get("session_id", "")
     ledger = common.events(root)
-    problems = common.gate_module().check(progress)
+    problems = gate.check(progress)
     if re.search(r"^pstack: O-interrogate\|", text, re.M) and not reviewer_spawned(data.get("transcript_path"), ledger):
         problems.append("no reviewer subagent was spawned: launch one (Agent tool, run_in_background: false) "
                         "and record what it found")

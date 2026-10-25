@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
-from progress_gate import check
+from progress_gate import check, claims_met
 
 GOOD = """# Progress
 pstack: O-poteto|claude|inline → T001–T004 verified
@@ -44,6 +44,12 @@ class ProgressGateTest(unittest.TestCase):
                      "pstack: O-interrogate|codex|inline → self-check against FR list"):
             text = GOOD.replace("pstack: O-interrogate|claude|pstack:effort-medium → 2 findings", line)
             self.assertTrue(any("self-review" in p for p in self.run_gate(text)), line)
+
+    def test_claims_met_ignores_negations(self):
+        self.assertTrue(claims_met("Status: Final Goal met — specs closed"))
+        self.assertTrue(claims_met("The Final Goal is met."))
+        self.assertFalse(claims_met("Final Goal NOT met: the user forbade subagents"))
+        self.assertFalse(claims_met("## Final Goal\nAdd todo edit (done when tests pass)."))
 
     def test_blocked_review_keeps_gate_open(self):
         text = GOOD.replace("pstack:effort-medium → 2 findings", "BLOCKED: independent review")

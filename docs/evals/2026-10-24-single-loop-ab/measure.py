@@ -202,7 +202,9 @@ def repo_facts(repo: Path):
     f["gate_review_line"] = bool(re.search(r"^pstack: O-interrogate\|", text, re.M))
     f["gate_rea_line"] = bool(re.search(r"^rea: [^|\n]+\|pass\|ev_", text, re.M))
     f["breadcrumbs_bulleted"] = len(re.findall(r"^\s*[-*]\s+(?:pstack|harness|ROUTING|rea):", text, re.M))
-    f["final_goal_met"] = bool(re.search(r"(?i)final goal[^\n]*\b(met|complete|done)\b", text))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
+    import progress_gate
+    f["final_goal_met"] = progress_gate.claims_met(text)
     allmd = "\n".join(p.read_text(errors="replace") for p in repo.rglob("*.md") if not {".claude", ".specify"} & set(p.parts))
     f["rea_evidence_ids"] = sorted(set(re.findall(r"\bev_[0-9a-f]{6,}", allmd)))
     code = [p for p in repo.rglob("*.py") if not {".claude", ".specify", "tests"} & set(p.parts) and not p.name.startswith("test")]

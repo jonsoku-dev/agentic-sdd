@@ -115,7 +115,7 @@ def snapshot(project: Path, claude_home: Path | None = None) -> dict:
     return {
         "project": str(project),
         "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "final_goal_claimed": bool(re.search(r"(?i)final goal[^\n]*\b(met|complete|done)\b", text)),
+        "final_goal_claimed": progress_gate.claims_met(text),
         "gate": {"ok": not gate, "problems": gate},
         "features": [feature(d, text) for d in feature_dirs(project)],
         "breadcrumbs": crumbs,
