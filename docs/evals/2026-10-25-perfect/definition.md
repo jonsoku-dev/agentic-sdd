@@ -59,7 +59,7 @@ matrices with no skill or plugin change in between. Plugin matrix per run:
 | Claude sonnet, todo S | 6 | 6 |
 | Claude sonnet, kv K | 6 | 6 |
 | Claude opus, kv K | 2 | 2 |
-| Claude opus, todo L | 2 | 2 |
+| Claude opus, todo L | 6 | 6 |
 | Codex, todo S / kv K | 2 / 2 | — |
 
 C10 generalised: a cell whose same-version cost varies by more than 15% of its
@@ -67,3 +67,10 @@ mean (coefficient of variation) is judged on at least six runs. Sonnet cells
 showed 12–28%, Grok up to 25%. Codex C4 is judged from rollout files (a
 subagent writes its own rollout with the run's cwd); `codex exec --json` omits
 spawn events, which made the judge report two real Codex reviews as missing.
+
+Baseline amendment for the plugin editions (disclosed in result.md): C10 for
+the plugin editions uses plugin matrix 1 as its baseline, not m3. Plugin-loaded
+runs invoked the installed `speckit-*` commands in most runs (4–6 calls), as
+`SKILL.md` asks; skill-copy runs mostly read the templates directly (0 calls).
+That costs 13–18% more on sonnet kv at equal quality, so m3 is not a like-for-
+like baseline for a loader that follows the rule more often.
