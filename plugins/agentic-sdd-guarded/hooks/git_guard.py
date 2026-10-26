@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-"""PreToolUse hook (Bash): in an agentic-sdd project, deny the git commands SKILL.md gives no
-permission for: push, reset --hard, clean -f, branch -D, stash (except list/show), and checkout /
-restore that discard the whole working tree. Commits and ordinary checkouts pass.
+"""PreToolUse hook (Bash): in an agentic-sdd project, deny the commands SKILL.md gives no
+permission for: git push, git merge (except --abort), deploy/publish/apply of the
+binaries listed in why_deploy, reset --hard, clean -f, branch -D, stash (except
+list/show), and checkout / restore that discard the whole working tree.
+Commits and ordinary checkouts pass.
 
 Adapted from mattpocock/skills `git-guardrails-claude-code` (MIT), but parsed per git subcommand
 instead of substring matching, so `echo "git push"` and `git checkout ./src/a.py` are not blocked.
@@ -19,6 +21,8 @@ import common  # noqa: E402
 
 SHELLS = {"sh", "bash", "zsh", "dash"}
 GIT_VALUE_OPTS = {"-C", "-c", "--git-dir", "--work-tree", "--namespace"}
+DEPLOY_BINARIES = {"fly", "flyctl", "wrangler", "serverless", "sls"}
+PUBLISH_BINARIES = {"npm", "pnpm", "yarn", "bun"}
 
 
 def segments(command: str) -> list[list[str]]:
@@ -57,6 +61,8 @@ def why_denied(args: list[str]) -> str | None:
     sub, rest = args[0], args[1:]
     if sub == "push":
         return "git push"
+    if sub == "merge" and "--abort" not in rest:
+        return "git merge"
     if sub == "reset" and "--hard" in rest:
         return "git reset --hard"
     if sub == "clean" and any(a == "--force" or re.fullmatch(r"-[a-zA-Z]*f[a-zA-Z]*", a) for a in rest):
@@ -70,6 +76,32 @@ def why_denied(args: list[str]) -> str | None:
     return None
 
 
+def why_deploy(seg: list[str]) -> str | None:
+    """Readable refusal for a deploy, publish, or cluster apply. Echo and git messages pass."""
+    index = 0
+    while index < len(seg) and re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", seg[index]):
+        index += 1
+    if index >= len(seg):
+        return None
+    name = Path(seg[index]).name
+    rest = seg[index + 1:]
+    if name == "deploy":
+        return "deploy"
+    if name in PUBLISH_BINARIES and "publish" in rest:
+        return f"{name} publish"
+    if name == "vercel" and (not rest or rest[0] == "deploy" or "--prod" in rest):
+        return "vercel deploy"
+    if name in DEPLOY_BINARIES and rest and rest[0] == "deploy":
+        return f"{name} deploy"
+    if name in {"kubectl", "helm"} and "apply" in rest:
+        return f"{name} apply"
+    if name == "terraform" and "apply" in rest:
+        return "terraform apply"
+    if name == "gh" and len(rest) >= 2 and rest[0] == "release" and rest[1] == "create":
+        return "gh release create"
+    return None
+
+
 def scan(command: str, depth: int = 0) -> str | None:
     for seg in segments(command):
         if depth < 2 and len(seg) >= 3 and Path(seg[0]).name in SHELLS and "-c" in seg[1:-1]:
@@ -78,6 +110,8 @@ def scan(command: str, depth: int = 0) -> str | None:
                 return hit
         args = git_args(seg)
         if args is not None and (hit := why_denied(args)):
+            return hit
+        if hit := why_deploy(seg):
             return hit
     return None
 
@@ -94,8 +128,8 @@ def main() -> int:
         "hookEventName": "PreToolUse",
         "permissionDecision": "deny",
         "permissionDecisionReason": (f"agentic-sdd: `{hit}` is outside this skill's authority (no push, merge, "
-                                     "reset, stash, or discarding work). Ask the user to run it, or continue "
-                                     "without it."),
+                                     "deploy, reset, stash, or discarding work). Ask the user to run it, or "
+                                     "continue without it."),
     }}))
     return 0
 

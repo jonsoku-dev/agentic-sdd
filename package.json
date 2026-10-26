@@ -53,7 +53,7 @@
     "linux"
   ],
   "scripts": {
-    "test": "python3 -m unittest discover -s tests -p 'test_*.py'",
+    "test": "python3 -m unittest discover -s tests -p 'test_*.py' && python3 -m unittest discover -s hosts/cursor/hooks/agentic-sdd-continue -p 'test_*.py'",
     "setup": "node bin/agentic-sdd.js",
     "check-deps": "node bin/agentic-sdd.js check-deps"
   },

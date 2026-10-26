@@ -13,7 +13,7 @@ Converged is not finish; only REA `pass` or `not-applicable` finishes.
 |------|------|----------|
 | **Economy** | High volume, low risk, explicit budget | Run packets inline; light child models only for leaves a single-loop trigger justifies; compact early; keep Spec Kit artifacts but narrow intermediate checks |
 | **Balanced** | Default | Full Spec Kit core flow; repository checks + narrowest extra proof; pstack-sheet routing at phase/recovery boundaries |
-| **Thorough** | High-risk or user asks for high confidence | Full Spec Kit + clarify/analyze/checklist as needed; multi-perspective review at converge; deeper evidence classes |
+| **Thorough** | High-risk or user asks for high confidence | Full Spec Kit + clarify/analyze/checklist as needed; the one verifier applies the multi-perspective checklist at converge; deeper evidence classes |
 
 ## Defaults
 
@@ -24,11 +24,13 @@ Converged is not finish; only REA `pass` or `not-applicable` finishes.
 - Light-path (no full Spec Kit) remains a separate opt-in for trivial work only
   — it is not Economy mode.
 
-## Interaction with pstack panels
+## Interaction with review
 
-See the "Panel size by cost mode" table in `pstack-integration.md`: Economy
-runs a 2-reviewer interrogate and skips `architect` on single-file specs;
-Thorough keeps the full panel and adds `thermos` where present.
+See "Review size by cost mode" in `pstack-integration.md`. Every mode spawns
+one independent verifier. Economy still skips `architect` on single-file
+specs. Thorough adds `thermos` where present and has that one verifier apply
+the multi-perspective checklist. It does not add reviewer seats. A wider
+panel comes back only through the eval procedure in that file.
 
 ## Interaction with routing
 

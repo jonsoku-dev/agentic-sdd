@@ -178,19 +178,39 @@ rows must run (skill or obligation) every time the phase is entered;
 Exact slash names may vary by plugin version; use the installed plugin's listed
 commands when they differ.
 
-**Panel size by cost mode** ([cost-modes.md](cost-modes.md)). The fixed
+**Review size by cost mode** ([cost-modes.md](cost-modes.md)). The fixed
 per-feature cost of the map (probe, sharpen, how, architect, interrogate, REA)
 is roughly constant while the defects it catches grow with surface area; one
 measured sandbox run (n = 1, asymmetric prompts) put the full map at roughly an
 order of magnitude more cost than bare Spec Kit on a 60-line feature while
 catching three shipped defects; see
-`docs/evals/2026-10-19-sandbox-ab/result.md`. Size the panels:
+`docs/evals/2026-10-19-sandbox-ab/result.md`. Every mode spawns **one**
+independent verifier for `O-interrogate` (the `conflict` trigger: a fresh
+context that does not share the author's anchoring). Cost mode changes
+`architect` and whether `thermos` runs; it does not add reviewer seats.
 
-| Mode | `O-architect` | `O-interrogate` panel | `O-poteto` leaves |
-|------|---------------|-----------------------|-------------------|
-| Economy | skip for single-file specs (record `O-architect: n/a single-file`) | 2 reviewers, different families | inline; 1 worker-model leaf only on a trigger |
-| Balanced | run when code crosses a function boundary | sheet default (4) | inline; a leaf per packet that meets a trigger |
-| Thorough | always | sheet default + `thermos` on the port | inline or leaf by trigger, + re-review by a second model |
+| Mode | `O-architect` | `O-interrogate` | `O-poteto` leaves |
+|------|---------------|-----------------|-------------------|
+| Economy | skip for single-file specs (record `O-architect: n/a single-file`) | one independent verifier | inline; 1 worker-model leaf only on a trigger |
+| Balanced | run when code crosses a function boundary | one independent verifier | inline; a leaf per packet that meets a trigger |
+| Thorough | always | one independent verifier; add `thermos` on the port for auth, payment, schema, or public-API risk | inline or leaf by trigger |
+
+### Restoring a wider review panel
+
+The default stays one verifier. Add another reviewer only for a case where
+quality dropped after this default, and only by this procedure:
+
+1. A cell in [docs/evals/2026-10-25-perfect](../docs/evals/2026-10-25-perfect/definition.md)
+   flips a previously passing C1–C9 check. C10 cost alone does not add a seat.
+2. Change one thing: one extra independent verifier on that cell's case
+   (host, brief, and the risk that failed). Do not widen Economy, Balanced,
+   or Thorough as a whole.
+3. Re-run that cell at least twice with the extra verifier, and at least
+   twice without it. Keep the extra reviewer only when a check that passed
+   with it fails without it.
+4. Record the flipped cell next to this section: host, brief, criterion,
+   both outcomes, and the date. Delete the extra seat if a later pair of
+   runs passes with one verifier.
 
 ### Poteto-mode under Spec Kit (critical)
 
@@ -244,6 +264,9 @@ acceptance check, return format). Rules that hold everywhere:
   The parent never writes a leaf's worktree while the leaf holds it. After
   merging a leaf's diff, run `git worktree remove <path>` (and delete its
   branch); no leaf worktree may remain registered when the feature closes.
+  When you create that worktree, record `gate: worktree|<absolute-path>` at column 1 in `progress.md`.
+  The gate flags only that recorded path, and only while it is still checked out.
+  It never flags the main checkout, the current checkout, or a worktree you did not record.
 - **Leaves do not delegate.** File pointers, not inlined context.
 - **Model and effort:** role line from the pstack sheet when present, else the
   skill's default; the chosen level becomes the leaf's effort (see
@@ -251,15 +274,16 @@ acceptance check, return format). Rules that hold everywhere:
 - **Call as a tool, not a handoff.** The leaf returns the shared schema in
   [single-loop-default.md](single-loop-default.md); the parent keeps the
   conversation and `tasks.md`.
+- **Paste the brief.** Copy the [spawn brief](phase-card.md#spawn-brief) into the leaf or verifier prompt. An output style and `SKILL.md` apply to the parent conversation and its forks. They do not apply to an ordinary subagent.
 - **You own the leaf's diff.** Open the changed files and the decisive check
   output before accepting; write your own summary.
 
 | Host | Dispatch | Effort level | Notes |
 |------|----------|--------------|-------|
-| **Claude Code** | `Agent` with `subagent_type: "pstack:poteto-agent"`, `isolation: "worktree"` for writers; foreground (several calls in one message run in parallel) when the parent waits on the result, `run_in_background: true` only while the parent has independent work, and never `ScheduleWakeup` to wait for its own agents; put the resolved absolute `skills/poteto-mode/SKILL.md` path in the prompt | `subagent_type: "pstack:poteto-agent-<level>"` (`low`…`max`); panels/readers use `pstack:effort-<level>` | Bare `poteto-agent` errors. Verified live on this machine. |
+| **Claude Code** | `Agent` with `subagent_type: "pstack:poteto-agent"`, `isolation: "worktree"` for writers; foreground (several calls in one message run in parallel) when the parent waits on the result, `run_in_background: true` only while the parent has independent work, and never `ScheduleWakeup` to wait for its own agents; put the resolved absolute `skills/poteto-mode/SKILL.md` path in the prompt | `subagent_type: "pstack:poteto-agent-<level>"` (`low`…`max`); the one verifier uses `pstack:effort-<level>` | Bare `poteto-agent` errors. Verified live on this machine. |
 | **Cursor** | Native `poteto-agent` subagent (plugin `agents/poteto-agent.md`); own worktree for writers | Model line from `~/.cursor/rules/pstack-models.mdc` when present | `/architect`, `/arena`, `/swarm` spawn their own panels. The **Cursor Agent CLI** (`agent -p`) lists `poteto-agent` and `/goal`, and does not put marketplace plugin skills in the session catalog. `npx agentic-sdd setup --cursor-cli-skills` links them into `~/.cursor/skills`. On 2026-10-19 an `agent -p --mode ask` session reported `poteto-mode` and `architect` absent from that catalog, then opened the linked `~/.cursor/skills/poteto-mode/SKILL.md` by path (heading `# Poteto mode`). |
 | **Codex** | The session's spawn tool (`spawn_agent` under the configured namespace, e.g. `agents`) with instructions to read `poteto-mode/SKILL.md` in full first; `wait_agent` / `close_agent` to drain | Pass the level as `reasoning_effort`; `session` passes none | No `poteto-agent` type exists. **Always pass a model the spawn tool lists**: omitting `model` makes the host inject the parent slug, which `spawn_agent` can reject (`Unknown model gpt-6.1-sol`, verified live 2026-10-19). Listed that day: `gpt-6-luna`, `gpt-5.6-terra`, `gpt-5.6-luna`. The same day, `spawn_agent` with `model=gpt-6-luna` and `reasoning_effort=low` started and the child replied OK. `inherit-parent` in the Codex sheet is therefore unsafe — write explicit host-listed slugs. A thread-limit error is capacity, not a bad slug: stop spawning, close a finished agent, continue locally. See the port's `references/codex-tools.md`. |
-| **Grok Build** | `spawn_subagent` with `subagent_type: "poteto-agent"` after `npx agentic-sdd setup --grok-agents` (links the port's `poteto-agent.md` / `comment-sicko.md` into `~/.grok/agents/`; plugin agents such as `pstack:poteto-agent` are **not** in the enum). Without that link: `general-purpose` + read `poteto-mode/SKILL.md` first. `isolation: worktree` for writers | Persona `reasoning_effort`, `[subagents.models]` pins, `/effort low|medium|high|xhigh` | Verified live: the linked `poteto-agent` spawns and reads the plugin's SKILL.md. Grok runs SessionStart hooks but never injects their stdout, so the pstack mandate is installed as a home rule by `npx agentic-sdd setup --grok-mandate` (`~/.grok/rules/pstack-mandate.md`), verified loaded. On 2026-10-19 a `grok -p` debug log loaded the pstack hooks file (1 hook, 0 warnings) and did not execute `session-start.sh` (`session_start=0`; `CLAUDE_PLUGIN_ROOT` unset). That script exits 1 with `CLAUDE_PLUGIN_ROOT: unbound variable` when the variable is missing, and prints the mandate when it is set. Scope precedence keeps the Claude marketplace copy (0.9.92) over the installed Grok copy (0.9.93); `harness_probe` still reports the highest version on disk. `grok models` while logged in listed `grok-4.7` (default), `grok-4.7-build-fast`, `grok-4.6`, `grok-4.5`. |
+| **Grok Build** | `spawn_subagent` with `subagent_type: "poteto-agent"` after `npx agentic-sdd setup --grok-agents` (links the port's `poteto-agent.md` into `~/.grok/agents/`; plugin agents such as `pstack:poteto-agent` are **not** in the enum). Without that link: `general-purpose` + read `poteto-mode/SKILL.md` first. `isolation: worktree` for writers. Uninstall removes a leftover `comment-sicko.md`; new installs do not link it | Persona `reasoning_effort`, `[subagents.models]` pins, `/effort low|medium|high|xhigh` | Verified live: the linked `poteto-agent` spawns and reads the plugin's SKILL.md. Grok runs SessionStart hooks but never injects their stdout, so the pstack mandate is installed as a home rule by `npx agentic-sdd setup --grok-mandate` (`~/.grok/rules/pstack-mandate.md`), verified loaded. On 2026-10-19 a `grok -p` debug log loaded the pstack hooks file (1 hook, 0 warnings) and did not execute `session-start.sh` (`session_start=0`; `CLAUDE_PLUGIN_ROOT` unset). That script exits 1 with `CLAUDE_PLUGIN_ROOT: unbound variable` when the variable is missing, and prints the mandate when it is set. Scope precedence keeps the Claude marketplace copy (0.9.92) over the installed Grok copy (0.9.93); `harness_probe` still reports the highest version on disk. `grok models` while logged in listed `grok-4.7` (default), `grok-4.7-build-fast`, `grok-4.6`, `grok-4.5`. |
 
 ### Review gate (converge)
 
@@ -312,7 +336,8 @@ Long unattended runs: `show-me-your-work` TSV, linked from `progress.md`.
 - Running `converge` twice on one spec; carry remaining gaps into the next small spec.
 - Opening a poteto playbook todolist beside the Spec Kit `tasks.md`.
 - Asking "should I continue to plan?" after specify succeeds.
-- Claiming multi-model consensus when only one model reviewed.
+- Claiming multi-model consensus from the single default verifier.
+- Spawning a second reviewer without a recorded C1–C9 flip (see Restoring a wider review panel).
 - Stopping Spec Kit because pstack is not installed (use obligations).
 - Requiring a port-only skill (`deslop`, `thermos`) on Cursor.
 - Hardcoding a plugin version in a path.

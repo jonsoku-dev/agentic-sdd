@@ -33,15 +33,28 @@ finish — run REA closeout on that code state first.
 | Disposition | Meaning | May finish Final Goal / feature / bug verified? |
 |-------------|---------|--------------------------------------------------|
 | `pass` | Real Evidence ID(s) present; required capture families for the artifact type; bound to current code state; no material findings | **Yes** |
-| `not-applicable` | No runnable or build artifact exists (with recorded reason) | **Yes** |
-| `tasks-appended` | Material findings queued for implement/fix | **No** — continue Spec Kit loop |
-| `blocked-limitation` | Tooling failed after install/alternate path; command + exit + remediation recorded | **No** — stays open. A user dropping REA is a recorded scope change to `not-applicable` only when no runnable/build artifact exists, not a finish on this disposition |
+| `not-applicable` | No runnable or build artifact exists, with a real reason. `n/a`, empty, and placeholders do not count | **Yes**, when it is the latest line and the feature has no `blocked-limitation` |
+| `tasks-appended` | Material findings queued for implement/fix | **No** — continue Spec Kit loop. A later `pass` can close |
+| `blocked-limitation` | Tooling failed after install/alternate path; command + exit + remediation recorded | **No** — stays open, including when a later `pass` or `not-applicable` follows. Remove the line once the limitation is gone. A user dropping REA is a recorded scope change to `not-applicable` only when no runnable/build artifact exists, not a finish on this disposition |
 
 **Material finding** means: acceptance miss, broken P1 path, page/runtime error
 that violates acceptance, integrity contradiction, or user-visible wrong behavior.
 
 `pass` requires at least one evidence id copied **verbatim** from the tool result
 (not the placeholder string `ev_…`).
+
+`scripts/progress_gate.py` is the only completion predicate. It accepts
+`rea: <feature>|pass|ev_…` or
+`rea: <feature>|not-applicable|<why there is no runnable artifact>` when the
+reason is real. For each feature the latest line wins, except
+`blocked-limitation`, which a later `pass` or `not-applicable` does not clear.
+`tasks-appended` does not stick. Every feature directory under `specs/` or
+`.specify/specs/` is in scope except `overview` and `000-overview`. A directory
+that predates this Final Goal stays out of scope only with a column-1 line
+`gate: exclude|<feature-directory>|<why it predates this Final Goal>`.
+That line does not apply to the active feature, the last directory name in
+sorted order.
+Do not write "Final Goal met" until the script prints `ok`.
 
 ## Ensure REA is available
 

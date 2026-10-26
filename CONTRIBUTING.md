@@ -9,7 +9,7 @@ README's "Versioning and releases" and "Automation" sections.
 git clone git@github.com:jonsoku-dev/agentic-sdd.git
 cd agentic-sdd
 sh scripts/dev-setup.sh      # git hooks: regenerate llms.txt and run the tests before each commit
-npm test                     # python3 -m unittest discover -s tests
+npm test                     # tests/ plus the Cursor hook tests
 shellcheck -S error install.sh scripts/*.sh
 ```
 

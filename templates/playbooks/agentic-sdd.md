@@ -8,6 +8,7 @@ when: Any feature, bug, or multi-file change in a repository that has a Spec Kit
 This repository runs Spec Kit through the `agentic-sdd` skill. pstack playbooks
 execute *inside* an admitted Spec Kit phase; they do not replace
 `specify → plan → tasks → implement → converge → REA closeout`.
+Implement runs inline. Spawn a leaf only for a `bloat`, `parallel`, or `conflict` trigger. Paste the phase-card spawn brief into that prompt. This playbook does not apply inside the subagent.
 
 - **Before** "`how` over the affected subsystem." resolve the Spec Kit project
   (nearest `.specify/`), the active numbered feature, and its phase from the

@@ -84,16 +84,55 @@ class StopGateTest(unittest.TestCase):
         root = project(PROGRESS_MET)
         self.assertEqual(hook("stop_gate.py", {"cwd": str(root), "session_id": "s", "transcript_path": transcript_with_review(root)}), {})
 
-    def test_open_gate_blocks_then_releases_after_two(self):
+    def test_open_gate_blocks_once_then_ends_not_complete(self):
         root = project(PROGRESS_MET.replace("rea: 001-todo-edit|pass|ev_abc123def456\n", "- `rea: 001-todo-edit|pass|ev_abc`\n"))
-        payload = {"cwd": str(root), "session_id": "s1", "transcript_path": transcript_with_review(root)}
+        payload = {"cwd": str(root), "session_id": "s1", "transcript_path": transcript_with_review(root), "stop_hook_active": True}
         first = hook("stop_gate.py", payload)
         self.assertEqual(first["decision"], "block")
         self.assertIn("column 1", first["reason"])
-        self.assertEqual(hook("stop_gate.py", payload)["decision"], "block")
-        self.assertEqual(hook("stop_gate.py", payload), {})
+        self.assertIn("stays blocked", first["reason"])
+        second = hook("stop_gate.py", payload)
+        self.assertNotIn("decision", second)
+        self.assertTrue(second["reason"].startswith("NOT complete / blocked:"))
+        self.assertIn("The Final Goal is not met.", second["reason"])
+        self.assertNotIn("Final Goal met", second["reason"])
+        self.assertIn("run is not complete", second["reason"])
+        text = (root / "progress.md").read_text()
+        self.assertNotIn("Final Goal met", text)
+        self.assertIn("NOT complete / blocked:", text)
+        self.assertIn("The Final Goal is not met", text)
         events = [json.loads(l)["event"] for l in (root / ".agentic-sdd" / "ledger.jsonl").read_text().splitlines()]
-        self.assertEqual(events, ["gate_blocked", "gate_blocked", "gate_released"])
+        self.assertEqual(events, ["gate_blocked", "gate_stuck"])
+        self.assertEqual(hook("stop_gate.py", payload), {})
+
+    def test_a_progress_edit_resets_the_stuck_streak(self):
+        root = project(PROGRESS_MET.replace("rea: 001-todo-edit|pass|ev_abc123def456\n", "- `rea: 001-todo-edit|pass|ev_abc`\n"))
+        payload = {"cwd": str(root), "session_id": "s1", "transcript_path": transcript_with_review(root), "stop_hook_active": True}
+        self.assertEqual(hook("stop_gate.py", payload)["decision"], "block")
+        progress = root / "progress.md"
+        progress.write_text(progress.read_text() + "note: still open\n")
+        self.assertEqual(hook("stop_gate.py", payload)["decision"], "block")
+        released = hook("stop_gate.py", payload)
+        self.assertNotIn("decision", released)
+        self.assertTrue(released["reason"].startswith("NOT complete / blocked:"))
+        self.assertNotIn("Final Goal met", released["reason"])
+
+    def test_a_git_change_resets_the_stuck_streak(self):
+        root = project(PROGRESS_MET.replace("rea: 001-todo-edit|pass|ev_abc123def456\n", "- `rea: 001-todo-edit|pass|ev_abc`\n"))
+        payload = {"cwd": str(root), "session_id": "s1", "transcript_path": transcript_with_review(root), "stop_hook_active": True}
+        self.assertEqual(hook("stop_gate.py", payload)["decision"], "block")
+        quiet = {"cwd": root, "stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL}
+        subprocess.check_call(["git", "init"], **quiet)
+        subprocess.check_call(["git", "config", "user.email", "t@example.com"], cwd=root)
+        subprocess.check_call(["git", "config", "user.name", "t"], cwd=root)
+        (root / "note").write_text("1\n")
+        subprocess.check_call(["git", "add", "note"], **quiet)
+        subprocess.check_call(["git", "commit", "-m", "note"], **quiet)
+        self.assertEqual(hook("stop_gate.py", payload)["decision"], "block")
+        released = hook("stop_gate.py", payload)
+        self.assertNotIn("decision", released)
+        self.assertTrue(released["reason"].startswith("NOT complete / blocked:"))
+        self.assertNotIn("Final Goal met", released["reason"])
 
     def test_claimed_review_without_a_spawn_blocks(self):
         root = project(PROGRESS_MET)
@@ -129,7 +168,12 @@ class GitGuardTest(unittest.TestCase):
         root = project(PROGRESS_MET)
         deny = hook("git_guard.py", {"cwd": str(root), "session_id": "s", "tool_input": {"command": "git add -A && git push origin main"}})
         self.assertEqual(deny["hookSpecificOutput"]["permissionDecision"], "deny")
-        for ok in ("git commit -m done", "echo 'git push'", "git checkout ./todo.py", "git branch -d merged"):
+        for denied in ("git merge origin/main", "npm publish", "vercel --prod", "fly deploy", "kubectl apply -f x.yaml", "gh release create v1"):
+            out = hook("git_guard.py", {"cwd": str(root), "session_id": "s", "tool_input": {"command": denied}})
+            self.assertEqual(out["hookSpecificOutput"]["permissionDecision"], "deny", denied)
+            self.assertIn(denied.split()[0], out["hookSpecificOutput"]["permissionDecisionReason"])
+        for ok in ("git commit -m done", "echo 'git push'", "git checkout ./todo.py", "git branch -d merged",
+                   "git merge --abort", "npm test", "vercel dev", "echo npm publish"):
             self.assertEqual(hook("git_guard.py", {"cwd": str(root), "session_id": "s", "tool_input": {"command": ok}}), {}, ok)
         self.assertEqual(hook("git_guard.py", {"cwd": tempfile.mkdtemp(), "tool_input": {"command": "git push"}}), {})
 

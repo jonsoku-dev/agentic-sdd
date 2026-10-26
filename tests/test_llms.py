@@ -19,6 +19,8 @@ class LlmsTxtTests(unittest.TestCase):
             self.assertTrue((ROOT / rel).is_file(), rel)
         full = (ROOT / "llms-full.txt").read_text()
         self.assertIn("<!-- file: SKILL.md -->", full)
+        self.assertIn("Do not paste it into a system prompt", text)
+        self.assertIn("do not paste this file into a system prompt", full)
         self.assertIn("<!-- file: references/pstack-integration.md -->", full)
 
 

@@ -132,33 +132,28 @@ plain words, or type the skill's name (`/agentic-sdd`, `$agentic-sdd`,
 
 ## How a run looks
 
-1. **Enter.** Resolve the nearest `.specify/`, the active numbered feature, and
-   its phase from the artifacts and `progress.md`. Load
-   `references/pstack-integration.md` and `references/harness-layers.md`, run
-   the probe, record the breadcrumbs. `O-sharpen` pins the Final Goal and the
-   acceptance criteria; nobody is quizzed.
-2. **Specify, plan, tasks.** Spec Kit commands write the artifacts; the
-   obligations run beside them: `technical-writing` + `unslop` on the spec,
-   `how` for brownfield evidence, `architect` (or `arena` when shapes compete)
-   when code crosses a function boundary, `principle-sequence-verifiable-units`
-   so every task ends in a check. Tasks beyond about twelve mean a smaller spec.
-3. **Implement.** The host's poteto agent takes one admitted task packet at a
-   time, in its own worktree, with the model and effort the pstack sheet names.
-   The lead reviews every diff and never claims a dispatch it did not observe.
-4. **Converge, once.** `blast-radius`, `no-comments`, then a two-to-four model
-   `interrogate` panel. Act-on findings are appended to `tasks.md` and
-   implemented in one bounded fix round. There is no second converge: gaps
-   that survive become the next, smaller spec (`closed-carryover`).
-5. **REA closeout.** Run the real artifact under REA and record the Evidence
-   id in `converge.md` and `progress.md`. Disposition is `pass`,
-   `not-applicable`, or `blocked-limitation`; only `pass` closes the feature.
-6. **Next spec or stop.** `progress.md` ends with `Final Goal status` and a
-   `Next action` line a cold session can resume from.
+```mermaid
+flowchart LR
+  specify --> plan --> tasks --> implement --> converge --> rea[REA]
+  converge -->|one fix round| implement
+  converge -->|still failing| nextSpec[next spec]
+```
 
-Every obligation leaves one line in `progress.md`, for example
-`pstack: O-interrogate|claude|2x pstack:effort-low (opus, haiku) -> 1 act-on -> T004 appended`,
-plus `ROUTING:` lines that record requested versus observed model and effort.
-The full phase → obligation map is in `references/pstack-integration.md`.
+The [phase card](references/phase-card.md) is the procedure.
+These points are the ones a hook or the gate enforces:
+
+| Step | What happens | What actually blocks |
+|------|----------------|----------------------|
+| Enter | Pin the Final Goal. Run the probe. Record breadcrumbs. | A bulleted breadcrumb fails `progress_gate.py`. |
+| Tasks | Every task ends in a check. | More than 12 tasks fails the gate. |
+| Implement | The parent runs each admitted task inline. A leaf is only for `bloat`, `parallel`, or `conflict`. | Instruction only. The gate does not count leaves. |
+| Converge | One verifier. One fix round. | A second `Convergence` header, or a recorded leftover git worktree, fails the gate. |
+| REA | `rea: <feature>\|pass\|ev_…`, or `not-applicable` with a real reason. | `blocked-limitation` stays open, including after a later pass. A false "Final Goal met" is refused; the second identical refusal ends `NOT complete / blocked`. |
+
+- Paste the phase-card spawn brief into a leaf or verifier prompt. This page does not apply inside that subagent.
+- An older spec drops out only with `gate: exclude|<feature>|<why>`. That line does not drop the active feature, the last directory name in sorted order.
+- `progress.md` ends with `Final Goal status` and a `Next action` line.
+- One breadcrumb example: `pstack: O-interrogate|claude|pstack:effort-low (haiku) -> 1 act-on -> T004 appended`.
 
 ## Plugins (Claude Code and Codex)
 
@@ -193,12 +188,18 @@ What the guarded hooks do, all in Python with no network access:
 
 - **Stop** blocks a turn whose `progress.md` says "Final Goal met" while
   `progress_gate.py` fails or no reviewer subagent was spawned, and tells the
-  model what to fix. It blocks at most twice per session, then lets the turn
-  end and records the release, so a gate that cannot clear never traps you.
+  model what to fix. `stop_hook_active` does not skip that block. The same
+  refusal, with no change to `progress.md` or the git state, blocks once. The
+  second identical refusal allows the stop and records
+  `NOT complete / blocked: <reason>`. That ending says the Final Goal is not
+  met. A change to `progress.md` or the git state starts the count again. End
+  the turn cleanly by making the gate print `ok`, or by removing the claim
+  (BLOCKED review, and say the Final Goal is not met).
 - **PreToolUse** denies `ScheduleWakeup` inside an agentic-sdd project, and
-  denies the git commands the skill has no authority for (`push`,
+  denies the commands the skill has no authority for (`push`, `merge` except
+  `--abort`, the deploy and publish commands in `why_deploy`,
   `reset --hard`, `clean -f`, `branch -D`, `stash`, and `checkout`/`restore .`
-  that discard the working tree), parsed per git subcommand so commits and
+  that discard the working tree), parsed per command so commits and
   ordinary checkouts pass. Adapted from mattpocock/skills
   `git-guardrails-claude-code` (MIT).
 - **PostToolUse** (async) appends each subagent spawn (type and description,
@@ -242,12 +243,13 @@ playbook. The project playbook from `npx agentic-sdd --project` anchors three
 handoffs on the port's Feature and Bug fix steps so a plain request in a Spec
 Kit repo still resolves the phase first.
 
-**Dispatch.** Implement runs inline by default. A leaf that meets a
-[single-loop trigger](references/single-loop-default.md) is `subagent_type: "pstack:poteto-agent"`, or
-`pstack:poteto-agent-<level>` when the sheet names an effort. Review panels use
-`pstack:effort-<level>` with the `model` family (`opus`, `fable`, `sonnet`,
-`haiku`) from `~/.claude/pstack-models.md`, written by `/pstack:setup-pstack`.
-Delegates run in their own worktree.
+**Dispatch.** Implement runs inline.
+Spawn a leaf only for a [single-loop trigger](references/single-loop-default.md).
+The type is `pstack:poteto-agent`, or `pstack:poteto-agent-<level>` when the sheet names an effort.
+Converge spawns one verifier at `pstack:effort-<level>`.
+The model family comes from `~/.claude/pstack-models.md`.
+A leaf that writes code uses its own worktree.
+Paste the [spawn brief](references/phase-card.md#spawn-brief) into that prompt.
 
 **Completion.** `/goal` is Claude Code's own stop-hook goal; agentic-sdd's
 Final Goal in `progress.md` is the durable copy a resumed session reads.
@@ -355,13 +357,14 @@ npx agentic-sdd setup --grok-mandate --grok-agents
 their stdout, so `--grok-mandate` writes the mandate plus the three Spec Kit
 handoffs as a home rule, `~/.grok/rules/pstack-mandate.md`, which Grok always
 loads. Plugin agents are not in the `spawn_subagent` enum, so `--grok-agents`
-links the port's `poteto-agent.md` and `comment-sicko.md` into
-`~/.grok/agents/`, where they are.
+links the port's `poteto-agent.md` into `~/.grok/agents/`, where it is.
+Uninstall still removes a leftover `comment-sicko.md` from an older install.
 
-**Dispatch.** `spawn_subagent` with `subagent_type: "poteto-agent"`; the
-subagent reads `poteto-mode/SKILL.md` before working. `[subagents.models]` in
-`~/.grok/config.toml` pins a model when you want one; without a sheet the
-`ROUTING:` lines read `model unpinned, observed unknown`.
+**Dispatch.** `spawn_subagent` with `subagent_type: "poteto-agent"`.
+Paste the [spawn brief](references/phase-card.md#spawn-brief) into that prompt.
+This page does not apply inside the subagent.
+`[subagents.models]` in `~/.grok/config.toml` pins a model when you want one.
+Without a sheet, record `model unpinned, observed unknown`.
 
 **MCP.** Grok loads `~/.cursor/mcp.json` through `[compat.cursor]`, so REA
 configured for Cursor is already visible to Grok.
@@ -412,7 +415,7 @@ rm -rf ~/.agents/skills/agentic-sdd                                           # 
 | Removed by `--uninstall` | Detail |
 |---|---|
 | Skill symlinks | `agentic-sdd` in `~/.agents/skills`, `~/.claude/skills`, `~/.codex/skills`, `~/.cursor/skills`, `~/.grok/skills` (only when they are symlinks) |
-| Grok files | `~/.grok/agents/poteto-agent.md`, `~/.grok/agents/comment-sicko.md`, `~/.grok/rules/pstack-mandate.md`, `~/.grok/hooks/pstack-session-start.json` |
+| Grok files | `~/.grok/agents/poteto-agent.md`, a leftover `~/.grok/agents/comment-sicko.md` if an older install linked one, `~/.grok/rules/pstack-mandate.md`, `~/.grok/hooks/pstack-session-start.json` |
 | Codex block | the `<!-- pstack-mandate:start … end -->` block in `~/.codex/AGENTS.md`; the rest of the file is untouched |
 | Cursor CLI links | every `~/.cursor/skills/*` symlink that points into a pstack plugin cache |
 | Cursor hooks | `~/.cursor/hooks/agentic-sdd-continue/` and the `agentic-sdd-continue` entries in `~/.cursor/hooks.json`; other hooks stay |
@@ -432,6 +435,11 @@ Nothing is deleted from a project except the two files above, and nothing is
 deleted from a host config except the marked block and the named hook entries.
 
 ## Evidence that it works
+
+The pass bar is [`docs/evals/2026-10-25-perfect`](docs/evals/2026-10-25-perfect/definition.md):
+every run passes C1–C9, and two consecutive full matrices pass with no fix in
+between. [`result.md`](docs/evals/2026-10-25-perfect/result.md) records that
+bar as met. Older records below are history.
 
 [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md) has the full picture: method,
 routing table, a gate-by-gate matrix of what each host actually invoked at
@@ -462,13 +470,13 @@ every Spec Kit gate, result comparisons, and the A/B against plain Spec Kit.
 | `hosts/claude/` | Plugin sources: guarded hooks, the gate/report/dashboard skills, `bin/` wrappers |
 | `plugins/`, `.claude-plugin/marketplace.json` | Generated plugin editions and marketplace; rebuild with `python3 scripts/build_plugins.py` (the tests fail when they are stale) |
 | `npx agentic-sdd` | Link, configure, update, and uninstall per host |
-| `tests/` | `python3 -m unittest discover -s tests -p 'test_*.py'` |
+| `tests/` | `python3 -m unittest discover -s tests -p 'test_*.py'`, plus the Cursor hook tests: `python3 -m unittest discover -s hosts/cursor/hooks/agentic-sdd-continue -p 'test_*.py'` |
 | `evals/` | Behavioral eval cases |
 | `personas/` | Provider personas, loaded only when a host asks for one |
 | `agents/openai.yaml` | Codex skill metadata |
 | `visualizer/` | Local dashboard (flow, gates, tokens, reports) and Kanban: `python3 visualizer/server.py --project /path/to/repo` |
 | `docs/evals/` | Measured runs and their artifacts |
-| `llms.txt`, `llms-full.txt` | [llms.txt](https://llmstxt.org/) index and full inline copy of the docs for agents; regenerate with `python3 scripts/build_llms.py` (the test suite fails when they are stale) |
+| `llms.txt` | [llms.txt](https://llmstxt.org/) index of the docs. `llms-full.txt` is the generated archive of those files and is not a prompt. Regenerate with `python3 scripts/build_llms.py` (the test suite fails when they are stale) |
 
 ## Versioning and releases
 

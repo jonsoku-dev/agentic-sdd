@@ -29,7 +29,7 @@ Spawn only when at least one trigger holds, and name it in the breadcrumb:
 |---------|-------|----------------------|
 | `bloat` | Keeping the work in the parent would push the parent's context past what it can use well: large reads, logs, or a packet the parent would have to page through | `O-guard` bulk reads; a cross-cutting `O-fio` survey |
 | `parallel` | Independent work that runs at the same time in a fresh context and is thrown away after it returns | `O-swarm` disjoint packets; `O-architect` / `O-arena` design runners |
-| `conflict` | One loop picks tools badly or its instructions collide, including the anchoring a reviewer must not share with the author | `O-interrogate` panel; the independent review gate; recovery reviewers |
+| `conflict` | One loop picks tools badly or its instructions collide, including the anchoring a reviewer must not share with the author | one `O-interrogate` verifier; the independent review gate |
 
 Everything else runs inline in the parent: a packet that fits the parent's
 context, a mechanical edit, a sequential task chain over the same files.
@@ -74,28 +74,32 @@ flipped, not only the total, and run more than once. Keep the fold when the
 score holds; otherwise restore the leaf or fix the skill. Change one thing per
 comparison.
 
-## Harness limits stay in the harness
+## Harness limits that actually run
 
-The single loop is open-ended inside fixed limits that agentic-sdd already has:
+The single loop is open-ended inside the limits this repository enforces. Anything not in this table is guidance for the model, not a gate.
 
-| Limit | Where |
-|-------|-------|
-| Turn budget | two unchanged attempts → [verification_guard.py](../scripts/verification_guard.py) and [recovery](recovery.md) |
-| Cost budget | [cost modes](cost-modes.md); escalation budget in [model-routing](model-routing.md) |
-| Write gates | one writer per checkout; hard boundaries in `SKILL.md`; admitted paths in the feature contract |
-| Scope | Final Goal, `tasks.md` IDs, one converge per spec |
+| Limit | Where it runs |
+|-------|----------------|
+| Completion | [progress_gate.py](../scripts/progress_gate.py) is the only completion predicate. Claude Stop (`hosts/claude/hooks/stop_gate.py`) and Cursor stop (`hosts/cursor/hooks/agentic-sdd-continue/common.py`) both call it. While `progress.md` claims the Final Goal is met, or Cursor `status` is `delivered`, an open gate refuses the stop. |
+| Task count, one converge, leftover worktrees | The same script. More than 12 tasks or a second `Convergence` header in `tasks.md` is a refusal. A leftover is only a `gate: worktree|<absolute-path>` this run recorded that is still checked out, and is neither the main checkout nor the current checkout. |
+| Write gates | Claude guarded `hosts/claude/hooks/git_guard.py` denies `git push`, `git merge` (not `--abort`), `reset --hard`, `clean -f`, `branch -D`, `stash`, a checkout/restore that discards the tree, and the deploy/publish commands in `why_deploy` (`npm publish`, `vercel --prod`, `fly deploy`, `kubectl apply`, `terraform apply`, `gh release create`, and the same family). Codex, Grok, Cursor, and the hook-free edition have no write hook. |
+| Stuck completion | Both hosts share `STUCK_LIMIT` (2) in `progress_gate.py`. A refusal is identical when the `progress.md` text, the problem list, and the git state are unchanged. The git state is `HEAD` plus `git worktree list --porcelain`, or `nogit` when git fails. The first identical refusal stays a block (Claude `decision: block`) or a follow-up (Cursor). The second allows the stop. The message starts with `NOT complete / blocked:` and includes `The Final Goal is not met.` The words `Final Goal met` are absent from that message. The hook rewrites those claims in `progress.md` to `Final Goal is not met` and appends the same message. A later stop with that same file is allowed. A change to `progress.md` or the git state resets the count, and the next refusal blocks or follows up again. `stop_hook_active` does not release the block. This ending is not completion. |
+| Turn budget | Cursor continuation only, for a goal that is still running: 80 follow-ups (`BUDGET`) and a separate stuck latch after the same `next_action` and the same `progress.md` modification time twice. Spending the budget does not close the gate and does not write `Final Goal met`. Claude, Codex, and Grok have no turn cap. The stuck-completion row is the only shared escape from a repeated open gate. |
+| Repeated identical checks | [verification_guard.py](../scripts/verification_guard.py) recommends stopping after two unchanged attempts, and only when the model passes it a state file. It does not end the session. |
+| Cost | No cost gate. [cost-modes.md](cost-modes.md) and the escalation notes in [model-routing.md](model-routing.md) are guidance. |
 
 ## Progressive disclosure
 
 - `SKILL.md` stays the short always-loaded prompt; detail lives in
   `references/` and loads from [INDEX.md](INDEX.md) when a step needs it.
+- An output style applies to the parent conversation and its forks. It does not apply to an ordinary subagent. Paste the [spawn brief](phase-card.md#spawn-brief).
 - pstack skills load per obligation row, not all at once.
 - Knowledge (specs, logs, prior evidence) is read on demand by path, never
   pasted into a prompt or a leaf's brief. Leaves get file pointers.
 
 ## Waiting on a subagent
 
-A reviewer or leaf whose result gates the parent's next step is on the critical
+A verifier or leaf whose result gates the parent's next step is on the critical
 path. Launch the batch in one message in the foreground; the calls run in
 parallel and return together. Background only while the parent has other
 admitted work, and the harness notifies on completion. To wait for an agent

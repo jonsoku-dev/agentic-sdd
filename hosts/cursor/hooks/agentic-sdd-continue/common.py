@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import os
 import re
@@ -83,6 +84,10 @@ def empty_session(cid: str) -> dict:
         "stuck_repeats": 0,
         "stuck_latched": False,
         "budget_exhausted": False,
+        "gate_refusal_key": None,
+        "gate_refusal_count": 0,
+        "gate_stuck_latched": False,
+        "gate_latched_key": None,
         "last_assistant_head": "",
     }
 
@@ -163,6 +168,10 @@ def apply_prompt(session: dict, prompt: str) -> dict:
         session["stuck_repeats"] = 0
         session["stuck_latched"] = False
         session["budget_exhausted"] = False
+        session["gate_refusal_key"] = None
+        session["gate_refusal_count"] = 0
+        session["gate_stuck_latched"] = False
+        session["gate_latched_key"] = None
         return session
     session["hold"] = True
     return session
@@ -269,7 +278,56 @@ def marker_blocks(record: dict | None) -> bool:
     return False
 
 
-def build_followup(count: int, action: str) -> str:
+def skill_root() -> Path | None:
+    """Repo checkout that contains this hook, else AGENTIC_SDD_SKILL, else the installed skill."""
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        if (parent / "SKILL.md").is_file() and (parent / "scripts" / "progress_gate.py").is_file():
+            return parent
+    override = os.environ.get("AGENTIC_SDD_SKILL")
+    if override and (Path(override) / "scripts" / "progress_gate.py").is_file():
+        return Path(override)
+    installed = Path.home() / ".agents" / "skills" / "agentic-sdd"
+    if (installed / "scripts" / "progress_gate.py").is_file():
+        return installed
+    return None
+
+
+def progress_gate_module():
+    root = skill_root()
+    if root is None:
+        return None
+    path = root / "scripts" / "progress_gate.py"
+    spec = importlib.util.spec_from_file_location("agentic_sdd_progress_gate", path)
+    if spec is None or spec.loader is None:
+        return None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def completion_problems(record: dict | None) -> list[str]:
+    """Run progress_gate.py when this stop is trying to call the Final Goal done."""
+    if not record:
+        return []
+    path = Path(str(record["path"]))
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return [f"could not read {path}; refusing to treat the Final Goal as met"]
+    marker = record.get("marker") or {}
+    delivered = isinstance(marker, dict) and not marker.get("invalid") and marker.get("status") == "delivered"
+    gate = progress_gate_module()
+    if gate is None:
+        if delivered:
+            return ["progress_gate.py was not found; refusing to treat the Final Goal as met"]
+        return []
+    if not delivered and not gate.claims_met(text):
+        return []
+    return gate.check(path)
+
+
+def build_followup(count: int, action: str, problems: list[str] | None = None) -> str:
     lines = [
         "<!-- " + FOLLOWUP_MARKER + " -->",
         "This is an automatic Cursor continuation of the same Final Goal, not a new task.",
@@ -277,18 +335,81 @@ def build_followup(count: int, action: str) -> str:
         "Do not spend this turn on a status report.",
         "If the line is missing, write it before other work:",
         '<!-- sdd-continue: {"status":"running","stop_reason":null,"next_action":"<one concrete step>"} -->',
-        "When the Final Goal is delivered, set status to delivered and stop.",
+        "When the Final Goal is delivered, set status to delivered only after progress_gate.py prints ok.",
         "If you must stop for a destructive action, a secret, a missing or contradictory goal, or an evidence or authority boundary, set status to blocked, set stop_reason to destructive, secret, missing_goal, contradiction, or evidence, and ask once.",
     ]
     if action:
         lines.append("next_action: " + action)
+    if problems:
+        lines.append("progress_gate.py refused completion. The Final Goal is not met:")
+        lines.extend("- " + problem for problem in problems)
+        lines.append("Fix those lines, or remove the completion claim. Ending the turn does not close the gate.")
     if count >= BUDGET:
         lines.append(
             "This is automatic continuation 80 of 80. "
-            "If the Final Goal is still open after this turn, say that the continuation budget is spent, "
-            "leave status running, and stop."
+            "The continuation budget is spent. Leave status running and stop. "
+            "A spent budget does not mean the Final Goal is met."
         )
     return "\n".join(lines)
+
+
+def stop_payload(message: str | None) -> dict | None:
+    """Cursor stop output. A stuck completion is not a follow-up, so the agent is not resumed."""
+    if not message:
+        return None
+    gate = progress_gate_module()
+    prefix = gate.NOT_COMPLETE if gate is not None else "NOT complete / blocked:"
+    if message.startswith(prefix):
+        return {"user_message": message}
+    return {"followup_message": message}
+
+
+def _refusal_key(record: dict | None, problems: list[str]) -> str:
+    gate = progress_gate_module()
+    if gate is None or not record:
+        return "nogate"
+    return gate.refusal_key(Path(str(record["path"])), problems)
+
+
+def _clear_gate_latch(session: dict) -> None:
+    session["gate_stuck_latched"] = False
+    session["gate_latched_key"] = None
+    session["gate_refusal_count"] = 0
+    session["gate_refusal_key"] = None
+
+
+def _refuse_completion(session: dict, record: dict | None, problems: list[str]) -> str | None:
+    gate = progress_gate_module()
+    key = _refusal_key(record, problems)
+    if key == session.get("gate_refusal_key"):
+        session["gate_refusal_count"] = int(session.get("gate_refusal_count") or 0) + 1
+    else:
+        session["gate_refusal_key"] = key
+        session["gate_refusal_count"] = 1
+    limit = gate.STUCK_LIMIT if gate is not None else 2
+    if int(session["gate_refusal_count"]) >= limit:
+        if gate is not None and record is not None:
+            message = gate.stuck_message(problems)
+            path = Path(str(record["path"]))
+            gate.clear_met_claim(path, message)
+            fresh = completion_problems(record)
+            session["gate_latched_key"] = gate.refusal_key(path, fresh if fresh else problems)
+        else:
+            message = (
+                "NOT complete / blocked: progress_gate.py was not found. "
+                "The Final Goal is not met. "
+                "The same refusal repeated with no change to progress.md or the git state, so this stop is allowed. "
+                "The run is not complete."
+            )
+            session["gate_latched_key"] = key
+        session["gate_stuck_latched"] = True
+        session["gate_refusal_key"] = session["gate_latched_key"]
+        return message
+    if int(session.get("followup_count") or 0) >= BUDGET:
+        session["budget_exhausted"] = True
+        return None
+    session["followup_count"] = int(session.get("followup_count") or 0) + 1
+    return build_followup(int(session["followup_count"]), next_action_of(record), problems)
 
 
 def decide_stop(session: dict, payload: dict, record: dict | None) -> str | None:
@@ -298,6 +419,13 @@ def decide_stop(session: dict, payload: dict, record: dict | None) -> str | None
         return None
     if payload.get("status") != "completed":
         return None
+    problems = completion_problems(record)
+    if session.get("gate_stuck_latched"):
+        if not problems or _refusal_key(record, problems) == session.get("gate_latched_key"):
+            return None
+        _clear_gate_latch(session)
+    if problems:
+        return _refuse_completion(session, record, problems)
     if session.get("stuck_latched"):
         return None
     if int(session.get("followup_count") or 0) >= BUDGET:

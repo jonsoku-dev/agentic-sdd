@@ -1,25 +1,81 @@
 #!/usr/bin/env python3
-"""Check the completion gate in progress.md before a feature or the Final Goal is called done.
+"""The only completion predicate for an agentic-sdd Final Goal.
 
 usage: progress_gate.py [progress.md]
-Needs, at column 1: a `pstack: O-interrogate|…` line, and `rea: <feature>|pass|ev_…` for every
-feature directory under specs/ (or .specify/specs/) next to progress.md. A BLOCKED review line
-fails the gate on purpose. Breadcrumbs written as bullets or inside backticks are reported with
-the line to rewrite. Exit 0 ok, 1 gate open, 2 no progress.md.
+
+A feature directory under specs/ or .specify/specs/ (except overview scaffolds)
+closes with one column-1 line:
+
+    rea: <feature>|pass|ev_<id>
+    rea: <feature>|not-applicable|<why there is no runnable or build artifact>
+
+not-applicable closes only with a real reason. n/a, an empty reason, and
+placeholders do not. For each feature the latest rea line wins, except
+blocked-limitation, which sticks: a later pass or not-applicable does not
+clear it. Remove that line once the limitation is gone. tasks-appended does
+not stick, so a later real pass can close. A directory that predates this
+Final Goal is omitted only by:
+
+    gate: exclude|<feature-directory>|<why it predates this Final Goal>
+
+exclude does not apply to the active feature. The active feature is the last
+directory name in sorted order.
+
+A worktree this run created is recorded at column 1:
+
+    gate: worktree|<absolute-path>
+
+Only a recorded path that is still a git worktree, and is neither the main
+checkout nor the current checkout, is a leftover. Other worktrees are left
+alone. The refusal never says to remove the main checkout.
+
+Also required at column 1: one real reviewer line
+`pstack: O-interrogate|<host>|<subagent_type> → <n> findings`.
+BLOCKED, a self-review, a bulleted or backticked breadcrumb, or a secret-shaped
+token leaves the gate open. In-scope tasks.md files may contain at most 12
+tasks and one Convergence header.
+
+Hosts share STUCK_LIMIT. A refusal is identical when the progress.md text, the
+problem list, and the git state are unchanged. The git state is HEAD plus
+`git worktree list --porcelain`, or `nogit` when git fails. The second
+identical refusal is stuck: the host allows the stop, rewrites a met claim to
+"Final Goal is not met", and reports `NOT complete / blocked:`. That message
+says the Final Goal is not met. `stop_hook_active` does not release a block.
+A change to progress.md or the git state resets the count.
+
+Exit 0 ok, 1 gate open, 2 no progress.md.
 """
 from __future__ import annotations
 
+import hashlib
 import re
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
-PREFIX = r"(?:pstack|harness|ROUTING|rea):"
+PREFIX = r"(?:pstack|harness|ROUTING|rea|gate):"
+NOT_FEATURES = {"overview", "000-overview"}
 SELF_REVIEW = re.compile(r"(?i)self[- ]review|no (?:sub)?agent|not independent|without (?:a )?(?:sub)?agent|primary (?:self|own)|\|inline\b")
 # high-confidence token shapes only; progress.md is copied into reports and the dashboard
 SECRET = re.compile(r"AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{40,}|sk-ant-[A-Za-z0-9_-]{20,}"
                     r"|sk-(?:proj-)?[A-Za-z0-9_-]{32,}|xox[abposr]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----")
 MISFORMED = re.compile(rf"^\s*(?:[-*]\s+|\d+[.)]\s+)?`?{PREFIX}|^\s+{PREFIX}")
-
+PASS_LINE = re.compile(r"^rea: ([^|]+)\|pass\|ev_\w+")
+REA_LINE = re.compile(r"^rea: ([^|]+)\|([^|]+)\|(.*)$")
+EXCLUDE_LINE = re.compile(r"^gate: exclude\|([^|]+)\|(\S.*)$")
+REA_KINDS = {"pass", "not-applicable", "tasks-appended", "blocked-limitation"}
+TRIVIAL_REASONS = frozenset({
+    "n/a", "na", "n.a", "none", "nil", "null", "tbd", "todo", "placeholder",
+    "reason", "unknown", "-", "xxx", "fixme",
+})
+WORKTREE_LINE = re.compile(r"^gate: worktree\|(\S.*)$")
+TASK_LIMIT = 12
+STUCK_LIMIT = 2
+NOT_COMPLETE = "NOT complete / blocked:"
+TASK_ID = re.compile(r"\bT\d{3,}\b")
+CHECKBOX = re.compile(r"^\s*[-*]\s+\[[ xX]\]")
+CONVERGE_HEADER = re.compile(r"^#{1,6}\s+.*\bConvergence\b", re.I)
 
 # "Final Goal met", "The Final Goal is met", "Final Goal: complete"; not "Final Goal NOT met"
 MET = re.compile(r"(?i)\bfinal goal\b[\s:*_`'\"-]*(?:is\s+|has been\s+|was\s+)?(?:now\s+)?(?:fully\s+)?"
@@ -28,6 +84,213 @@ MET = re.compile(r"(?i)\bfinal goal\b[\s:*_`'\"-]*(?:is\s+|has been\s+|was\s+)?(
 
 def claims_met(text: str) -> bool:
     return bool(MET.search(text))
+
+
+def _git_state(start: Path) -> str:
+    if shutil.which("git") is None:
+        return "nogit"
+    head = _git(start, "rev-parse", "HEAD")
+    if head.returncode != 0:
+        return "nogit"
+    trees = _git(start, "worktree", "list", "--porcelain")
+    if trees.returncode != 0:
+        return "nogit"
+    return head.stdout + trees.stdout
+
+
+def refusal_key(progress: Path, problems: list[str]) -> str:
+    text = progress.read_text(errors="replace")
+    payload = text + "\n---\n" + "\n".join(problems) + "\n---\n" + _git_state(progress.parent)
+    return hashlib.sha256(payload.encode()).hexdigest()
+
+
+def _without_met_claim(text: str) -> str:
+    return text.replace("Final Goal met", "Final Goal is not met")
+
+
+def stuck_message(problems: list[str]) -> str:
+    reason = "; ".join(_without_met_claim(problem) for problem in problems[:10]) or "completion gate stayed open"
+    return (
+        f"{NOT_COMPLETE} {reason}. "
+        "The Final Goal is not met. "
+        "The same refusal repeated with no change to progress.md or the git state, so this stop is allowed. "
+        "The run is not complete."
+    )
+
+
+def clear_met_claim(progress: Path, message: str) -> None:
+    text = progress.read_text(errors="replace")
+    rewritten = MET.sub("Final Goal is not met", text)
+    if message not in rewritten:
+        if rewritten and not rewritten.endswith("\n"):
+            rewritten += "\n"
+        rewritten += message + "\n"
+    if rewritten != text:
+        progress.write_text(rewritten)
+
+
+def feature_names(root: Path) -> list[str]:
+    found: list[str] = []
+    for pattern in ("specs/*/", ".specify/specs/*/"):
+        for directory in root.glob(pattern):
+            if directory.is_dir() and directory.name not in NOT_FEATURES:
+                found.append(directory.name)
+    return sorted(set(found))
+
+
+def _trivial_reason(reason: str) -> bool:
+    token = reason.strip().lower().strip(".")
+    return not token or token in TRIVIAL_REASONS
+
+
+def _rea_state(lines: list[str]) -> tuple[dict[str, tuple[str, str]], set[str]]:
+    """Latest disposition per feature, and features with a sticky blocked-limitation.
+
+    A later pass or not-applicable does not remove a blocked-limitation.
+    tasks-appended is not sticky: the latest line wins for the other kinds.
+    """
+    latest: dict[str, tuple[str, str]] = {}
+    blocked: set[str] = set()
+    for line in lines:
+        match = REA_LINE.match(line)
+        if match is None:
+            continue
+        feature, kind, rest = match.group(1), match.group(2), match.group(3)
+        if kind == "blocked-limitation":
+            blocked.add(feature)
+        if kind in REA_KINDS:
+            latest[feature] = (kind, rest)
+    return latest, blocked
+
+
+def _closes(feature: str, kind: str, rest: str) -> bool:
+    if kind == "pass":
+        return PASS_LINE.match(f"rea: {feature}|pass|{rest.strip()}") is not None
+    if kind == "not-applicable":
+        return not _trivial_reason(rest)
+    return False
+
+
+def _exclusions(lines: list[str]) -> tuple[dict[str, str], list[str]]:
+    found: dict[str, str] = {}
+    problems: list[str] = []
+    for number, line in enumerate(lines, 1):
+        if not line.startswith("gate:"):
+            continue
+        if WORKTREE_LINE.match(line):
+            continue
+        match = EXCLUDE_LINE.match(line)
+        if match is None:
+            problems.append(
+                "line %d: gate: lines must be `gate: exclude|<feature-directory>|<why it predates this Final Goal>`"
+                " or `gate: worktree|<absolute-path>`" % number
+            )
+            continue
+        found[match.group(1)] = match.group(2).strip()
+    return found, problems
+
+
+def task_count(text: str) -> int:
+    ids = set(TASK_ID.findall(text))
+    if ids:
+        return len(ids)
+    return sum(1 for line in text.splitlines() if CHECKBOX.match(line))
+
+
+def _structural(root: Path, excluded: set[str]) -> list[str]:
+    problems: list[str] = []
+    for feature in feature_names(root):
+        if feature in excluded:
+            continue
+        for tasks in (root / "specs" / feature / "tasks.md", root / ".specify" / "specs" / feature / "tasks.md"):
+            if not tasks.is_file():
+                continue
+            text = tasks.read_text(errors="replace")
+            count = task_count(text)
+            if count > TASK_LIMIT:
+                problems.append(
+                    f"{tasks.relative_to(root)} has {count} tasks; the limit is {TASK_LIMIT}. "
+                    "Split into a smaller spec before calling the Final Goal met."
+                )
+            headers = sum(1 for line in text.splitlines() if CONVERGE_HEADER.match(line))
+            if headers > 1:
+                problems.append(
+                    f"{tasks.relative_to(root)} has {headers} Convergence headers; one converge per spec. "
+                    "Carry the remaining gap into the next spec."
+                )
+    return problems
+
+
+def _git(cwd: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    git = shutil.which("git") or "git"
+    return subprocess.run([git, "-C", str(cwd), *args], capture_output=True, text=True)
+
+
+def _repo_paths(start: Path) -> tuple[Path, Path, dict[Path, str] | str] | None:
+    """Current toplevel, main checkout, and live worktrees keyed by resolved path.
+
+    The third item is an error string when `git worktree list` fails.
+    Returns None when start is not inside a worktree.
+    """
+    if shutil.which("git") is None:
+        return None
+    probe = _git(start, "rev-parse", "--is-inside-work-tree")
+    if probe.returncode != 0 or probe.stdout.strip() != "true":
+        return None
+    top = _git(start, "rev-parse", "--show-toplevel")
+    if top.returncode != 0 or not top.stdout.strip():
+        return None
+    toplevel = Path(top.stdout.strip()).resolve()
+    common = _git(toplevel, "rev-parse", "--git-common-dir")
+    if common.returncode != 0 or not common.stdout.strip():
+        return None
+    common_path = Path(common.stdout.strip())
+    if not common_path.is_absolute():
+        common_path = toplevel / common_path
+    common_path = common_path.resolve()
+    main = common_path.parent.resolve() if common_path.name == ".git" else toplevel
+    listed = _git(toplevel, "worktree", "list", "--porcelain")
+    if listed.returncode != 0:
+        return toplevel, main, listed.stderr.strip() or "git worktree list failed"
+    live: dict[Path, str] = {}
+    for line in listed.stdout.splitlines():
+        if line.startswith("worktree "):
+            raw = line[len("worktree "):]
+            live[Path(raw).resolve()] = raw
+    return toplevel, main, live
+
+
+def _recorded_worktrees(lines: list[str], toplevel: Path) -> list[Path]:
+    found: list[Path] = []
+    for line in lines:
+        match = WORKTREE_LINE.match(line)
+        if match is None:
+            continue
+        path = Path(match.group(1).strip())
+        if not path.is_absolute():
+            path = toplevel / path
+        found.append(path.resolve())
+    return found
+
+
+def _leftover_worktrees(start: Path, lines: list[str]) -> list[str]:
+    located = _repo_paths(start)
+    if located is None:
+        return []
+    toplevel, main, live = located
+    if isinstance(live, str):
+        return [f"could not list git worktrees: {live}"]
+    problems: list[str] = []
+    seen: set[Path] = set()
+    for recorded in _recorded_worktrees(lines, toplevel):
+        if recorded in seen or recorded == main or recorded == toplevel or recorded not in live:
+            continue
+        seen.add(recorded)
+        shown = live[recorded]
+        problems.append(
+            f"leftover git worktree: {shown}. Remove it with `git worktree remove` before calling the Final Goal met."
+        )
+    return problems
 
 
 def check(progress: Path) -> list[str]:
@@ -45,11 +308,44 @@ def check(progress: Path) -> list[str]:
     elif all(SELF_REVIEW.search(l) for l in reviews):
         problems.append("the review line describes a self-review; spawn a reviewer subagent, or write "
                         "BLOCKED: independent review and leave the Final Goal open")
-    root = progress.parent
-    features = sorted({d.name for d in [*root.glob("specs/*/"), *root.glob(".specify/specs/*/")] if d.is_dir()})
-    for f in features:
-        if not re.search(rf"^rea: {re.escape(f)}\|pass\|ev_\w+", text, re.M):
-            problems.append(f"missing: rea: {f}|pass|<ev_… id copied verbatim>")
+    excluded, exclude_problems = _exclusions(lines)
+    problems += exclude_problems
+    names = feature_names(progress.parent)
+    active = names[-1] if names else None
+    for name in sorted(excluded):
+        if name not in names:
+            problems.append(f"gate: exclude|{name}|… names no feature directory under specs/ or .specify/specs/")
+        elif name == active:
+            problems.append(
+                f"gate: exclude|{name}|… names the active feature. "
+                "The active feature is the last directory name in sorted order. "
+                "exclude applies only to an older directory."
+            )
+    skipped = {name for name in excluded if name != active}
+    latest, blocked = _rea_state(lines)
+    for feature in names:
+        if feature in skipped:
+            continue
+        if feature in blocked:
+            problems.append(
+                f"{feature}: blocked-limitation is not cleared by a later pass or not-applicable. "
+                "Remove the blocked-limitation line once the limitation is gone."
+            )
+            continue
+        kind, rest = latest.get(feature, ("", ""))
+        if kind == "not-applicable" and _trivial_reason(rest):
+            problems.append(
+                f"{feature}: not-applicable needs a real reason. {rest.strip()!r} is empty or a placeholder."
+            )
+            continue
+        if _closes(feature, kind, rest):
+            continue
+        problems.append(
+            f"missing: rea: {feature}|pass|<ev_… id> or rea: {feature}|not-applicable|<why no runnable artifact> "
+            f"(or gate: exclude|{feature}|<why it predates this Final Goal>)"
+        )
+    problems.extend(_structural(progress.parent, skipped))
+    problems.extend(_leftover_worktrees(progress.parent, lines))
     return problems
 
 
@@ -59,8 +355,8 @@ def main(argv: list[str]) -> int:
         print(f"no {progress}")
         return 2
     problems = check(progress)
-    for p in problems:
-        print(p)
+    for problem in problems:
+        print(problem)
     print("ok" if not problems else f"gate open: {len(problems)} problem(s)")
     return 1 if problems else 0
 

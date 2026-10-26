@@ -1,6 +1,6 @@
 ---
 name: gate
-description: Check the agentic-sdd completion gate for the current project (progress.md review line, rea pass line per feature, misformatted breadcrumbs). Use before writing "Final Goal met", or when asked whether a feature or the Final Goal is really done.
+description: Check the agentic-sdd completion gate for the current project. progress_gate.py is the only completion predicate (review line, rea pass or a real not-applicable reason per in-scope feature, blocked-limitation not cleared by a later pass, historical specs only via gate: exclude, which does not apply to the active feature). Use before writing "Final Goal met", or when asked whether a feature or the Final Goal is really done.
 ---
 
 Run `agentic-sdd-gate progress.md` from the project root (Claude Code puts the plugin's `bin/` on PATH).
