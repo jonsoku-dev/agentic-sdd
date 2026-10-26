@@ -22,7 +22,7 @@ own words. Record one breadcrumb per row.
 | `tasks` | `O-sequence` | `principle-sequence-verifiable-units` | ordered `tasks.md`, each task ends in a check; `progress_gate.py` refuses more than 12 tasks |
 | `implement` | `O-poteto` | poteto-mode non-negotiables | admitted task IDs only; inline unless a single-loop trigger holds; a leaf's worktree is removed (`git worktree remove`) once its diff is merged |
 | Pre-converge | `O-blast`, `O-hygiene` | `blast-radius`, `no-comments` | external risk proved or task-tracked; no narrating comments |
-| `converge` | `O-interrogate` | `interrogate` | a **spawned** reviewer's findings (foreground; no `ScheduleWakeup`, not even as a heartbeat); gaps appended to `tasks.md` |
+| `converge` | `O-interrogate` | `interrogate` | one independent verifier's findings (foreground; no `ScheduleWakeup`, not even as a heartbeat); gaps appended to `tasks.md` |
 | Post-converge | `O-rea` | REA (below) | Evidence ID bound to the current code |
 | Before `/compact` or host switch | `O-pause` | `pause-safely` | `progress.md` current |
 
@@ -77,7 +77,7 @@ is omitted only with `gate: exclude|<feature>|<why>`.
 
 | Need | Read |
 |------|------|
-| Spawning a leaf or panel on a given host; review gate details; port-only skills | [pstack-integration.md](pstack-integration.md) |
+| Spawning a leaf or the one verifier on a given host; review gate details; port-only skills | [pstack-integration.md](pstack-integration.md) |
 | REA install fails, web/SPA capture details, known REA failures | [rea-closeout.md](rea-closeout.md) |
 | A harness layer reports a gap | [harness-layers.md](harness-layers.md) |
 | Whether to spawn at all | [single-loop-default.md](single-loop-default.md) |

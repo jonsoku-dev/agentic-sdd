@@ -5,7 +5,8 @@ description: Multi-perspective checklist for Spec Kit converge (or bug test). No
 # Multi-Perspective Review (Converge / Bug Test Only)
 
 Apply at feature `converge` or bug `test` — not during intermediate `implement`
-or bug `fix` steps. Use in Thorough mode or when risk warrants it.
+or bug `fix` steps. The one independent verifier uses this as a checklist in
+Thorough mode or when risk warrants it. Perspectives are lenses, not seats.
 
 ## Perspectives
 
@@ -42,15 +43,17 @@ or bug `fix` steps. Use in Thorough mode or when risk warrants it.
   feature/bug. Do not silently expand or relax acceptance.
 - This is a short multi-lens pass, not a substitute for required evidence classes
   in [phase-contract.md](phase-contract.md).
-- With pstack on any host: run `interrogate` (`/interrogate` on Cursor,
-  `/pstack:interrogate` on Claude, native skill on Codex) — obligation
+- With pstack on any host: one verifier runs `interrogate` (`/interrogate` on
+  Cursor, `/pstack:interrogate` on Claude, native skill on Codex) — obligation
   `O-interrogate`. Add `thermos` on the Claude/Codex port for auth, payment,
-  schema, or public-API changes.
-- Reconcile findings into this checklist and `tasks.md`. Interrogate agreement alone
-  is not Spec Kit convergence.
+  schema, or public-API changes. Do not spawn a second reviewer to cover
+  another perspective.
+- Reconcile that verifier's findings into this checklist and `tasks.md`.
+  Interrogate agreement alone is not Spec Kit convergence.
 - With pstack present, a required review that no independent reviewer can run
   stays `BLOCKED: independent review` (recorded in `progress.md`); the feature
   stays open. Self-review, green tests, or CI do not close it.
-- Only if pstack is absent: spawn at least two independent review leaves with
-  different models when the host allows; otherwise explicit single-model
-  self-review with the limit recorded — never claim multi-model consensus.
+- Only if pstack is absent: one explicit single-model self-review with the
+  limit recorded. Never claim multi-model consensus. A second reviewer is
+  added only by the restore procedure in
+  [pstack-integration.md](pstack-integration.md#restoring-a-wider-review-panel).

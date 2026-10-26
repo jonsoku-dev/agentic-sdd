@@ -145,8 +145,8 @@ plain words, or type the skill's name (`/agentic-sdd`, `$agentic-sdd`,
 3. **Implement.** The host's poteto agent takes one admitted task packet at a
    time, in its own worktree, with the model and effort the pstack sheet names.
    The lead reviews every diff and never claims a dispatch it did not observe.
-4. **Converge, once.** `blast-radius`, `no-comments`, then a two-to-four model
-   `interrogate` panel. Act-on findings are appended to `tasks.md` and
+4. **Converge, once.** `blast-radius`, `no-comments`, then one independent
+   `interrogate` verifier. Act-on findings are appended to `tasks.md` and
    implemented in one bounded fix round. `progress_gate.py` refuses a second
    `Convergence` header in the same `tasks.md` and any git worktree besides
    the one you are in. Gaps that survive become the next, smaller spec
@@ -162,7 +162,7 @@ plain words, or type the skill's name (`/agentic-sdd`, `$agentic-sdd`,
    `Next action` line a cold session can resume from.
 
 Every obligation leaves one line in `progress.md`, for example
-`pstack: O-interrogate|claude|2x pstack:effort-low (opus, haiku) -> 1 act-on -> T004 appended`,
+`pstack: O-interrogate|claude|pstack:effort-low (haiku) -> 1 act-on -> T004 appended`,
 plus `ROUTING:` lines that record requested versus observed model and effort.
 The full phase → obligation map is in `references/pstack-integration.md`.
 
@@ -252,10 +252,10 @@ Kit repo still resolves the phase first.
 
 **Dispatch.** Implement runs inline by default. A leaf that meets a
 [single-loop trigger](references/single-loop-default.md) is `subagent_type: "pstack:poteto-agent"`, or
-`pstack:poteto-agent-<level>` when the sheet names an effort. Review panels use
-`pstack:effort-<level>` with the `model` family (`opus`, `fable`, `sonnet`,
-`haiku`) from `~/.claude/pstack-models.md`, written by `/pstack:setup-pstack`.
-Delegates run in their own worktree.
+`pstack:poteto-agent-<level>` when the sheet names an effort. Converge spawns
+one verifier at `pstack:effort-<level>` with the `model` family (`opus`,
+`fable`, `sonnet`, `haiku`) from `~/.claude/pstack-models.md`, written by
+`/pstack:setup-pstack`. Writer leaves run in their own worktree.
 
 **Completion.** `/goal` is Claude Code's own stop-hook goal; agentic-sdd's
 Final Goal in `progress.md` is the durable copy a resumed session reads.

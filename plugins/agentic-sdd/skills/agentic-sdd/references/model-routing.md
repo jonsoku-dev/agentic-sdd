@@ -17,7 +17,10 @@ global config, or project policy. No external advisor service is consulted.
 2. **pstack skill defaults** (poteto-mode Models section / `models.json` tiers):
    worker model for feature and refactoring leaves, default model for bug-fix,
    perf, judgment and prose, strongest model for the hardest judgment, the
-   diverse panel for `arena` / `architect` / `interrogate`.
+   strongest listed model for `arena` and `architect` judgment, and one
+   independent verifier (not the parent) for `interrogate`. A wider
+   interrogate panel is restored only by the procedure in
+   [pstack-integration.md](pstack-integration.md#restoring-a-wider-review-panel).
 3. **Parent model** (`inherit-parent` / omit `model`) when neither names a value
    or the host cannot pin a child model.
 
@@ -46,7 +49,7 @@ choices. GPT-5.6 remains excluded on this machine.
 
 | Host | Model | Effort |
 |------|-------|--------|
-| Claude Code | `model` on the `Agent` call (family name: `opus`, `fable`, `sonnet`, `haiku`) | `subagent_type: "pstack:poteto-agent-<level>"` for code leaves, `pstack:effort-<level>` for readers/panels |
+| Claude Code | `model` on the `Agent` call (family name: `opus`, `fable`, `sonnet`, `haiku`) | `subagent_type: "pstack:poteto-agent-<level>"` for code leaves, `pstack:effort-<level>` for the one verifier |
 | Codex | `spawn_agent` `model` set to a slug the tool lists (never omitted: the host substitutes the parent slug and may reject it) | `reasoning_effort: <level>` |
 | Cursor | Native `poteto-agent` with the sheet's role model | Host-native effort when exposed; otherwise record `unknown` |
 | Grok Build | `spawn_subagent` with `subagent_type: "poteto-agent"` (user-level link from `npx agentic-sdd setup --grok-agents`); `[subagents.models]` pins the model | Persona `reasoning_effort`; `/effort` for the session |

@@ -29,7 +29,7 @@ Spawn only when at least one trigger holds, and name it in the breadcrumb:
 |---------|-------|----------------------|
 | `bloat` | Keeping the work in the parent would push the parent's context past what it can use well: large reads, logs, or a packet the parent would have to page through | `O-guard` bulk reads; a cross-cutting `O-fio` survey |
 | `parallel` | Independent work that runs at the same time in a fresh context and is thrown away after it returns | `O-swarm` disjoint packets; `O-architect` / `O-arena` design runners |
-| `conflict` | One loop picks tools badly or its instructions collide, including the anchoring a reviewer must not share with the author | `O-interrogate` panel; the independent review gate; recovery reviewers |
+| `conflict` | One loop picks tools badly or its instructions collide, including the anchoring a reviewer must not share with the author | one `O-interrogate` verifier; the independent review gate |
 
 Everything else runs inline in the parent: a packet that fits the parent's
 context, a mechanical edit, a sequential task chain over the same files.

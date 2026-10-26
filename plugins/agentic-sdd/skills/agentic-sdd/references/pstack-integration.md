@@ -178,19 +178,39 @@ rows must run (skill or obligation) every time the phase is entered;
 Exact slash names may vary by plugin version; use the installed plugin's listed
 commands when they differ.
 
-**Panel size by cost mode** ([cost-modes.md](cost-modes.md)). The fixed
+**Review size by cost mode** ([cost-modes.md](cost-modes.md)). The fixed
 per-feature cost of the map (probe, sharpen, how, architect, interrogate, REA)
 is roughly constant while the defects it catches grow with surface area; one
 measured sandbox run (n = 1, asymmetric prompts) put the full map at roughly an
 order of magnitude more cost than bare Spec Kit on a 60-line feature while
 catching three shipped defects; see
-`docs/evals/2026-10-19-sandbox-ab/result.md`. Size the panels:
+`docs/evals/2026-10-19-sandbox-ab/result.md`. Every mode spawns **one**
+independent verifier for `O-interrogate` (the `conflict` trigger: a fresh
+context that does not share the author's anchoring). Cost mode changes
+`architect` and whether `thermos` runs; it does not add reviewer seats.
 
-| Mode | `O-architect` | `O-interrogate` panel | `O-poteto` leaves |
-|------|---------------|-----------------------|-------------------|
-| Economy | skip for single-file specs (record `O-architect: n/a single-file`) | 2 reviewers, different families | inline; 1 worker-model leaf only on a trigger |
-| Balanced | run when code crosses a function boundary | sheet default (4) | inline; a leaf per packet that meets a trigger |
-| Thorough | always | sheet default + `thermos` on the port | inline or leaf by trigger, + re-review by a second model |
+| Mode | `O-architect` | `O-interrogate` | `O-poteto` leaves |
+|------|---------------|-----------------|-------------------|
+| Economy | skip for single-file specs (record `O-architect: n/a single-file`) | one independent verifier | inline; 1 worker-model leaf only on a trigger |
+| Balanced | run when code crosses a function boundary | one independent verifier | inline; a leaf per packet that meets a trigger |
+| Thorough | always | one independent verifier; add `thermos` on the port for auth, payment, schema, or public-API risk | inline or leaf by trigger |
+
+### Restoring a wider review panel
+
+The default stays one verifier. Add another reviewer only for a case where
+quality dropped after this default, and only by this procedure:
+
+1. A cell in [docs/evals/2026-10-25-perfect](../docs/evals/2026-10-25-perfect/definition.md)
+   flips a previously passing C1–C9 check. C10 cost alone does not add a seat.
+2. Change one thing: one extra independent verifier on that cell's case
+   (host, brief, and the risk that failed). Do not widen Economy, Balanced,
+   or Thorough as a whole.
+3. Re-run that cell at least twice with the extra verifier, and at least
+   twice without it. Keep the extra reviewer only when a check that passed
+   with it fails without it.
+4. Record the flipped cell next to this section: host, brief, criterion,
+   both outcomes, and the date. Delete the extra seat if a later pair of
+   runs passes with one verifier.
 
 ### Poteto-mode under Spec Kit (critical)
 
@@ -312,7 +332,8 @@ Long unattended runs: `show-me-your-work` TSV, linked from `progress.md`.
 - Running `converge` twice on one spec; carry remaining gaps into the next small spec.
 - Opening a poteto playbook todolist beside the Spec Kit `tasks.md`.
 - Asking "should I continue to plan?" after specify succeeds.
-- Claiming multi-model consensus when only one model reviewed.
+- Claiming multi-model consensus from the single default verifier.
+- Spawning a second reviewer without a recorded C1–C9 flip (see Restoring a wider review panel).
 - Stopping Spec Kit because pstack is not installed (use obligations).
 - Requiring a port-only skill (`deslop`, `thermos`) on Cursor.
 - Hardcoding a plugin version in a path.

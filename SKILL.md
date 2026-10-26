@@ -166,10 +166,14 @@ the per-host dispatch detail.
   spec, and `specify` it. Context stays small; the gap is not lost.
 - `converge` only assesses and appends missing in-scope tasks. Return to
   `implement` for fixes. Do not relax acceptance to get green. Prefer
-  `/interrogate` (or `O-interrogate` fallback) plus
-  [multi-perspective review](references/multi-perspective-review.md). With
-  pstack present, a required review with no independent reviewer stays
-  `BLOCKED: independent review`; self-review never closes it.
+  one independent verifier via `/interrogate` (or the `O-interrogate`
+  fallback) applying
+  [multi-perspective review](references/multi-perspective-review.md) as a
+  checklist. Do not add a second reviewer unless
+  [Restoring a wider review panel](references/pstack-integration.md#restoring-a-wider-review-panel)
+  recorded a C1–C9 flip. With pstack present, a required review with no
+  independent reviewer stays `BLOCKED: independent review`; self-review never
+  closes it.
 - Installed `speckit-converge` reporting `converged` is not finish. After a clean
   converge (no new tasks), run **REA closeout** before marking the feature closed
   or advancing. Prefer MCP `user-rea` / `rea` tools; if absent in delivery/repair
