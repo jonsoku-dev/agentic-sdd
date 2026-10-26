@@ -443,6 +443,11 @@ deleted from a host config except the marked block and the named hook entries.
 
 ## Evidence that it works
 
+The pass bar is [`docs/evals/2026-10-25-perfect`](docs/evals/2026-10-25-perfect/definition.md):
+every run passes C1–C9, and two consecutive full matrices pass with no fix in
+between. [`result.md`](docs/evals/2026-10-25-perfect/result.md) records that
+bar as met. Older records below are history.
+
 [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md) has the full picture: method,
 routing table, a gate-by-gate matrix of what each host actually invoked at
 every Spec Kit gate, result comparisons, and the A/B against plain Spec Kit.
@@ -472,7 +477,7 @@ every Spec Kit gate, result comparisons, and the A/B against plain Spec Kit.
 | `hosts/claude/` | Plugin sources: guarded hooks, the gate/report/dashboard skills, `bin/` wrappers |
 | `plugins/`, `.claude-plugin/marketplace.json` | Generated plugin editions and marketplace; rebuild with `python3 scripts/build_plugins.py` (the tests fail when they are stale) |
 | `npx agentic-sdd` | Link, configure, update, and uninstall per host |
-| `tests/` | `python3 -m unittest discover -s tests -p 'test_*.py'` |
+| `tests/` | `python3 -m unittest discover -s tests -p 'test_*.py'`, plus the Cursor hook tests: `python3 -m unittest discover -s hosts/cursor/hooks/agentic-sdd-continue -p 'test_*.py'` |
 | `evals/` | Behavioral eval cases |
 | `personas/` | Provider personas, loaded only when a host asks for one |
 | `agents/openai.yaml` | Codex skill metadata |

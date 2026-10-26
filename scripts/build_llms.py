@@ -49,6 +49,8 @@ SECTIONS = [
         ("install.sh", "Installer and exact-inverse uninstaller"),
     ]),
     ("Evidence", [
+        ("docs/evals/2026-10-25-perfect/definition.md", "The pass bar: C1–C10 on every run, two consecutive full matrices, judged by perfect.py"),
+        ("docs/evals/2026-10-25-perfect/result.md", "That bar was met: matrices m2 and m3 passed with no fix in between"),
         ("docs/BENCHMARKS.md", "Method, routing table, gate-by-gate matrix of what each host invoked at every Spec Kit gate, result comparisons, A/B against plain Spec Kit"),
         ("docs/evals/2026-10-24-single-loop-ab/result.md", "Isolated A/B of 1.1.6 vs 1.2.0 single-loop rule (no measurable gain) and the 1.2.1 fixes for parked reviewers and uncounted breadcrumbs"),
         ("docs/evals/2026-10-20-host-matrix/result.md", "Four hosts × routing prompts, a real feature, and a three-part goal; black-box, converge count, REA ids, cost"),

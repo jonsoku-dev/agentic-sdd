@@ -36,7 +36,9 @@ jobs:
         with:
           python-version: "3.12"
       - name: Tests
-        run: python3 -m unittest discover -s tests -p 'test_*.py'
+        run: |
+          python3 -m unittest discover -s tests -p 'test_*.py'
+          python3 -m unittest discover -s hosts/cursor/hooks/agentic-sdd-continue -p 'test_*.py'
       - name: npm CLI that supports trusted publishing (OIDC needs npm >= 11.5.1)
         run: npm install -g npm@latest && npm --version
       # Trusted publishing (OIDC): this repository + this workflow file are

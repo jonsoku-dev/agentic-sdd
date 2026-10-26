@@ -24,7 +24,9 @@ jobs:
           echo "changed=$(git status --porcelain | wc -l | tr -d ' ')" >> "$GITHUB_OUTPUT"
       - name: Tests still pass with the new pins
         if: steps.bump.outputs.changed != '0'
-        run: python3 -m unittest discover -s tests -p 'test_*.py'
+        run: |
+          python3 -m unittest discover -s tests -p 'test_*.py'
+          python3 -m unittest discover -s hosts/cursor/hooks/agentic-sdd-continue -p 'test_*.py'
       - name: Open or update the pull request
         if: steps.bump.outputs.changed != '0'
         uses: peter-evans/create-pull-request@v8

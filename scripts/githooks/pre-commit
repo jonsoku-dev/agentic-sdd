@@ -12,3 +12,4 @@ if git diff --cached --name-only | grep -q -E '^(SKILL\.md|LICENSE|package\.json
   git add plugins .claude-plugin
 fi
 python3 -m unittest discover -s tests -p 'test_*.py' >/dev/null 2>&1 || { echo "pre-commit: tests failed; run python3 -m unittest discover -s tests" >&2; exit 1; }
+python3 -m unittest discover -s hosts/cursor/hooks/agentic-sdd-continue -p 'test_*.py' >/dev/null 2>&1 || { echo "pre-commit: cursor hook tests failed" >&2; exit 1; }

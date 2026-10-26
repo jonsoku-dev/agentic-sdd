@@ -22,9 +22,11 @@ jobs:
           for f in $files; do bash -n "$f"; done
           shellcheck -S error $files
       - name: Python compiles
-        run: python3 -m compileall -q scripts visualizer tests
+        run: python3 -m compileall -q scripts visualizer tests hosts/claude/hooks hosts/cursor/hooks
       - name: Unit tests
-        run: python3 -m unittest discover -s tests -p 'test_*.py'
+        run: |
+          python3 -m unittest discover -s tests -p 'test_*.py'
+          python3 -m unittest discover -s hosts/cursor/hooks/agentic-sdd-continue -p 'test_*.py'
       - name: Regenerate llms.txt when stale (main only)
         if: github.event_name == 'push'
         run: |
