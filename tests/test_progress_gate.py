@@ -56,11 +56,58 @@ class ProgressGateTest(unittest.TestCase):
             "rea: 001-todo-edit|not-applicable|docs-only, no runnable artifact",
         )
         self.assertEqual(self.run_gate(text), [])
+        short = GOOD.replace(
+            "rea: 001-todo-edit|pass|ev_adf6e4ce87099f67",
+            "rea: 001-todo-edit|not-applicable|no binary",
+        )
+        self.assertEqual(self.run_gate(short), [])
         bare = GOOD.replace(
             "rea: 001-todo-edit|pass|ev_adf6e4ce87099f67",
             "rea: 001-todo-edit|not-applicable|",
         )
         self.assertTrue(any("not-applicable" in p for p in self.run_gate(bare)))
+        for placeholder in ("n/a", "N/A", "na", "none", "tbd", "todo", "...", "placeholder"):
+            line = GOOD.replace(
+                "rea: 001-todo-edit|pass|ev_adf6e4ce87099f67",
+                f"rea: 001-todo-edit|not-applicable|{placeholder}",
+            )
+            problems = self.run_gate(line)
+            self.assertTrue(any("placeholder" in p or "real reason" in p for p in problems), placeholder)
+            self.assertNotEqual(problems, [], placeholder)
+
+    def test_exclude_does_not_apply_to_the_active_feature(self):
+        only = (
+            "pstack: O-interrogate|claude|pstack:effort-medium → 2 findings\n"
+            "gate: exclude|001-todo-edit|old\n"
+        )
+        problems = self.run_gate(only)
+        self.assertTrue(any("active feature" in p for p in problems), problems)
+        self.assertTrue(any("001-todo-edit" in p for p in problems), problems)
+        later = GOOD + "gate: exclude|002-next|old\n"
+        problems = self.run_gate(later, features=("001-todo-edit", "002-next"))
+        self.assertTrue(any("active feature" in p and "002-next" in p for p in problems), problems)
+        older = GOOD.replace("001-todo-edit", "002-next") + "gate: exclude|001-todo-edit|predates this Final Goal\n"
+        self.assertEqual(self.run_gate(older, features=("001-todo-edit", "002-next")), [])
+
+    def test_blocked_limitation_is_not_cleared_by_a_later_pass(self):
+        blocked_then_pass = GOOD.replace(
+            "rea: 001-todo-edit|pass|ev_adf6e4ce87099f67",
+            "rea: 001-todo-edit|blocked-limitation|rea CLI missing\n"
+            "rea: 001-todo-edit|pass|ev_adf6e4ce87099f67",
+        )
+        problems = self.run_gate(blocked_then_pass)
+        self.assertTrue(any("blocked-limitation" in p and "not cleared" in p for p in problems), problems)
+        pass_then_blocked = GOOD + "rea: 001-todo-edit|blocked-limitation|rea CLI missing\n"
+        problems = self.run_gate(pass_then_blocked)
+        self.assertTrue(any("blocked-limitation" in p for p in problems), problems)
+        appended_then_pass = GOOD.replace(
+            "rea: 001-todo-edit|pass|ev_adf6e4ce87099f67",
+            "rea: 001-todo-edit|tasks-appended|T005 added\n"
+            "rea: 001-todo-edit|pass|ev_adf6e4ce87099f67",
+        )
+        self.assertEqual(self.run_gate(appended_then_pass), [])
+        pass_then_appended = GOOD + "rea: 001-todo-edit|tasks-appended|T005 added\n"
+        self.assertTrue(any("001-todo-edit" in p for p in self.run_gate(pass_then_appended)))
 
     def test_exclude_drops_a_spec_that_predates_the_goal(self):
         text = GOOD + "gate: exclude|000-legacy|predates this Final Goal; closed before agentic-sdd\n"
@@ -114,6 +161,7 @@ class ProgressGateTest(unittest.TestCase):
     def test_excluded_feature_skips_the_task_limit(self):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
+            (root / "specs" / "001-todo-edit").mkdir(parents=True)
             feature = root / "specs" / "000-legacy"
             feature.mkdir(parents=True)
             (feature / "tasks.md").write_text("\n".join(f"- [ ] T{i:03d} old" for i in range(1, 20)))

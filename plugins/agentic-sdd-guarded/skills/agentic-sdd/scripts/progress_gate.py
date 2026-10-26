@@ -9,10 +9,17 @@ closes with one column-1 line:
     rea: <feature>|pass|ev_<id>
     rea: <feature>|not-applicable|<why there is no runnable or build artifact>
 
-blocked-limitation and tasks-appended do not close. A directory that predates
-this Final Goal is omitted only by:
+not-applicable closes only with a real reason. n/a, an empty reason, and
+placeholders do not. For each feature the latest rea line wins, except
+blocked-limitation, which sticks: a later pass or not-applicable does not
+clear it. Remove that line once the limitation is gone. tasks-appended does
+not stick, so a later real pass can close. A directory that predates this
+Final Goal is omitted only by:
 
     gate: exclude|<feature-directory>|<why it predates this Final Goal>
+
+exclude does not apply to the active feature. The active feature is the last
+directory name in sorted order.
 
 A worktree this run created is recorded at column 1:
 
@@ -55,8 +62,13 @@ SECRET = re.compile(r"AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-
                     r"|sk-(?:proj-)?[A-Za-z0-9_-]{32,}|xox[abposr]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----")
 MISFORMED = re.compile(rf"^\s*(?:[-*]\s+|\d+[.)]\s+)?`?{PREFIX}|^\s+{PREFIX}")
 PASS_LINE = re.compile(r"^rea: ([^|]+)\|pass\|ev_\w+")
-NA_LINE = re.compile(r"^rea: ([^|]+)\|not-applicable\|(\S.*)$")
+REA_LINE = re.compile(r"^rea: ([^|]+)\|([^|]+)\|(.*)$")
 EXCLUDE_LINE = re.compile(r"^gate: exclude\|([^|]+)\|(\S.*)$")
+REA_KINDS = {"pass", "not-applicable", "tasks-appended", "blocked-limitation"}
+TRIVIAL_REASONS = frozenset({
+    "n/a", "na", "n.a", "none", "nil", "null", "tbd", "todo", "placeholder",
+    "reason", "unknown", "-", "xxx", "fixme",
+})
 WORKTREE_LINE = re.compile(r"^gate: worktree\|(\S.*)$")
 TASK_LIMIT = 12
 STUCK_LIMIT = 2
@@ -126,13 +138,37 @@ def feature_names(root: Path) -> list[str]:
     return sorted(set(found))
 
 
-def _closed(lines: list[str]) -> set[str]:
-    closed: set[str] = set()
+def _trivial_reason(reason: str) -> bool:
+    token = reason.strip().lower().strip(".")
+    return not token or token in TRIVIAL_REASONS
+
+
+def _rea_state(lines: list[str]) -> tuple[dict[str, tuple[str, str]], set[str]]:
+    """Latest disposition per feature, and features with a sticky blocked-limitation.
+
+    A later pass or not-applicable does not remove a blocked-limitation.
+    tasks-appended is not sticky: the latest line wins for the other kinds.
+    """
+    latest: dict[str, tuple[str, str]] = {}
+    blocked: set[str] = set()
     for line in lines:
-        match = PASS_LINE.match(line) or NA_LINE.match(line)
-        if match:
-            closed.add(match.group(1))
-    return closed
+        match = REA_LINE.match(line)
+        if match is None:
+            continue
+        feature, kind, rest = match.group(1), match.group(2), match.group(3)
+        if kind == "blocked-limitation":
+            blocked.add(feature)
+        if kind in REA_KINDS:
+            latest[feature] = (kind, rest)
+    return latest, blocked
+
+
+def _closes(feature: str, kind: str, rest: str) -> bool:
+    if kind == "pass":
+        return PASS_LINE.match(f"rea: {feature}|pass|{rest.strip()}") is not None
+    if kind == "not-applicable":
+        return not _trivial_reason(rest)
+    return False
 
 
 def _exclusions(lines: list[str]) -> tuple[dict[str, str], list[str]]:
@@ -275,19 +311,40 @@ def check(progress: Path) -> list[str]:
     excluded, exclude_problems = _exclusions(lines)
     problems += exclude_problems
     names = feature_names(progress.parent)
+    active = names[-1] if names else None
     for name in sorted(excluded):
         if name not in names:
             problems.append(f"gate: exclude|{name}|… names no feature directory under specs/ or .specify/specs/")
-    closed = _closed(lines)
-    for feature in names:
-        if feature in excluded:
-            continue
-        if feature not in closed:
+        elif name == active:
             problems.append(
-                f"missing: rea: {feature}|pass|<ev_… id> or rea: {feature}|not-applicable|<why no runnable artifact> "
-                f"(or gate: exclude|{feature}|<why it predates this Final Goal>)"
+                f"gate: exclude|{name}|… names the active feature. "
+                "The active feature is the last directory name in sorted order. "
+                "exclude applies only to an older directory."
             )
-    problems.extend(_structural(progress.parent, set(excluded)))
+    skipped = {name for name in excluded if name != active}
+    latest, blocked = _rea_state(lines)
+    for feature in names:
+        if feature in skipped:
+            continue
+        if feature in blocked:
+            problems.append(
+                f"{feature}: blocked-limitation is not cleared by a later pass or not-applicable. "
+                "Remove the blocked-limitation line once the limitation is gone."
+            )
+            continue
+        kind, rest = latest.get(feature, ("", ""))
+        if kind == "not-applicable" and _trivial_reason(rest):
+            problems.append(
+                f"{feature}: not-applicable needs a real reason. {rest.strip()!r} is empty or a placeholder."
+            )
+            continue
+        if _closes(feature, kind, rest):
+            continue
+        problems.append(
+            f"missing: rea: {feature}|pass|<ev_… id> or rea: {feature}|not-applicable|<why no runnable artifact> "
+            f"(or gate: exclude|{feature}|<why it predates this Final Goal>)"
+        )
+    problems.extend(_structural(progress.parent, skipped))
     problems.extend(_leftover_worktrees(progress.parent, lines))
     return problems
 

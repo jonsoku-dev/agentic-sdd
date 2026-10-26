@@ -148,10 +148,10 @@ These points are the ones a hook or the gate enforces:
 | Tasks | Every task ends in a check. | More than 12 tasks fails the gate. |
 | Implement | The parent runs each admitted task inline. A leaf is only for `bloat`, `parallel`, or `conflict`. | Instruction only. The gate does not count leaves. |
 | Converge | One verifier. One fix round. | A second `Convergence` header, or a recorded leftover git worktree, fails the gate. |
-| REA | `rea: <feature>\|pass\|ev_…`, or `not-applicable` with a reason. | `blocked-limitation` does not close. A false "Final Goal met" is refused; the second identical refusal ends `NOT complete / blocked`. |
+| REA | `rea: <feature>\|pass\|ev_…`, or `not-applicable` with a real reason. | `blocked-limitation` stays open, including after a later pass. A false "Final Goal met" is refused; the second identical refusal ends `NOT complete / blocked`. |
 
 - Paste the phase-card spawn brief into a leaf or verifier prompt. This page does not apply inside that subagent.
-- An older spec drops out only with `gate: exclude|<feature>|<why>`.
+- An older spec drops out only with `gate: exclude|<feature>|<why>`. That line does not drop the active feature, the last directory name in sorted order.
 - `progress.md` ends with `Final Goal status` and a `Next action` line.
 - One breadcrumb example: `pstack: O-interrogate|claude|pstack:effort-low (haiku) -> 1 act-on -> T004 appended`.
 

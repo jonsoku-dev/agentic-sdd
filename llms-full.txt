@@ -159,10 +159,10 @@ These points are the ones a hook or the gate enforces:
 | Tasks | Every task ends in a check. | More than 12 tasks fails the gate. |
 | Implement | The parent runs each admitted task inline. A leaf is only for `bloat`, `parallel`, or `conflict`. | Instruction only. The gate does not count leaves. |
 | Converge | One verifier. One fix round. | A second `Convergence` header, or a recorded leftover git worktree, fails the gate. |
-| REA | `rea: <feature>\|pass\|ev_…`, or `not-applicable` with a reason. | `blocked-limitation` does not close. A false "Final Goal met" is refused; the second identical refusal ends `NOT complete / blocked`. |
+| REA | `rea: <feature>\|pass\|ev_…`, or `not-applicable` with a real reason. | `blocked-limitation` stays open, including after a later pass. A false "Final Goal met" is refused; the second identical refusal ends `NOT complete / blocked`. |
 
 - Paste the phase-card spawn brief into a leaf or verifier prompt. This page does not apply inside that subagent.
-- An older spec drops out only with `gate: exclude|<feature>|<why>`.
+- An older spec drops out only with `gate: exclude|<feature>|<why>`. That line does not drop the active feature, the last directory name in sorted order.
 - `progress.md` ends with `Final Goal status` and a `Next action` line.
 - One breadcrumb example: `pstack: O-interrogate|claude|pstack:effort-low (haiku) -> 1 act-on -> T004 appended`.
 
@@ -580,9 +580,10 @@ pstack: O-interrogate|<host>|<reviewer subagent_type> → <n> findings
 rea: <feature>|pass|ev_…
 ```
 
-- No runnable artifact: `rea: <feature>|not-applicable|<why there is no runnable artifact>`.
-- `blocked-limitation` and `tasks-appended` do not close a feature.
-- A directory that predates this Final Goal drops out only with `gate: exclude|<feature-directory>|<why it predates this Final Goal>`.
+- No runnable artifact: `rea: <feature>|not-applicable|<why there is no runnable artifact>`. `n/a` and other placeholders do not count.
+- `tasks-appended` does not close. A later `pass` can.
+- `blocked-limitation` stays open. A later `pass` does not clear it. Remove that line once the limitation is gone.
+- `gate: exclude|<feature-directory>|<why>` drops an older directory. It does not drop the active feature, the last directory name in sorted order.
 - `overview` and `000-overview` are not features.
 - Every other feature directory needs its own closing line.
 
@@ -838,7 +839,9 @@ That script is the only completion predicate.
 It names a bulleted or backticked breadcrumb, a secret-shaped token, and a feature directory with no closing line.
 Write `<REDACTED>` instead of a secret.
 Close with `rea: <feature>|pass|ev_…`, or `rea: <feature>|not-applicable|<why>` when nothing runnable exists.
+The reason has to be real. `n/a`, an empty reason, and placeholders do not close.
 Omit an older directory only with `gate: exclude|<feature>|<why>`.
+The active feature is the last directory name in sorted order. `exclude` does not apply to it.
 
 ## REA closeout, common path
 
@@ -860,10 +863,10 @@ Omit an older directory only with `gate: exclude|<feature>|<why>`.
 
    | Disposition | Closes? | When |
    |-------------|---------|------|
-   | `pass` | yes | Evidence ID present, no material finding |
-   | `not-applicable` | yes | No runnable artifact, reason recorded |
-   | `tasks-appended` | no | Material finding; one fix round, then REA again |
-   | `blocked-limitation` | no | Tooling failed after an alternate path |
+   | `pass` | yes, if it is the latest line and no `blocked-limitation` is present | Evidence ID present, no material finding |
+   | `not-applicable` | yes, under the same rule | No runnable artifact, and a real reason. `n/a`, empty, and placeholders do not count |
+   | `tasks-appended` | no | Material finding; one fix round, then REA again. A later `pass` can close |
+   | `blocked-limitation` | no | Tooling failed after an alternate path. A later `pass` or `not-applicable` does not clear it. Remove the line once the limitation is gone |
 
 ## Open the long references only when
 
@@ -2012,9 +2015,9 @@ finish — run REA closeout on that code state first.
 | Disposition | Meaning | May finish Final Goal / feature / bug verified? |
 |-------------|---------|--------------------------------------------------|
 | `pass` | Real Evidence ID(s) present; required capture families for the artifact type; bound to current code state; no material findings | **Yes** |
-| `not-applicable` | No runnable or build artifact exists (with recorded reason) | **Yes** |
-| `tasks-appended` | Material findings queued for implement/fix | **No** — continue Spec Kit loop |
-| `blocked-limitation` | Tooling failed after install/alternate path; command + exit + remediation recorded | **No** — stays open. A user dropping REA is a recorded scope change to `not-applicable` only when no runnable/build artifact exists, not a finish on this disposition |
+| `not-applicable` | No runnable or build artifact exists, with a real reason. `n/a`, empty, and placeholders do not count | **Yes**, when it is the latest line and the feature has no `blocked-limitation` |
+| `tasks-appended` | Material findings queued for implement/fix | **No** — continue Spec Kit loop. A later `pass` can close |
+| `blocked-limitation` | Tooling failed after install/alternate path; command + exit + remediation recorded | **No** — stays open, including when a later `pass` or `not-applicable` follows. Remove the line once the limitation is gone. A user dropping REA is a recorded scope change to `not-applicable` only when no runnable/build artifact exists, not a finish on this disposition |
 
 **Material finding** means: acceptance miss, broken P1 path, page/runtime error
 that violates acceptance, integrity contradiction, or user-visible wrong behavior.
@@ -2024,12 +2027,15 @@ that violates acceptance, integrity contradiction, or user-visible wrong behavio
 
 `scripts/progress_gate.py` is the only completion predicate. It accepts
 `rea: <feature>|pass|ev_…` or
-`rea: <feature>|not-applicable|<why there is no runnable artifact>`, and it
-rejects `blocked-limitation` and `tasks-appended`. Every feature directory
-under `specs/` or `.specify/specs/` is in scope except `overview` and
-`000-overview`. A directory that predates this Final Goal stays out of scope
-only with a column-1 line
+`rea: <feature>|not-applicable|<why there is no runnable artifact>` when the
+reason is real. For each feature the latest line wins, except
+`blocked-limitation`, which a later `pass` or `not-applicable` does not clear.
+`tasks-appended` does not stick. Every feature directory under `specs/` or
+`.specify/specs/` is in scope except `overview` and `000-overview`. A directory
+that predates this Final Goal stays out of scope only with a column-1 line
 `gate: exclude|<feature-directory>|<why it predates this Final Goal>`.
+That line does not apply to the active feature, the last directory name in
+sorted order.
 Do not write "Final Goal met" until the script prints `ok`.
 
 ## Ensure REA is available

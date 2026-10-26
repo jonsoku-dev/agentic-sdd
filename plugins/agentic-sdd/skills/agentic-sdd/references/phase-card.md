@@ -64,7 +64,9 @@ That script is the only completion predicate.
 It names a bulleted or backticked breadcrumb, a secret-shaped token, and a feature directory with no closing line.
 Write `<REDACTED>` instead of a secret.
 Close with `rea: <feature>|pass|ev_…`, or `rea: <feature>|not-applicable|<why>` when nothing runnable exists.
+The reason has to be real. `n/a`, an empty reason, and placeholders do not close.
 Omit an older directory only with `gate: exclude|<feature>|<why>`.
+The active feature is the last directory name in sorted order. `exclude` does not apply to it.
 
 ## REA closeout, common path
 
@@ -86,10 +88,10 @@ Omit an older directory only with `gate: exclude|<feature>|<why>`.
 
    | Disposition | Closes? | When |
    |-------------|---------|------|
-   | `pass` | yes | Evidence ID present, no material finding |
-   | `not-applicable` | yes | No runnable artifact, reason recorded |
-   | `tasks-appended` | no | Material finding; one fix round, then REA again |
-   | `blocked-limitation` | no | Tooling failed after an alternate path |
+   | `pass` | yes, if it is the latest line and no `blocked-limitation` is present | Evidence ID present, no material finding |
+   | `not-applicable` | yes, under the same rule | No runnable artifact, and a real reason. `n/a`, empty, and placeholders do not count |
+   | `tasks-appended` | no | Material finding; one fix round, then REA again. A later `pass` can close |
+   | `blocked-limitation` | no | Tooling failed after an alternate path. A later `pass` or `not-applicable` does not clear it. Remove the line once the limitation is gone |
 
 ## Open the long references only when
 

@@ -30,9 +30,10 @@ pstack: O-interrogate|<host>|<reviewer subagent_type> → <n> findings
 rea: <feature>|pass|ev_…
 ```
 
-- No runnable artifact: `rea: <feature>|not-applicable|<why there is no runnable artifact>`.
-- `blocked-limitation` and `tasks-appended` do not close a feature.
-- A directory that predates this Final Goal drops out only with `gate: exclude|<feature-directory>|<why it predates this Final Goal>`.
+- No runnable artifact: `rea: <feature>|not-applicable|<why there is no runnable artifact>`. `n/a` and other placeholders do not count.
+- `tasks-appended` does not close. A later `pass` can.
+- `blocked-limitation` stays open. A later `pass` does not clear it. Remove that line once the limitation is gone.
+- `gate: exclude|<feature-directory>|<why>` drops an older directory. It does not drop the active feature, the last directory name in sorted order.
 - `overview` and `000-overview` are not features.
 - Every other feature directory needs its own closing line.
 
