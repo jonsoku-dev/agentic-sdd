@@ -1,6 +1,6 @@
 {
   "name": "agentic-sdd-guarded",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Spec Kit delivery driven to the Final Goal: phase contracts, a one-page phase card, a completion gate script, REA closeout, a local dashboard and tracking reports. Guarded edition: hooks block a false 'Final Goal met', ScheduleWakeup during a run, and log subagent spawns.",
   "author": {
     "name": "jonsoku-dev"
