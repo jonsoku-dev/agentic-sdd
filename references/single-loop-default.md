@@ -91,13 +91,14 @@ The single loop is open-ended inside the limits this repository enforces. Anythi
 
 - `SKILL.md` stays the short always-loaded prompt; detail lives in
   `references/` and loads from [INDEX.md](INDEX.md) when a step needs it.
+- An output style applies to the parent conversation and its forks. It does not apply to an ordinary subagent. Paste the [spawn brief](phase-card.md#spawn-brief).
 - pstack skills load per obligation row, not all at once.
 - Knowledge (specs, logs, prior evidence) is read on demand by path, never
   pasted into a prompt or a leaf's brief. Leaves get file pointers.
 
 ## Waiting on a subagent
 
-A reviewer or leaf whose result gates the parent's next step is on the critical
+A verifier or leaf whose result gates the parent's next step is on the critical
 path. Launch the batch in one message in the foreground; the calls run in
 parallel and return together. Background only while the parent has other
 admitted work, and the harness notifies on completion. To wait for an agent

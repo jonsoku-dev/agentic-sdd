@@ -22,6 +22,14 @@ class SkillDisclosureTests(unittest.TestCase):
             self.assertIn(needle, text)
         self.assertIn("Do not read [phase-contract.md](references/phase-contract.md) on every phase.", text)
         self.assertNotIn("when entering a phase", text)
+        self.assertIn("ordinary subagent", text)
+        self.assertIn("does not block a command", text)
+        card = (ROOT / "references/phase-card.md").read_text()
+        self.assertIn("```mermaid", card)
+        self.assertIn("## Spawn brief", card)
+        self.assertIn("### Leaf", card)
+        self.assertIn("### Verifier", card)
+        self.assertIn("ordinary subagent", card)
 
 
 if __name__ == "__main__":

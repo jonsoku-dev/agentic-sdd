@@ -16,7 +16,9 @@ on the pstack-claude port.
   phase from the feature artifacts and `progress.md`. A contained one-file edit
   with an obvious check (a typo, a one-line fix) needs none of this: do it
   directly and verify on the real artifact. Implement runs inline. Spawn a
-  leaf only for a `bloat`, `parallel`, or `conflict` trigger.
+  leaf only for a `bloat`, `parallel`, or `conflict` trigger. Paste the
+  phase-card spawn brief into that prompt. This rule does not apply inside
+  the subagent.
 - Before a pstack Feature playbook's `how` step: if the phase is not `implement`,
   hand off to the owning Spec Kit phase command and stop the playbook; the
   phase's own obligation (`O-architect`, `O-interrogate`, …) runs pstack skills

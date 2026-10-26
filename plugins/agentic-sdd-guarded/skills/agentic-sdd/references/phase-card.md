@@ -7,11 +7,20 @@ description: >
 
 # Phase card
 
+```mermaid
+flowchart LR
+  specify --> plan --> tasks --> implement --> converge --> rea[REA]
+  converge -->|one fix round| implement
+  converge -->|still failing| nextSpec[next spec]
+```
+
 ## Obligations per phase
 
-Run each row as the pstack skill when it is installed (`/pstack:<skill>` on
-Claude, bare names on Cursor, by name on Codex), else as the obligation in your
-own words. Record one breadcrumb per row.
+Run each row as the pstack skill when it is installed.
+On Claude that is `/pstack:<skill>`.
+On Cursor and Codex, use the bare skill name.
+If the skill is missing, carry out the obligation in your own words.
+Record one breadcrumb per row.
 
 | Phase | Obligation | Skill | Must leave |
 |-------|------------|-------|------------|
@@ -19,15 +28,17 @@ own words. Record one breadcrumb per row.
 | Enter, existing code touched | `O-how` | `how` | file:line evidence in `plan.md` |
 | `specify` / `clarify` | `O-specify` | `technical-writing` + `unslop` | spec prose; assumptions marked |
 | `plan`, code crosses a function boundary | `O-architect` | `architect` | plan + verification contract |
-| `tasks` | `O-sequence` | `principle-sequence-verifiable-units` | ordered `tasks.md`, each task ends in a check; `progress_gate.py` refuses more than 12 tasks |
-| `implement` | `O-poteto` | poteto-mode non-negotiables | admitted task IDs only; inline unless a single-loop trigger holds; a leaf's worktree is removed (`git worktree remove`) once its diff is merged |
+| `tasks` | `O-sequence` | `principle-sequence-verifiable-units` | ordered `tasks.md`; each task ends in a check; the gate refuses more than 12 tasks |
+| `implement` | `O-poteto` | poteto-mode non-negotiables | admitted task IDs; inline unless a trigger holds; `git worktree remove` after the leaf's diff is merged |
 | Pre-converge | `O-blast`, `O-hygiene` | `blast-radius`, `no-comments` | external risk proved or task-tracked; no narrating comments |
-| `converge` | `O-interrogate` | `interrogate` | one independent verifier's findings (foreground; no `ScheduleWakeup`, not even as a heartbeat); gaps appended to `tasks.md` |
+| `converge` | `O-interrogate` | `interrogate` | one verifier, in the foreground; no `ScheduleWakeup`; gaps appended to `tasks.md` |
 | Post-converge | `O-rea` | REA (below) | Evidence ID bound to the current code |
 | Before `/compact` or host switch | `O-pause` | `pause-safely` | `progress.md` current |
 
-`converge` runs once per spec. `progress_gate.py` refuses a second `Convergence` header and a leftover git worktree. Gap tasks get one `implement` round, then
-REA; still failing → `closed-carryover` and the gap becomes the next spec.
+`converge` runs once per spec.
+`progress_gate.py` refuses a second `Convergence` header and a leftover git worktree.
+Gap tasks get one `implement` round, then REA.
+If they still fail, mark `closed-carryover` and specify the gap next.
 
 ## Breadcrumbs
 
@@ -45,20 +56,24 @@ ROUTING: <role> → <model>@<level> (source: sheet|default|parent) observed: …
 No reviewer can run → `pstack: O-interrogate|<host>|BLOCKED: independent review`,
 and the Final Goal stays open.
 
-Before "Final Goal met": `python3 <this skill>/scripts/progress_gate.py progress.md`
-must print `ok`. That script is the only completion predicate. It names any
-bulleted or backticked breadcrumb to rewrite, any line that looks like a secret
-(write `<REDACTED>` instead), and any feature directory still missing a closing
-line. Close with `rea: <feature>|pass|ev_…` or, when nothing runnable exists,
-`rea: <feature>|not-applicable|<why>`. A directory that predates this Final Goal
-is omitted only with `gate: exclude|<feature>|<why>`.
+Before "Final Goal met", this command must print `ok`:
+
+`python3 <this skill>/scripts/progress_gate.py progress.md`
+
+That script is the only completion predicate.
+It names a bulleted or backticked breadcrumb, a secret-shaped token, and a feature directory with no closing line.
+Write `<REDACTED>` instead of a secret.
+Close with `rea: <feature>|pass|ev_…`, or `rea: <feature>|not-applicable|<why>` when nothing runnable exists.
+Omit an older directory only with `gate: exclude|<feature>|<why>`.
 
 ## REA closeout, common path
 
-1. Use the REA MCP tools when connected, else the `rea` CLI. Missing both in
-   delivery/repair → `npm install -g rea-agents@6.7.0`, then
-   `rea setup --yes --client <claude_code|codex|cursor|grok_build>` for the
-   active host only.
+1. Use the REA MCP tools when connected, else the `rea` CLI.
+   If both are missing on delivery or repair, install the pin, then register the active host only:
+
+   `npm install -g rea-agents@6.7.0`
+
+   `rea setup --yes --client <claude_code|codex|cursor|grok_build>`
 2. Pick the smallest capture for the artifact:
    - CLI or script → `capture_process_scenario` on the real command (P1 path
      and one failure path).
@@ -67,11 +82,14 @@ is omitted only with `gate: exclude|<feature>|<why>`.
      `url` + `dom` or `accessibility`; a URL-only capture is not a pass.
 3. Copy the Evidence ID verbatim into `progress.md` (`rea:` line) and
    `converge.md` if the feature has one.
-4. Disposition, which `scripts/progress_gate.py` enforces: `pass` (ID present,
-   no material finding), `not-applicable` (no runnable artifact, reason
-   recorded), `tasks-appended` (material finding → one fix round, then REA
-   again), `blocked-limitation` (tooling failed after an alternate path; does
-   not finish). Only `pass` and `not-applicable` close the feature.
+4. Disposition, which `scripts/progress_gate.py` enforces:
+
+   | Disposition | Closes? | When |
+   |-------------|---------|------|
+   | `pass` | yes | Evidence ID present, no material finding |
+   | `not-applicable` | yes | No runnable artifact, reason recorded |
+   | `tasks-appended` | no | Material finding; one fix round, then REA again |
+   | `blocked-limitation` | no | Tooling failed after an alternate path |
 
 ## Open the long references only when
 
@@ -82,3 +100,25 @@ is omitted only with `gate: exclude|<feature>|<why>`.
 | A harness layer reports a gap | [harness-layers.md](harness-layers.md) |
 | Whether to spawn at all | [single-loop-default.md](single-loop-default.md) |
 | A phase's evidence class, who may write the artifact, or the handoff block is unclear | [phase-contract.md](phase-contract.md) |
+
+## Spawn brief
+
+An output style applies to the parent conversation and its forks.
+It does not apply to an ordinary subagent.
+This card does not apply there either.
+Paste the matching block into the spawn prompt.
+A file path is not a substitute.
+
+### Leaf
+
+- Admitted task IDs, the paths this packet may edit, and the acceptance check.
+- Read `poteto-mode/SKILL.md` at the absolute path the parent gives you.
+- Do not spawn another subagent.
+- Do not push, merge, or deploy.
+- Return one line: `changed paths | commands run → decisive output line | acceptance IDs → met/unmet/blocked | open risks`.
+
+### Verifier
+
+- You did not write this diff. Read the spec and the diff.
+- Do not edit source. Do not mark the Final Goal met.
+- Return findings as act-on, consider, noted, or dismissed.

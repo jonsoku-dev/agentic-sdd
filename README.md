@@ -132,41 +132,28 @@ plain words, or type the skill's name (`/agentic-sdd`, `$agentic-sdd`,
 
 ## How a run looks
 
-1. **Enter.** Resolve the nearest `.specify/`, the active numbered feature, and
-   its phase from the artifacts and `progress.md`. Load
-   `references/pstack-integration.md` and `references/harness-layers.md`, run
-   the probe, record the breadcrumbs. `O-sharpen` pins the Final Goal and the
-   acceptance criteria; nobody is quizzed.
-2. **Specify, plan, tasks.** Spec Kit commands write the artifacts; the
-   obligations run beside them: `technical-writing` + `unslop` on the spec,
-   `how` for brownfield evidence, `architect` (or `arena` when shapes compete)
-   when code crosses a function boundary, `principle-sequence-verifiable-units`
-   so every task ends in a check. `progress_gate.py` refuses a `tasks.md` with more than 12 tasks.
-3. **Implement.** The parent runs each admitted task inline. A leaf
-   (`poteto-agent`, or the host equivalent) is spawned only when a
-   [single-loop trigger](references/single-loop-default.md) holds, in its own
-   worktree, with the model and effort the pstack sheet names. The lead
-   reviews every diff and never claims a dispatch it did not observe.
-4. **Converge, once.** `blast-radius`, `no-comments`, then one independent
-   `interrogate` verifier. Act-on findings are appended to `tasks.md` and
-   implemented in one bounded fix round. `progress_gate.py` refuses a second
-   `Convergence` header in the same `tasks.md` and any git worktree besides
-   the one you are in. Gaps that survive become the next, smaller spec
-   (`closed-carryover`).
-5. **REA closeout.** Run the real artifact under REA and record the disposition
-   in `converge.md` and `progress.md`. `scripts/progress_gate.py` is the only
-   completion predicate: `rea: <feature>|pass|ev_…`, or
-   `rea: <feature>|not-applicable|<why no runnable artifact>` when nothing
-   runnable exists. `blocked-limitation` does not close the feature. A spec
-   directory that predates this Final Goal is omitted only with
-   `gate: exclude|<feature>|<why>`.
-6. **Next spec or stop.** `progress.md` ends with `Final Goal status` and a
-   `Next action` line a cold session can resume from.
+```mermaid
+flowchart LR
+  specify --> plan --> tasks --> implement --> converge --> rea[REA]
+  converge -->|one fix round| implement
+  converge -->|still failing| nextSpec[next spec]
+```
 
-Every obligation leaves one line in `progress.md`, for example
-`pstack: O-interrogate|claude|pstack:effort-low (haiku) -> 1 act-on -> T004 appended`,
-plus `ROUTING:` lines that record requested versus observed model and effort.
-The full phase → obligation map is in `references/pstack-integration.md`.
+The [phase card](references/phase-card.md) is the procedure.
+These points are the ones a hook or the gate enforces:
+
+| Step | What happens | What actually blocks |
+|------|----------------|----------------------|
+| Enter | Pin the Final Goal. Run the probe. Record breadcrumbs. | A bulleted breadcrumb fails `progress_gate.py`. |
+| Tasks | Every task ends in a check. | More than 12 tasks fails the gate. |
+| Implement | The parent runs each admitted task inline. A leaf is only for `bloat`, `parallel`, or `conflict`. | Instruction only. The gate does not count leaves. |
+| Converge | One verifier. One fix round. | A second `Convergence` header, or a leftover git worktree, fails the gate. |
+| REA | `rea: <feature>\|pass\|ev_…`, or `not-applicable` with a reason. | `blocked-limitation` does not close. Stop hooks keep blocking a false "Final Goal met". |
+
+- Paste the phase-card spawn brief into a leaf or verifier prompt. This page does not apply inside that subagent.
+- An older spec drops out only with `gate: exclude|<feature>|<why>`.
+- `progress.md` ends with `Final Goal status` and a `Next action` line.
+- One breadcrumb example: `pstack: O-interrogate|claude|pstack:effort-low (haiku) -> 1 act-on -> T004 appended`.
 
 ## Plugins (Claude Code and Codex)
 
@@ -252,12 +239,13 @@ playbook. The project playbook from `npx agentic-sdd --project` anchors three
 handoffs on the port's Feature and Bug fix steps so a plain request in a Spec
 Kit repo still resolves the phase first.
 
-**Dispatch.** Implement runs inline by default. A leaf that meets a
-[single-loop trigger](references/single-loop-default.md) is `subagent_type: "pstack:poteto-agent"`, or
-`pstack:poteto-agent-<level>` when the sheet names an effort. Converge spawns
-one verifier at `pstack:effort-<level>` with the `model` family (`opus`,
-`fable`, `sonnet`, `haiku`) from `~/.claude/pstack-models.md`, written by
-`/pstack:setup-pstack`. Writer leaves run in their own worktree.
+**Dispatch.** Implement runs inline.
+Spawn a leaf only for a [single-loop trigger](references/single-loop-default.md).
+The type is `pstack:poteto-agent`, or `pstack:poteto-agent-<level>` when the sheet names an effort.
+Converge spawns one verifier at `pstack:effort-<level>`.
+The model family comes from `~/.claude/pstack-models.md`.
+A leaf that writes code uses its own worktree.
+Paste the [spawn brief](references/phase-card.md#spawn-brief) into that prompt.
 
 **Completion.** `/goal` is Claude Code's own stop-hook goal; agentic-sdd's
 Final Goal in `progress.md` is the durable copy a resumed session reads.
@@ -368,10 +356,11 @@ loads. Plugin agents are not in the `spawn_subagent` enum, so `--grok-agents`
 links the port's `poteto-agent.md` into `~/.grok/agents/`, where it is.
 Uninstall still removes a leftover `comment-sicko.md` from an older install.
 
-**Dispatch.** `spawn_subagent` with `subagent_type: "poteto-agent"`; the
-subagent reads `poteto-mode/SKILL.md` before working. `[subagents.models]` in
-`~/.grok/config.toml` pins a model when you want one; without a sheet the
-`ROUTING:` lines read `model unpinned, observed unknown`.
+**Dispatch.** `spawn_subagent` with `subagent_type: "poteto-agent"`.
+Paste the [spawn brief](references/phase-card.md#spawn-brief) into that prompt.
+This page does not apply inside the subagent.
+`[subagents.models]` in `~/.grok/config.toml` pins a model when you want one.
+Without a sheet, record `model unpinned, observed unknown`.
 
 **MCP.** Grok loads `~/.cursor/mcp.json` through `[compat.cursor]`, so REA
 configured for Cursor is already visible to Grok.

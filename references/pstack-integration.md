@@ -271,6 +271,7 @@ acceptance check, return format). Rules that hold everywhere:
 - **Call as a tool, not a handoff.** The leaf returns the shared schema in
   [single-loop-default.md](single-loop-default.md); the parent keeps the
   conversation and `tasks.md`.
+- **Paste the brief.** Copy the [spawn brief](phase-card.md#spawn-brief) into the leaf or verifier prompt. An output style and `SKILL.md` apply to the parent conversation and its forks. They do not apply to an ordinary subagent.
 - **You own the leaf's diff.** Open the changed files and the decisive check
   output before accepting; write your own summary.
 
