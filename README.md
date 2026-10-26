@@ -147,7 +147,7 @@ These points are the ones a hook or the gate enforces:
 | Enter | Pin the Final Goal. Run the probe. Record breadcrumbs. | A bulleted breadcrumb fails `progress_gate.py`. |
 | Tasks | Every task ends in a check. | More than 12 tasks fails the gate. |
 | Implement | The parent runs each admitted task inline. A leaf is only for `bloat`, `parallel`, or `conflict`. | Instruction only. The gate does not count leaves. |
-| Converge | One verifier. One fix round. | A second `Convergence` header, or a leftover git worktree, fails the gate. |
+| Converge | One verifier. One fix round. | A second `Convergence` header, or a recorded leftover git worktree, fails the gate. |
 | REA | `rea: <feature>\|pass\|ev_…`, or `not-applicable` with a reason. | `blocked-limitation` does not close. Stop hooks keep blocking a false "Final Goal met". |
 
 - Paste the phase-card spawn brief into a leaf or verifier prompt. This page does not apply inside that subagent.

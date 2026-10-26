@@ -264,6 +264,9 @@ acceptance check, return format). Rules that hold everywhere:
   The parent never writes a leaf's worktree while the leaf holds it. After
   merging a leaf's diff, run `git worktree remove <path>` (and delete its
   branch); no leaf worktree may remain registered when the feature closes.
+  When you create that worktree, record `gate: worktree|<absolute-path>` at column 1 in `progress.md`.
+  The gate flags only that recorded path, and only while it is still checked out.
+  It never flags the main checkout, the current checkout, or a worktree you did not record.
 - **Leaves do not delegate.** File pointers, not inlined context.
 - **Model and effort:** role line from the pstack sheet when present, else the
   skill's default; the chosen level becomes the leaf's effort (see

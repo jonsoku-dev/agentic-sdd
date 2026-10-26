@@ -158,7 +158,7 @@ These points are the ones a hook or the gate enforces:
 | Enter | Pin the Final Goal. Run the probe. Record breadcrumbs. | A bulleted breadcrumb fails `progress_gate.py`. |
 | Tasks | Every task ends in a check. | More than 12 tasks fails the gate. |
 | Implement | The parent runs each admitted task inline. A leaf is only for `bloat`, `parallel`, or `conflict`. | Instruction only. The gate does not count leaves. |
-| Converge | One verifier. One fix round. | A second `Convergence` header, or a leftover git worktree, fails the gate. |
+| Converge | One verifier. One fix round. | A second `Convergence` header, or a recorded leftover git worktree, fails the gate. |
 | REA | `rea: <feature>\|pass\|ev_…`, or `not-applicable` with a reason. | `blocked-limitation` does not close. Stop hooks keep blocking a false "Final Goal met". |
 
 - Paste the phase-card spawn brief into a leaf or verifier prompt. This page does not apply inside that subagent.
@@ -803,7 +803,7 @@ Record one breadcrumb per row.
 | Before `/compact` or host switch | `O-pause` | `pause-safely` | `progress.md` current |
 
 `converge` runs once per spec.
-`progress_gate.py` refuses a second `Convergence` header and a leftover git worktree.
+`progress_gate.py` refuses a second `Convergence` header and a recorded `gate: worktree|<absolute-path>` that is still checked out. It ignores the main checkout, the current checkout, and any worktree this run did not record.
 Gap tasks get one `implement` round, then REA.
 If they still fail, mark `closed-carryover` and specify the gap next.
 
@@ -1553,6 +1553,9 @@ acceptance check, return format). Rules that hold everywhere:
   The parent never writes a leaf's worktree while the leaf holds it. After
   merging a leaf's diff, run `git worktree remove <path>` (and delete its
   branch); no leaf worktree may remain registered when the feature closes.
+  When you create that worktree, record `gate: worktree|<absolute-path>` at column 1 in `progress.md`.
+  The gate flags only that recorded path, and only while it is still checked out.
+  It never flags the main checkout, the current checkout, or a worktree you did not record.
 - **Leaves do not delegate.** File pointers, not inlined context.
 - **Model and effort:** role line from the pstack sheet when present, else the
   skill's default; the chosen level becomes the leaf's effort (see
@@ -1719,7 +1722,7 @@ The single loop is open-ended inside the limits this repository enforces. Anythi
 | Limit | Where it runs |
 |-------|----------------|
 | Completion | [progress_gate.py](../scripts/progress_gate.py), the only completion predicate. Claude Stop (`hosts/claude/hooks/stop_gate.py`) blocks while `progress.md` claims the Final Goal is met and the script is not `ok`. Cursor stop (`hosts/cursor/hooks/agentic-sdd-continue/common.py`) quotes the same script instead of accepting `delivered`. |
-| Task count, one converge, leftover worktrees | The same script. More than 12 tasks, a second `Convergence` header in `tasks.md`, or a git worktree other than the current one is a refusal the model can read. |
+| Task count, one converge, leftover worktrees | The same script. More than 12 tasks or a second `Convergence` header in `tasks.md` is a refusal. A leftover is only a `gate: worktree|<absolute-path>` this run recorded that is still checked out, and is neither the main checkout nor the current checkout. |
 | Write gates | Claude guarded `hosts/claude/hooks/git_guard.py` denies `git push`, `git merge` (not `--abort`), `reset --hard`, `clean -f`, `branch -D`, `stash`, a checkout/restore that discards the tree, and the deploy/publish commands in `why_deploy` (`npm publish`, `vercel --prod`, `fly deploy`, `kubectl apply`, `terraform apply`, `gh release create`, and the same family). Codex, Grok, Cursor, and the hook-free edition have no write hook. |
 | Turn budget | Cursor continuation only: 80 follow-ups (`BUDGET` in the Cursor hook) and a stuck latch after the same `progress.md` twice. Spending the budget does not close the gate. Claude, Codex, and Grok have no turn cap here. |
 | Repeated identical checks | [verification_guard.py](../scripts/verification_guard.py) recommends stopping after two unchanged attempts, and only when the model passes it a state file. It does not end the session. |

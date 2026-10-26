@@ -36,7 +36,7 @@ Record one breadcrumb per row.
 | Before `/compact` or host switch | `O-pause` | `pause-safely` | `progress.md` current |
 
 `converge` runs once per spec.
-`progress_gate.py` refuses a second `Convergence` header and a leftover git worktree.
+`progress_gate.py` refuses a second `Convergence` header and a recorded `gate: worktree|<absolute-path>` that is still checked out. It ignores the main checkout, the current checkout, and any worktree this run did not record.
 Gap tasks get one `implement` round, then REA.
 If they still fail, mark `closed-carryover` and specify the gap next.
 

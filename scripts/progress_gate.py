@@ -14,12 +14,19 @@ this Final Goal is omitted only by:
 
     gate: exclude|<feature-directory>|<why it predates this Final Goal>
 
+A worktree this run created is recorded at column 1:
+
+    gate: worktree|<absolute-path>
+
+Only a recorded path that is still a git worktree, and is neither the main
+checkout nor the current checkout, is a leftover. Other worktrees are left
+alone. The refusal never says to remove the main checkout.
+
 Also required at column 1: one real reviewer line
 `pstack: O-interrogate|<host>|<subagent_type> → <n> findings`.
 BLOCKED, a self-review, a bulleted or backticked breadcrumb, or a secret-shaped
 token leaves the gate open. In-scope tasks.md files may contain at most 12
-tasks and one Convergence header. Any git worktree besides the current one
-is a leftover. Exit 0 ok, 1 gate open, 2 no progress.md.
+tasks and one Convergence header. Exit 0 ok, 1 gate open, 2 no progress.md.
 """
 from __future__ import annotations
 
@@ -39,6 +46,7 @@ MISFORMED = re.compile(rf"^\s*(?:[-*]\s+|\d+[.)]\s+)?`?{PREFIX}|^\s+{PREFIX}")
 PASS_LINE = re.compile(r"^rea: ([^|]+)\|pass\|ev_\w+")
 NA_LINE = re.compile(r"^rea: ([^|]+)\|not-applicable\|(\S.*)$")
 EXCLUDE_LINE = re.compile(r"^gate: exclude\|([^|]+)\|(\S.*)$")
+WORKTREE_LINE = re.compile(r"^gate: worktree\|(\S.*)$")
 TASK_LIMIT = 12
 TASK_ID = re.compile(r"\bT\d{3,}\b")
 CHECKBOX = re.compile(r"^\s*[-*]\s+\[[ xX]\]")
@@ -77,9 +85,14 @@ def _exclusions(lines: list[str]) -> tuple[dict[str, str], list[str]]:
     for number, line in enumerate(lines, 1):
         if not line.startswith("gate:"):
             continue
+        if WORKTREE_LINE.match(line):
+            continue
         match = EXCLUDE_LINE.match(line)
         if match is None:
-            problems.append("line %d: gate: lines must be `gate: exclude|<feature-directory>|<why it predates this Final Goal>`" % number)
+            problems.append(
+                "line %d: gate: lines must be `gate: exclude|<feature-directory>|<why it predates this Final Goal>`"
+                " or `gate: worktree|<absolute-path>`" % number
+            )
             continue
         found[match.group(1)] = match.group(2).strip()
     return found, problems
@@ -113,28 +126,79 @@ def _structural(root: Path, excluded: set[str]) -> list[str]:
                     f"{tasks.relative_to(root)} has {headers} Convergence headers; one converge per spec. "
                     "Carry the remaining gap into the next spec."
                 )
-    problems.extend(_leftover_worktrees(root))
     return problems
 
 
-def _leftover_worktrees(root: Path) -> list[str]:
-    git = shutil.which("git")
-    if git is None:
-        return []
-    probe = subprocess.run([git, "-C", str(root), "rev-parse", "--is-inside-work-tree"], capture_output=True, text=True)
+def _git(cwd: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    git = shutil.which("git") or "git"
+    return subprocess.run([git, "-C", str(cwd), *args], capture_output=True, text=True)
+
+
+def _repo_paths(start: Path) -> tuple[Path, Path, dict[Path, str] | str] | None:
+    """Current toplevel, main checkout, and live worktrees keyed by resolved path.
+
+    The third item is an error string when `git worktree list` fails.
+    Returns None when start is not inside a worktree.
+    """
+    if shutil.which("git") is None:
+        return None
+    probe = _git(start, "rev-parse", "--is-inside-work-tree")
     if probe.returncode != 0 or probe.stdout.strip() != "true":
-        return []
-    listed = subprocess.run([git, "-C", str(root), "worktree", "list", "--porcelain"], capture_output=True, text=True)
+        return None
+    top = _git(start, "rev-parse", "--show-toplevel")
+    if top.returncode != 0 or not top.stdout.strip():
+        return None
+    toplevel = Path(top.stdout.strip()).resolve()
+    common = _git(toplevel, "rev-parse", "--git-common-dir")
+    if common.returncode != 0 or not common.stdout.strip():
+        return None
+    common_path = Path(common.stdout.strip())
+    if not common_path.is_absolute():
+        common_path = toplevel / common_path
+    common_path = common_path.resolve()
+    main = common_path.parent.resolve() if common_path.name == ".git" else toplevel
+    listed = _git(toplevel, "worktree", "list", "--porcelain")
     if listed.returncode != 0:
-        detail = listed.stderr.strip() or "git worktree list failed"
-        return [f"could not list git worktrees: {detail}"]
-    paths = [line[len("worktree "):] for line in listed.stdout.splitlines() if line.startswith("worktree ")]
-    current = root.resolve()
-    return [
-        f"leftover git worktree: {path}. Remove it with `git worktree remove` before calling the Final Goal met."
-        for path in paths
-        if Path(path).resolve() != current
-    ]
+        return toplevel, main, listed.stderr.strip() or "git worktree list failed"
+    live: dict[Path, str] = {}
+    for line in listed.stdout.splitlines():
+        if line.startswith("worktree "):
+            raw = line[len("worktree "):]
+            live[Path(raw).resolve()] = raw
+    return toplevel, main, live
+
+
+def _recorded_worktrees(lines: list[str], toplevel: Path) -> list[Path]:
+    found: list[Path] = []
+    for line in lines:
+        match = WORKTREE_LINE.match(line)
+        if match is None:
+            continue
+        path = Path(match.group(1).strip())
+        if not path.is_absolute():
+            path = toplevel / path
+        found.append(path.resolve())
+    return found
+
+
+def _leftover_worktrees(start: Path, lines: list[str]) -> list[str]:
+    located = _repo_paths(start)
+    if located is None:
+        return []
+    toplevel, main, live = located
+    if isinstance(live, str):
+        return [f"could not list git worktrees: {live}"]
+    problems: list[str] = []
+    seen: set[Path] = set()
+    for recorded in _recorded_worktrees(lines, toplevel):
+        if recorded in seen or recorded == main or recorded == toplevel or recorded not in live:
+            continue
+        seen.add(recorded)
+        shown = live[recorded]
+        problems.append(
+            f"leftover git worktree: {shown}. Remove it with `git worktree remove` before calling the Final Goal met."
+        )
+    return problems
 
 
 def check(progress: Path) -> list[str]:
@@ -168,6 +232,7 @@ def check(progress: Path) -> list[str]:
                 f"(or gate: exclude|{feature}|<why it predates this Final Goal>)"
             )
     problems.extend(_structural(progress.parent, set(excluded)))
+    problems.extend(_leftover_worktrees(progress.parent, lines))
     return problems
 
 

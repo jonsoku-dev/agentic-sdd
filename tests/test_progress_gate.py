@@ -120,25 +120,81 @@ class ProgressGateTest(unittest.TestCase):
             (root / "progress.md").write_text(GOOD + "gate: exclude|000-legacy|predates this Final Goal\n")
             self.assertEqual(check(root / "progress.md"), [])
 
-    def test_a_second_worktree_is_a_leftover(self):
+    def _git_repo(self, path: Path) -> None:
+        path.mkdir(parents=True, exist_ok=True)
+        quiet = {"stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL}
+        subprocess.check_call(["git", "init"], cwd=path, **quiet)
+        subprocess.check_call(["git", "config", "user.email", "t@example.com"], cwd=path)
+        subprocess.check_call(["git", "config", "user.name", "t"], cwd=path)
+        (path / "README").write_text("x\n")
+        subprocess.check_call(["git", "add", "README"], cwd=path, **quiet)
+        subprocess.check_call(["git", "commit", "-m", "init"], cwd=path, **quiet)
+
+    def _worktree(self, repo: Path, path: Path, branch: str) -> None:
+        subprocess.check_call(
+            ["git", "-C", str(repo), "worktree", "add", "-b", branch, str(path), "HEAD"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+
+    def _feature(self, root: Path) -> None:
+        (root / "specs" / "001-todo-edit").mkdir(parents=True)
+        (root / "progress.md").write_text(GOOD)
+
+    def test_a_subdirectory_does_not_flag_the_main_checkout(self):
         if shutil.which("git") is None:
             self.skipTest("git missing")
         with tempfile.TemporaryDirectory() as d:
             root = Path(d) / "repo"
-            root.mkdir()
-            quiet = {"cwd": root, "stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL}
-            subprocess.check_call(["git", "init"], **quiet)
-            subprocess.check_call(["git", "config", "user.email", "t@example.com"], cwd=root)
-            subprocess.check_call(["git", "config", "user.name", "t"], cwd=root)
-            (root / "README").write_text("x\n")
-            subprocess.check_call(["git", "add", "README"], **quiet)
-            subprocess.check_call(["git", "commit", "-m", "init"], **quiet)
-            extra = Path(d) / "extra"
-            subprocess.check_call(["git", "worktree", "add", "-b", "leaf", str(extra), "HEAD"], **quiet)
-            (root / "specs" / "001-todo-edit").mkdir(parents=True)
-            (root / "progress.md").write_text(GOOD)
+            self._git_repo(root)
+            app = root / "packages" / "app"
+            self._feature(app)
+            problems = check(app / "progress.md")
+        self.assertFalse(any("worktree" in p for p in problems), problems)
+        self.assertFalse(any(str(root.resolve()) in p for p in problems), problems)
+
+    def test_a_linked_worktree_does_not_flag_the_main_checkout(self):
+        if shutil.which("git") is None:
+            self.skipTest("git missing")
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d) / "repo"
+            self._git_repo(root)
+            linked = Path(d) / "linked"
+            self._worktree(root, linked, "feature")
+            self._feature(linked)
+            (linked / "progress.md").write_text(GOOD + f"gate: worktree|{root.resolve()}\n")
+            problems = check(linked / "progress.md")
+        self.assertFalse(any("worktree" in p.lower() and "leftover" in p for p in problems), problems)
+        self.assertFalse(any("git worktree remove" in p for p in problems), problems)
+        self.assertFalse(any(str(root.resolve()) in p for p in problems), problems)
+
+    def test_a_preexisting_worktree_is_not_a_leftover(self):
+        if shutil.which("git") is None:
+            self.skipTest("git missing")
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d) / "repo"
+            self._git_repo(root)
+            self._worktree(root, Path(d) / "unrelated", "unrelated")
+            self._feature(root)
             problems = check(root / "progress.md")
-        self.assertTrue(any("leftover git worktree" in p for p in problems), problems)
+        self.assertFalse(any("leftover git worktree" in p for p in problems), problems)
+
+    def test_a_recorded_worktree_still_blocks(self):
+        if shutil.which("git") is None:
+            self.skipTest("git missing")
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d) / "repo"
+            self._git_repo(root)
+            extra = Path(d) / "leaf"
+            self._worktree(root, extra, "leaf")
+            self._feature(root)
+            (root / "progress.md").write_text(
+                GOOD + f"gate: worktree|{extra.resolve()}\n" + f"gate: worktree|{root.resolve()}\n"
+            )
+            problems = check(root / "progress.md")
+        self.assertTrue(any("leftover git worktree" in p and str(extra.resolve()) in p for p in problems), problems)
+        self.assertFalse(any(str(root.resolve()) in p for p in problems), problems)
+        self.assertTrue(any("git worktree remove" in p for p in problems), problems)
 
     def test_blocked_review_keeps_gate_open(self):
         text = GOOD.replace("pstack:effort-medium → 2 findings", "BLOCKED: independent review")
