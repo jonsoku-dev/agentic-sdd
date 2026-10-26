@@ -10,7 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
-from progress_gate import check, claims_met
+from progress_gate import check, claims_met, clear_met_claim, refusal_key, stuck_message
 
 GOOD = """# Progress
 pstack: O-poteto|claude|inline → T001–T004 verified
@@ -195,6 +195,45 @@ class ProgressGateTest(unittest.TestCase):
         self.assertTrue(any("leftover git worktree" in p and str(extra.resolve()) in p for p in problems), problems)
         self.assertFalse(any(str(root.resolve()) in p for p in problems), problems)
         self.assertTrue(any("git worktree remove" in p for p in problems), problems)
+
+    def test_stuck_message_names_the_block_and_drops_the_met_claim(self):
+        message = stuck_message(["before calling the Final Goal met"])
+        self.assertTrue(message.startswith("NOT complete / blocked:"))
+        self.assertIn("The Final Goal is not met.", message)
+        self.assertNotIn("Final Goal met", message)
+        self.assertIn("run is not complete", message)
+
+    def test_clear_met_claim_rewrites_progress_and_keeps_an_honest_negation(self):
+        with tempfile.TemporaryDirectory() as d:
+            progress = Path(d) / "progress.md"
+            progress.write_text("Status: Final Goal met\nFinal Goal NOT met stays.\n")
+            message = stuck_message(["missing review"])
+            clear_met_claim(progress, message)
+            text = progress.read_text()
+        self.assertNotIn("Final Goal met", text)
+        self.assertIn("Final Goal is not met", text)
+        self.assertIn("Final Goal NOT met stays.", text)
+        self.assertIn(message, text)
+        self.assertFalse(claims_met(text))
+
+    def test_refusal_key_changes_with_progress_or_git_and_stays_for_a_repeat(self):
+        if shutil.which("git") is None:
+            self.skipTest("git missing")
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d) / "repo"
+            self._git_repo(root)
+            progress = root / "progress.md"
+            progress.write_text(GOOD)
+            first = refusal_key(progress, ["missing"])
+            self.assertEqual(first, refusal_key(progress, ["missing"]))
+            self.assertNotEqual(first, refusal_key(progress, ["other"]))
+            progress.write_text(GOOD + "note\n")
+            changed = refusal_key(progress, ["missing"])
+            self.assertNotEqual(first, changed)
+            (root / "note").write_text("1\n")
+            subprocess.check_call(["git", "add", "note"], cwd=root, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.check_call(["git", "commit", "-m", "note"], cwd=root, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            self.assertNotEqual(changed, refusal_key(progress, ["missing"]))
 
     def test_blocked_review_keeps_gate_open(self):
         text = GOOD.replace("pstack:effort-medium → 2 findings", "BLOCKED: independent review")

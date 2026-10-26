@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -42,12 +43,14 @@ class ContinueTests(unittest.TestCase):
         return common.progress_record([str(self.workspace)])
 
     def test_arm(self) -> None:
-        session = self.session(hold=True, followup_count=4, stuck_latched=True)
+        session = self.session(hold=True, followup_count=4, stuck_latched=True, gate_stuck_latched=True, gate_refusal_count=2)
         common.apply_prompt(session, "/agentic-sdd finish the goal")
         self.assertTrue(session["armed"])
         self.assertFalse(session["hold"])
         self.assertEqual(session["followup_count"], 0)
         self.assertFalse(session["stuck_latched"])
+        self.assertFalse(session["gate_stuck_latched"])
+        self.assertEqual(session["gate_refusal_count"], 0)
 
     def test_hold(self) -> None:
         self.write_progress("# Progress\n" + running_line())
@@ -99,6 +102,79 @@ class ContinueTests(unittest.TestCase):
         self.assertIn("O-interrogate", message)
         self.assertIn("not met", message)
         self.assertEqual(session["followup_count"], 1)
+
+    def _open_delivered(self, extra: str = "") -> None:
+        self.write_progress(
+            "# Progress\nFinal Goal met\n" + extra + "<!-- sdd-continue: " + json.dumps(
+                {"status": "delivered", "stop_reason": None, "next_action": ""}
+            ) + " -->\n"
+        )
+
+    def test_identical_gate_refusal_ends_not_complete(self) -> None:
+        self._open_delivered()
+        session = self.session(armed=True)
+        payload = {"status": "completed"}
+        first = common.decide_stop(session, payload, self.record())
+        assert first is not None
+        self.assertIn("refused completion", first)
+        self.assertNotIn("NOT complete / blocked:", first)
+        second = common.decide_stop(session, payload, self.record())
+        assert second is not None
+        self.assertTrue(second.startswith("NOT complete / blocked:"))
+        self.assertIn("The Final Goal is not met.", second)
+        self.assertNotIn("Final Goal met", second)
+        self.assertIn("run is not complete", second)
+        text = (self.workspace / "progress.md").read_text(encoding="utf-8")
+        self.assertNotIn("Final Goal met", text)
+        self.assertIn("NOT complete / blocked:", text)
+        self.assertIn("The Final Goal is not met", text)
+        self.assertTrue(session["gate_stuck_latched"])
+        self.assertEqual(session["followup_count"], 1)
+        emitted = common.stop_payload(second)
+        assert emitted is not None
+        self.assertNotIn("followup_message", emitted)
+        self.assertTrue(emitted["user_message"].startswith("NOT complete / blocked:"))
+        third = common.decide_stop(session, payload, self.record())
+        self.assertIsNone(third)
+        self.assertIsNone(common.stop_payload(third))
+
+    def test_changed_progress_resets_the_gate_refusal_streak(self) -> None:
+        self._open_delivered()
+        session = self.session(armed=True)
+        payload = {"status": "completed"}
+        first = common.decide_stop(session, payload, self.record())
+        self._open_delivered("note: still open\n")
+        second = common.decide_stop(session, payload, self.record())
+        assert first is not None and second is not None
+        self.assertIn("refused completion", second)
+        self.assertFalse(session["gate_stuck_latched"])
+        third = common.decide_stop(session, payload, self.record())
+        assert third is not None
+        self.assertTrue(third.startswith("NOT complete / blocked:"))
+        self.assertNotIn("Final Goal met", third)
+
+    def test_git_change_resets_the_gate_refusal_streak(self) -> None:
+        self._open_delivered()
+        quiet = {"cwd": self.workspace, "stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL}
+        subprocess.check_call(["git", "init"], **quiet)
+        subprocess.check_call(["git", "config", "user.email", "t@example.com"], cwd=self.workspace)
+        subprocess.check_call(["git", "config", "user.name", "t"], cwd=self.workspace)
+        subprocess.check_call(["git", "add", "progress.md"], **quiet)
+        subprocess.check_call(["git", "commit", "-m", "init"], **quiet)
+        session = self.session(armed=True)
+        payload = {"status": "completed"}
+        first = common.decide_stop(session, payload, self.record())
+        (self.workspace / "note").write_text("1\n", encoding="utf-8")
+        subprocess.check_call(["git", "add", "note"], **quiet)
+        subprocess.check_call(["git", "commit", "-m", "note"], **quiet)
+        second = common.decide_stop(session, payload, self.record())
+        assert first is not None and second is not None
+        self.assertIn("refused completion", second)
+        self.assertFalse(session["gate_stuck_latched"])
+        third = common.decide_stop(session, payload, self.record())
+        assert third is not None
+        self.assertTrue(third.startswith("NOT complete / blocked:"))
+        self.assertNotIn("Final Goal met", third)
 
     def test_blocked(self) -> None:
         self.write_progress("# Progress\n" + "<!-- sdd-continue: " + json.dumps(

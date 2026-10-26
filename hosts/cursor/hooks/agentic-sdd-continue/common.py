@@ -84,6 +84,10 @@ def empty_session(cid: str) -> dict:
         "stuck_repeats": 0,
         "stuck_latched": False,
         "budget_exhausted": False,
+        "gate_refusal_key": None,
+        "gate_refusal_count": 0,
+        "gate_stuck_latched": False,
+        "gate_latched_key": None,
         "last_assistant_head": "",
     }
 
@@ -164,6 +168,10 @@ def apply_prompt(session: dict, prompt: str) -> dict:
         session["stuck_repeats"] = 0
         session["stuck_latched"] = False
         session["budget_exhausted"] = False
+        session["gate_refusal_key"] = None
+        session["gate_refusal_count"] = 0
+        session["gate_stuck_latched"] = False
+        session["gate_latched_key"] = None
         return session
     session["hold"] = True
     return session
@@ -345,6 +353,65 @@ def build_followup(count: int, action: str, problems: list[str] | None = None) -
     return "\n".join(lines)
 
 
+def stop_payload(message: str | None) -> dict | None:
+    """Cursor stop output. A stuck completion is not a follow-up, so the agent is not resumed."""
+    if not message:
+        return None
+    gate = progress_gate_module()
+    prefix = gate.NOT_COMPLETE if gate is not None else "NOT complete / blocked:"
+    if message.startswith(prefix):
+        return {"user_message": message}
+    return {"followup_message": message}
+
+
+def _refusal_key(record: dict | None, problems: list[str]) -> str:
+    gate = progress_gate_module()
+    if gate is None or not record:
+        return "nogate"
+    return gate.refusal_key(Path(str(record["path"])), problems)
+
+
+def _clear_gate_latch(session: dict) -> None:
+    session["gate_stuck_latched"] = False
+    session["gate_latched_key"] = None
+    session["gate_refusal_count"] = 0
+    session["gate_refusal_key"] = None
+
+
+def _refuse_completion(session: dict, record: dict | None, problems: list[str]) -> str | None:
+    gate = progress_gate_module()
+    key = _refusal_key(record, problems)
+    if key == session.get("gate_refusal_key"):
+        session["gate_refusal_count"] = int(session.get("gate_refusal_count") or 0) + 1
+    else:
+        session["gate_refusal_key"] = key
+        session["gate_refusal_count"] = 1
+    limit = gate.STUCK_LIMIT if gate is not None else 2
+    if int(session["gate_refusal_count"]) >= limit:
+        if gate is not None and record is not None:
+            message = gate.stuck_message(problems)
+            path = Path(str(record["path"]))
+            gate.clear_met_claim(path, message)
+            fresh = completion_problems(record)
+            session["gate_latched_key"] = gate.refusal_key(path, fresh if fresh else problems)
+        else:
+            message = (
+                "NOT complete / blocked: progress_gate.py was not found. "
+                "The Final Goal is not met. "
+                "The same refusal repeated with no change to progress.md or the git state, so this stop is allowed. "
+                "The run is not complete."
+            )
+            session["gate_latched_key"] = key
+        session["gate_stuck_latched"] = True
+        session["gate_refusal_key"] = session["gate_latched_key"]
+        return message
+    if int(session.get("followup_count") or 0) >= BUDGET:
+        session["budget_exhausted"] = True
+        return None
+    session["followup_count"] = int(session.get("followup_count") or 0) + 1
+    return build_followup(int(session["followup_count"]), next_action_of(record), problems)
+
+
 def decide_stop(session: dict, payload: dict, record: dict | None) -> str | None:
     if session.get("skip") or session.get("composer_mode") == "ask" or session.get("is_background_agent"):
         return None
@@ -353,12 +420,12 @@ def decide_stop(session: dict, payload: dict, record: dict | None) -> str | None
     if payload.get("status") != "completed":
         return None
     problems = completion_problems(record)
-    if problems:
-        if int(session.get("followup_count") or 0) >= BUDGET:
-            session["budget_exhausted"] = True
+    if session.get("gate_stuck_latched"):
+        if not problems or _refusal_key(record, problems) == session.get("gate_latched_key"):
             return None
-        session["followup_count"] = int(session.get("followup_count") or 0) + 1
-        return build_followup(int(session["followup_count"]), next_action_of(record), problems)
+        _clear_gate_latch(session)
+    if problems:
+        return _refuse_completion(session, record, problems)
     if session.get("stuck_latched"):
         return None
     if int(session.get("followup_count") or 0) >= BUDGET:

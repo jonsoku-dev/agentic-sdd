@@ -45,6 +45,9 @@ Run `python3 <this skill>/scripts/progress_gate.py progress.md` and fix every li
 
 This file does not block a command.
 The script, Claude Stop, the Cursor stop hook, and guarded `git_guard.py` do.
+The same open-gate refusal twice, with no change to `progress.md` or the git state, ends the turn as `NOT complete / blocked`.
+That ending says the Final Goal is not met.
+It leaves the words "Final Goal met" out of the message and out of `progress.md`.
 The one-verifier default is an instruction.
 The gate checks that one real verifier line exists.
 It does not count seats.

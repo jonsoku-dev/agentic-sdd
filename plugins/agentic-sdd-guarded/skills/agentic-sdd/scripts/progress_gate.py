@@ -26,10 +26,21 @@ Also required at column 1: one real reviewer line
 `pstack: O-interrogate|<host>|<subagent_type> → <n> findings`.
 BLOCKED, a self-review, a bulleted or backticked breadcrumb, or a secret-shaped
 token leaves the gate open. In-scope tasks.md files may contain at most 12
-tasks and one Convergence header. Exit 0 ok, 1 gate open, 2 no progress.md.
+tasks and one Convergence header.
+
+Hosts share STUCK_LIMIT. A refusal is identical when the progress.md text, the
+problem list, and the git state are unchanged. The git state is HEAD plus
+`git worktree list --porcelain`, or `nogit` when git fails. The second
+identical refusal is stuck: the host allows the stop, rewrites a met claim to
+"Final Goal is not met", and reports `NOT complete / blocked:`. That message
+says the Final Goal is not met. `stop_hook_active` does not release a block.
+A change to progress.md or the git state resets the count.
+
+Exit 0 ok, 1 gate open, 2 no progress.md.
 """
 from __future__ import annotations
 
+import hashlib
 import re
 import shutil
 import subprocess
@@ -48,6 +59,8 @@ NA_LINE = re.compile(r"^rea: ([^|]+)\|not-applicable\|(\S.*)$")
 EXCLUDE_LINE = re.compile(r"^gate: exclude\|([^|]+)\|(\S.*)$")
 WORKTREE_LINE = re.compile(r"^gate: worktree\|(\S.*)$")
 TASK_LIMIT = 12
+STUCK_LIMIT = 2
+NOT_COMPLETE = "NOT complete / blocked:"
 TASK_ID = re.compile(r"\bT\d{3,}\b")
 CHECKBOX = re.compile(r"^\s*[-*]\s+\[[ xX]\]")
 CONVERGE_HEADER = re.compile(r"^#{1,6}\s+.*\bConvergence\b", re.I)
@@ -59,6 +72,49 @@ MET = re.compile(r"(?i)\bfinal goal\b[\s:*_`'\"-]*(?:is\s+|has been\s+|was\s+)?(
 
 def claims_met(text: str) -> bool:
     return bool(MET.search(text))
+
+
+def _git_state(start: Path) -> str:
+    if shutil.which("git") is None:
+        return "nogit"
+    head = _git(start, "rev-parse", "HEAD")
+    if head.returncode != 0:
+        return "nogit"
+    trees = _git(start, "worktree", "list", "--porcelain")
+    if trees.returncode != 0:
+        return "nogit"
+    return head.stdout + trees.stdout
+
+
+def refusal_key(progress: Path, problems: list[str]) -> str:
+    text = progress.read_text(errors="replace")
+    payload = text + "\n---\n" + "\n".join(problems) + "\n---\n" + _git_state(progress.parent)
+    return hashlib.sha256(payload.encode()).hexdigest()
+
+
+def _without_met_claim(text: str) -> str:
+    return text.replace("Final Goal met", "Final Goal is not met")
+
+
+def stuck_message(problems: list[str]) -> str:
+    reason = "; ".join(_without_met_claim(problem) for problem in problems[:10]) or "completion gate stayed open"
+    return (
+        f"{NOT_COMPLETE} {reason}. "
+        "The Final Goal is not met. "
+        "The same refusal repeated with no change to progress.md or the git state, so this stop is allowed. "
+        "The run is not complete."
+    )
+
+
+def clear_met_claim(progress: Path, message: str) -> None:
+    text = progress.read_text(errors="replace")
+    rewritten = MET.sub("Final Goal is not met", text)
+    if message not in rewritten:
+        if rewritten and not rewritten.endswith("\n"):
+            rewritten += "\n"
+        rewritten += message + "\n"
+    if rewritten != text:
+        progress.write_text(rewritten)
 
 
 def feature_names(root: Path) -> list[str]:

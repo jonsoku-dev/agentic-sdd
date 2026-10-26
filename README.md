@@ -148,7 +148,7 @@ These points are the ones a hook or the gate enforces:
 | Tasks | Every task ends in a check. | More than 12 tasks fails the gate. |
 | Implement | The parent runs each admitted task inline. A leaf is only for `bloat`, `parallel`, or `conflict`. | Instruction only. The gate does not count leaves. |
 | Converge | One verifier. One fix round. | A second `Convergence` header, or a recorded leftover git worktree, fails the gate. |
-| REA | `rea: <feature>\|pass\|ev_…`, or `not-applicable` with a reason. | `blocked-limitation` does not close. Stop hooks keep blocking a false "Final Goal met". |
+| REA | `rea: <feature>\|pass\|ev_…`, or `not-applicable` with a reason. | `blocked-limitation` does not close. A false "Final Goal met" is refused; the second identical refusal ends `NOT complete / blocked`. |
 
 - Paste the phase-card spawn brief into a leaf or verifier prompt. This page does not apply inside that subagent.
 - An older spec drops out only with `gate: exclude|<feature>|<why>`.
@@ -188,9 +188,13 @@ What the guarded hooks do, all in Python with no network access:
 
 - **Stop** blocks a turn whose `progress.md` says "Final Goal met" while
   `progress_gate.py` fails or no reviewer subagent was spawned, and tells the
-  model what to fix. It keeps blocking while that claim remains. End the turn
-  by making the gate print `ok`, or by removing the claim (BLOCKED review, and
-  say the Final Goal is not met).
+  model what to fix. `stop_hook_active` does not skip that block. The same
+  refusal, with no change to `progress.md` or the git state, blocks once. The
+  second identical refusal allows the stop and records
+  `NOT complete / blocked: <reason>`. That ending says the Final Goal is not
+  met. A change to `progress.md` or the git state starts the count again. End
+  the turn cleanly by making the gate print `ok`, or by removing the claim
+  (BLOCKED review, and say the Final Goal is not met).
 - **PreToolUse** denies `ScheduleWakeup` inside an agentic-sdd project, and
   denies the commands the skill has no authority for (`push`, `merge` except
   `--abort`, the deploy and publish commands in `why_deploy`,

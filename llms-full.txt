@@ -159,7 +159,7 @@ These points are the ones a hook or the gate enforces:
 | Tasks | Every task ends in a check. | More than 12 tasks fails the gate. |
 | Implement | The parent runs each admitted task inline. A leaf is only for `bloat`, `parallel`, or `conflict`. | Instruction only. The gate does not count leaves. |
 | Converge | One verifier. One fix round. | A second `Convergence` header, or a recorded leftover git worktree, fails the gate. |
-| REA | `rea: <feature>\|pass\|ev_…`, or `not-applicable` with a reason. | `blocked-limitation` does not close. Stop hooks keep blocking a false "Final Goal met". |
+| REA | `rea: <feature>\|pass\|ev_…`, or `not-applicable` with a reason. | `blocked-limitation` does not close. A false "Final Goal met" is refused; the second identical refusal ends `NOT complete / blocked`. |
 
 - Paste the phase-card spawn brief into a leaf or verifier prompt. This page does not apply inside that subagent.
 - An older spec drops out only with `gate: exclude|<feature>|<why>`.
@@ -199,9 +199,13 @@ What the guarded hooks do, all in Python with no network access:
 
 - **Stop** blocks a turn whose `progress.md` says "Final Goal met" while
   `progress_gate.py` fails or no reviewer subagent was spawned, and tells the
-  model what to fix. It keeps blocking while that claim remains. End the turn
-  by making the gate print `ok`, or by removing the claim (BLOCKED review, and
-  say the Final Goal is not met).
+  model what to fix. `stop_hook_active` does not skip that block. The same
+  refusal, with no change to `progress.md` or the git state, blocks once. The
+  second identical refusal allows the stop and records
+  `NOT complete / blocked: <reason>`. That ending says the Final Goal is not
+  met. A change to `progress.md` or the git state starts the count again. End
+  the turn cleanly by making the gate print `ok`, or by removing the claim
+  (BLOCKED review, and say the Final Goal is not met).
 - **PreToolUse** denies `ScheduleWakeup` inside an agentic-sdd project, and
   denies the commands the skill has no authority for (`push`, `merge` except
   `--abort`, the deploy and publish commands in `why_deploy`,
@@ -591,6 +595,9 @@ Run `python3 <this skill>/scripts/progress_gate.py progress.md` and fix every li
 
 This file does not block a command.
 The script, Claude Stop, the Cursor stop hook, and guarded `git_guard.py` do.
+The same open-gate refusal twice, with no change to `progress.md` or the git state, ends the turn as `NOT complete / blocked`.
+That ending says the Final Goal is not met.
+It leaves the words "Final Goal met" out of the message and out of `progress.md`.
 The one-verifier default is an instruction.
 The gate checks that one real verifier line exists.
 It does not count seats.
@@ -1721,10 +1728,11 @@ The single loop is open-ended inside the limits this repository enforces. Anythi
 
 | Limit | Where it runs |
 |-------|----------------|
-| Completion | [progress_gate.py](../scripts/progress_gate.py), the only completion predicate. Claude Stop (`hosts/claude/hooks/stop_gate.py`) blocks while `progress.md` claims the Final Goal is met and the script is not `ok`. Cursor stop (`hosts/cursor/hooks/agentic-sdd-continue/common.py`) quotes the same script instead of accepting `delivered`. |
+| Completion | [progress_gate.py](../scripts/progress_gate.py) is the only completion predicate. Claude Stop (`hosts/claude/hooks/stop_gate.py`) and Cursor stop (`hosts/cursor/hooks/agentic-sdd-continue/common.py`) both call it. While `progress.md` claims the Final Goal is met, or Cursor `status` is `delivered`, an open gate refuses the stop. |
 | Task count, one converge, leftover worktrees | The same script. More than 12 tasks or a second `Convergence` header in `tasks.md` is a refusal. A leftover is only a `gate: worktree|<absolute-path>` this run recorded that is still checked out, and is neither the main checkout nor the current checkout. |
 | Write gates | Claude guarded `hosts/claude/hooks/git_guard.py` denies `git push`, `git merge` (not `--abort`), `reset --hard`, `clean -f`, `branch -D`, `stash`, a checkout/restore that discards the tree, and the deploy/publish commands in `why_deploy` (`npm publish`, `vercel --prod`, `fly deploy`, `kubectl apply`, `terraform apply`, `gh release create`, and the same family). Codex, Grok, Cursor, and the hook-free edition have no write hook. |
-| Turn budget | Cursor continuation only: 80 follow-ups (`BUDGET` in the Cursor hook) and a stuck latch after the same `progress.md` twice. Spending the budget does not close the gate. Claude, Codex, and Grok have no turn cap here. |
+| Stuck completion | Both hosts share `STUCK_LIMIT` (2) in `progress_gate.py`. A refusal is identical when the `progress.md` text, the problem list, and the git state are unchanged. The git state is `HEAD` plus `git worktree list --porcelain`, or `nogit` when git fails. The first identical refusal stays a block (Claude `decision: block`) or a follow-up (Cursor). The second allows the stop. The message starts with `NOT complete / blocked:` and includes `The Final Goal is not met.` The words `Final Goal met` are absent from that message. The hook rewrites those claims in `progress.md` to `Final Goal is not met` and appends the same message. A later stop with that same file is allowed. A change to `progress.md` or the git state resets the count, and the next refusal blocks or follows up again. `stop_hook_active` does not release the block. This ending is not completion. |
+| Turn budget | Cursor continuation only, for a goal that is still running: 80 follow-ups (`BUDGET`) and a separate stuck latch after the same `next_action` and the same `progress.md` modification time twice. Spending the budget does not close the gate and does not write `Final Goal met`. Claude, Codex, and Grok have no turn cap. The stuck-completion row is the only shared escape from a repeated open gate. |
 | Repeated identical checks | [verification_guard.py](../scripts/verification_guard.py) recommends stopping after two unchanged attempts, and only when the model passes it a state file. It does not end the session. |
 | Cost | No cost gate. [cost-modes.md](cost-modes.md) and the escalation notes in [model-routing.md](model-routing.md) are guidance. |
 
@@ -3372,14 +3380,14 @@ Keep the JSON valid and inside one comment. `next_action` is a JSON string.
 
 Scripts live in `~/.cursor/hooks/agentic-sdd-continue/`. The stop script is last in `~/.cursor/hooks.json` and uses `loop_limit: null`. The script itself allows 80 automatic follow-ups per arm.
 
-- A prompt containing `agentic-sdd` arms the session and clears hold, the follow-up count, and a stuck latch.
+- A prompt containing `agentic-sdd` arms the session and clears hold, the follow-up count, the running stuck latch, and the completion-refusal latch.
 - A short resume phrase (`계속`, `이어서 진행`, `continue`, `keep going`, and the close variants in the script) does the same only when the session is already armed.
 - Any other human prompt sets hold. The hook does not continue after that answer.
 - A follow-up contains the marker `sdd-continue-followup`. That marker clears hold and does not reset the budget. It is the same Final Goal, not a new task.
 - Ask mode and background agents are never resumed. Aborted and error stops are never resumed.
 - A missing machine line still continues once. The follow-up tells the agent to write the line, then do the next action.
 - The same `next_action` and the same `progress.md` modification time on two consecutive stops latches stuck. Only a later human arm clears it.
-- A `delivered` line, or progress text that claims the Final Goal is met, is checked with `scripts/progress_gate.py`. An open gate produces a follow-up that quotes the script. The follow-up budget still ends at 80; a spent budget does not close the gate.
+- A `delivered` line, or progress text that claims the Final Goal is met, is checked with `scripts/progress_gate.py`. The first open-gate refusal is a follow-up that quotes the script. The second identical refusal, with no change to `progress.md` or the git state (`HEAD` and `git worktree list --porcelain`), allows the stop. That message starts with `NOT complete / blocked:` and says the Final Goal is not met. It is a `user_message`, so the agent is not resumed, and it does not contain `Final Goal met`. The hook rewrites the claim in `progress.md` the same way. A later stop with that same file is allowed. A change to `progress.md` or the git state starts the count again. The 80-follow-up budget still applies to a running goal; a spent budget does not close the gate.
 - Follow-up 80 tells the agent the continuation budget is spent and that this does not mean the Final Goal is met. Follow-up 81 is not sent. A later human `/agentic-sdd` or resume phrase resets the count.
 
 The hook does not approve shell or MCP calls. Those cards still wait for the human.
