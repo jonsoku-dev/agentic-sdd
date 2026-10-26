@@ -136,7 +136,7 @@ the per-host dispatch detail.
 - **Keep specs small, but split only past the threshold.** Plan the whole
   Final Goal as one numbered spec, even when it names several commands or
   behaviours. Decide at `tasks`, not before: split when
-  `tasks.md` exceeds about 12 tasks or the work would span more than two
+  `tasks.md` has more than 12 tasks (`progress_gate.py` refuses the 13th) or the work would span more than two
   compactions (`O-sequence`). A happy path and its error cases are one spec.
   Each extra spec costs a full converge, review, and REA round. A `closed-carryover`
   feature's gaps become the next spec's scope; the Final Goal stays open until

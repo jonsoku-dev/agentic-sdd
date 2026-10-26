@@ -152,14 +152,16 @@ plain words, or type the skill's name (`/agentic-sdd`, `$agentic-sdd`,
    obligations run beside them: `technical-writing` + `unslop` on the spec,
    `how` for brownfield evidence, `architect` (or `arena` when shapes compete)
    when code crosses a function boundary, `principle-sequence-verifiable-units`
-   so every task ends in a check. Tasks beyond about twelve mean a smaller spec.
+   so every task ends in a check. `progress_gate.py` refuses a `tasks.md` with more than 12 tasks.
 3. **Implement.** The host's poteto agent takes one admitted task packet at a
    time, in its own worktree, with the model and effort the pstack sheet names.
    The lead reviews every diff and never claims a dispatch it did not observe.
 4. **Converge, once.** `blast-radius`, `no-comments`, then a two-to-four model
    `interrogate` panel. Act-on findings are appended to `tasks.md` and
-   implemented in one bounded fix round. There is no second converge: gaps
-   that survive become the next, smaller spec (`closed-carryover`).
+   implemented in one bounded fix round. `progress_gate.py` refuses a second
+   `Convergence` header in the same `tasks.md` and any git worktree besides
+   the one you are in. Gaps that survive become the next, smaller spec
+   (`closed-carryover`).
 5. **REA closeout.** Run the real artifact under REA and record the disposition
    in `converge.md` and `progress.md`. `scripts/progress_gate.py` is the only
    completion predicate: `rea: <feature>|pass|ev_…`, or
@@ -212,9 +214,10 @@ What the guarded hooks do, all in Python with no network access:
   by making the gate print `ok`, or by removing the claim (BLOCKED review, and
   say the Final Goal is not met).
 - **PreToolUse** denies `ScheduleWakeup` inside an agentic-sdd project, and
-  denies the git commands the skill has no authority for (`push`,
+  denies the commands the skill has no authority for (`push`, `merge` except
+  `--abort`, the deploy and publish commands in `why_deploy`,
   `reset --hard`, `clean -f`, `branch -D`, `stash`, and `checkout`/`restore .`
-  that discard the working tree), parsed per git subcommand so commits and
+  that discard the working tree), parsed per command so commits and
   ordinary checkouts pass. Adapted from mattpocock/skills
   `git-guardrails-claude-code` (MIT).
 - **PostToolUse** (async) appends each subagent spawn (type and description,
@@ -683,7 +686,7 @@ the per-host dispatch detail.
 - **Keep specs small, but split only past the threshold.** Plan the whole
   Final Goal as one numbered spec, even when it names several commands or
   behaviours. Decide at `tasks`, not before: split when
-  `tasks.md` exceeds about 12 tasks or the work would span more than two
+  `tasks.md` has more than 12 tasks (`progress_gate.py` refuses the 13th) or the work would span more than two
   compactions (`O-sequence`). A happy path and its error cases are one spec.
   Each extra spec costs a full converge, review, and REA round. A `closed-carryover`
   feature's gaps become the next spec's scope; the Final Goal stays open until
@@ -935,14 +938,14 @@ own words. Record one breadcrumb per row.
 | Enter, existing code touched | `O-how` | `how` | file:line evidence in `plan.md` |
 | `specify` / `clarify` | `O-specify` | `technical-writing` + `unslop` | spec prose; assumptions marked |
 | `plan`, code crosses a function boundary | `O-architect` | `architect` | plan + verification contract |
-| `tasks` | `O-sequence` | `principle-sequence-verifiable-units` | ordered `tasks.md`, each task ends in a check; one spec unless > ~12 tasks |
+| `tasks` | `O-sequence` | `principle-sequence-verifiable-units` | ordered `tasks.md`, each task ends in a check; `progress_gate.py` refuses more than 12 tasks |
 | `implement` | `O-poteto` | poteto-mode non-negotiables | admitted task IDs only; inline unless a single-loop trigger holds; a leaf's worktree is removed (`git worktree remove`) once its diff is merged |
 | Pre-converge | `O-blast`, `O-hygiene` | `blast-radius`, `no-comments` | external risk proved or task-tracked; no narrating comments |
 | `converge` | `O-interrogate` | `interrogate` | a **spawned** reviewer's findings (foreground; no `ScheduleWakeup`, not even as a heartbeat); gaps appended to `tasks.md` |
 | Post-converge | `O-rea` | REA (below) | Evidence ID bound to the current code |
 | Before `/compact` or host switch | `O-pause` | `pause-safely` | `progress.md` current |
 
-`converge` runs once per spec. Its gap tasks get one `implement` round, then
+`converge` runs once per spec. `progress_gate.py` refuses a second `Convergence` header and a leftover git worktree. Gap tasks get one `implement` round, then
 REA; still failing → `closed-carryover` and the gap becomes the next spec.
 
 ## Breadcrumbs
@@ -1798,16 +1801,18 @@ flipped, not only the total, and run more than once. Keep the fold when the
 score holds; otherwise restore the leaf or fix the skill. Change one thing per
 comparison.
 
-## Harness limits stay in the harness
+## Harness limits that actually run
 
-The single loop is open-ended inside fixed limits that agentic-sdd already has:
+The single loop is open-ended inside the limits this repository enforces. Anything not in this table is guidance for the model, not a gate.
 
-| Limit | Where |
-|-------|-------|
-| Turn budget | two unchanged attempts → [verification_guard.py](../scripts/verification_guard.py) and [recovery](recovery.md) |
-| Cost budget | [cost modes](cost-modes.md); escalation budget in [model-routing](model-routing.md) |
-| Write gates | one writer per checkout; hard boundaries in `SKILL.md`; admitted paths in the feature contract |
-| Scope | Final Goal, `tasks.md` IDs, one converge per spec |
+| Limit | Where it runs |
+|-------|----------------|
+| Completion | [progress_gate.py](../scripts/progress_gate.py), the only completion predicate. Claude Stop (`hosts/claude/hooks/stop_gate.py`) blocks while `progress.md` claims the Final Goal is met and the script is not `ok`. Cursor stop (`hosts/cursor/hooks/agentic-sdd-continue/common.py`) quotes the same script instead of accepting `delivered`. |
+| Task count, one converge, leftover worktrees | The same script. More than 12 tasks, a second `Convergence` header in `tasks.md`, or a git worktree other than the current one is a refusal the model can read. |
+| Write gates | Claude guarded `hosts/claude/hooks/git_guard.py` denies `git push`, `git merge` (not `--abort`), `reset --hard`, `clean -f`, `branch -D`, `stash`, a checkout/restore that discards the tree, and the deploy/publish commands in `why_deploy` (`npm publish`, `vercel --prod`, `fly deploy`, `kubectl apply`, `terraform apply`, `gh release create`, and the same family). Codex, Grok, Cursor, and the hook-free edition have no write hook. |
+| Turn budget | Cursor continuation only: 80 follow-ups (`BUDGET` in the Cursor hook) and a stuck latch after the same `progress.md` twice. Spending the budget does not close the gate. Claude, Codex, and Grok have no turn cap here. |
+| Repeated identical checks | [verification_guard.py](../scripts/verification_guard.py) recommends stopping after two unchanged attempts, and only when the model passes it a state file. It does not end the session. |
+| Cost | No cost gate. [cost-modes.md](cost-modes.md) and the escalation notes in [model-routing.md](model-routing.md) are guidance. |
 
 ## Progressive disclosure
 

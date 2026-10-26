@@ -17,11 +17,15 @@ this Final Goal is omitted only by:
 Also required at column 1: one real reviewer line
 `pstack: O-interrogate|<host>|<subagent_type> → <n> findings`.
 BLOCKED, a self-review, a bulleted or backticked breadcrumb, or a secret-shaped
-token leaves the gate open. Exit 0 ok, 1 gate open, 2 no progress.md.
+token leaves the gate open. In-scope tasks.md files may contain at most 12
+tasks and one Convergence header. Any git worktree besides the current one
+is a leftover. Exit 0 ok, 1 gate open, 2 no progress.md.
 """
 from __future__ import annotations
 
 import re
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -35,6 +39,10 @@ MISFORMED = re.compile(rf"^\s*(?:[-*]\s+|\d+[.)]\s+)?`?{PREFIX}|^\s+{PREFIX}")
 PASS_LINE = re.compile(r"^rea: ([^|]+)\|pass\|ev_\w+")
 NA_LINE = re.compile(r"^rea: ([^|]+)\|not-applicable\|(\S.*)$")
 EXCLUDE_LINE = re.compile(r"^gate: exclude\|([^|]+)\|(\S.*)$")
+TASK_LIMIT = 12
+TASK_ID = re.compile(r"\bT\d{3,}\b")
+CHECKBOX = re.compile(r"^\s*[-*]\s+\[[ xX]\]")
+CONVERGE_HEADER = re.compile(r"^#{1,6}\s+.*\bConvergence\b", re.I)
 
 # "Final Goal met", "The Final Goal is met", "Final Goal: complete"; not "Final Goal NOT met"
 MET = re.compile(r"(?i)\bfinal goal\b[\s:*_`'\"-]*(?:is\s+|has been\s+|was\s+)?(?:now\s+)?(?:fully\s+)?"
@@ -77,6 +85,58 @@ def _exclusions(lines: list[str]) -> tuple[dict[str, str], list[str]]:
     return found, problems
 
 
+def task_count(text: str) -> int:
+    ids = set(TASK_ID.findall(text))
+    if ids:
+        return len(ids)
+    return sum(1 for line in text.splitlines() if CHECKBOX.match(line))
+
+
+def _structural(root: Path, excluded: set[str]) -> list[str]:
+    problems: list[str] = []
+    for feature in feature_names(root):
+        if feature in excluded:
+            continue
+        for tasks in (root / "specs" / feature / "tasks.md", root / ".specify" / "specs" / feature / "tasks.md"):
+            if not tasks.is_file():
+                continue
+            text = tasks.read_text(errors="replace")
+            count = task_count(text)
+            if count > TASK_LIMIT:
+                problems.append(
+                    f"{tasks.relative_to(root)} has {count} tasks; the limit is {TASK_LIMIT}. "
+                    "Split into a smaller spec before calling the Final Goal met."
+                )
+            headers = sum(1 for line in text.splitlines() if CONVERGE_HEADER.match(line))
+            if headers > 1:
+                problems.append(
+                    f"{tasks.relative_to(root)} has {headers} Convergence headers; one converge per spec. "
+                    "Carry the remaining gap into the next spec."
+                )
+    problems.extend(_leftover_worktrees(root))
+    return problems
+
+
+def _leftover_worktrees(root: Path) -> list[str]:
+    git = shutil.which("git")
+    if git is None:
+        return []
+    probe = subprocess.run([git, "-C", str(root), "rev-parse", "--is-inside-work-tree"], capture_output=True, text=True)
+    if probe.returncode != 0 or probe.stdout.strip() != "true":
+        return []
+    listed = subprocess.run([git, "-C", str(root), "worktree", "list", "--porcelain"], capture_output=True, text=True)
+    if listed.returncode != 0:
+        detail = listed.stderr.strip() or "git worktree list failed"
+        return [f"could not list git worktrees: {detail}"]
+    paths = [line[len("worktree "):] for line in listed.stdout.splitlines() if line.startswith("worktree ")]
+    current = root.resolve()
+    return [
+        f"leftover git worktree: {path}. Remove it with `git worktree remove` before calling the Final Goal met."
+        for path in paths
+        if Path(path).resolve() != current
+    ]
+
+
 def check(progress: Path) -> list[str]:
     text = progress.read_text(errors="replace")
     lines = text.splitlines()
@@ -107,6 +167,7 @@ def check(progress: Path) -> list[str]:
                 f"missing: rea: {feature}|pass|<ev_… id> or rea: {feature}|not-applicable|<why no runnable artifact> "
                 f"(or gate: exclude|{feature}|<why it predates this Final Goal>)"
             )
+    problems.extend(_structural(progress.parent, set(excluded)))
     return problems
 
 

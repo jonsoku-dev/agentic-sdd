@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -84,6 +86,59 @@ class ProgressGateTest(unittest.TestCase):
         self.assertTrue(claims_met("The Final Goal is met."))
         self.assertFalse(claims_met("Final Goal NOT met: the user forbade subagents"))
         self.assertFalse(claims_met("## Final Goal\nAdd todo edit (done when tests pass)."))
+
+    def test_more_than_twelve_tasks_and_a_second_converge_are_refused(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            feature = root / "specs" / "001-todo-edit"
+            feature.mkdir(parents=True)
+            tasks = "\n".join(f"- [ ] T{i:03d} do the thing" for i in range(1, 14))
+            tasks += "\n## Phase 6: Convergence\n## Phase 8: Convergence\n"
+            (feature / "tasks.md").write_text(tasks)
+            (root / "progress.md").write_text(GOOD)
+            problems = check(root / "progress.md")
+        self.assertTrue(any("13 tasks" in p for p in problems))
+        self.assertTrue(any("2 Convergence headers" in p for p in problems))
+
+    def test_twelve_tasks_and_one_converge_pass(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            feature = root / "specs" / "001-todo-edit"
+            feature.mkdir(parents=True)
+            tasks = "\n".join(f"- [x] T{i:03d} do the thing" for i in range(1, 13))
+            tasks += "\n## Phase 6: Convergence\n"
+            (feature / "tasks.md").write_text(tasks)
+            (root / "progress.md").write_text(GOOD)
+            self.assertEqual(check(root / "progress.md"), [])
+
+    def test_excluded_feature_skips_the_task_limit(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            feature = root / "specs" / "000-legacy"
+            feature.mkdir(parents=True)
+            (feature / "tasks.md").write_text("\n".join(f"- [ ] T{i:03d} old" for i in range(1, 20)))
+            (root / "progress.md").write_text(GOOD + "gate: exclude|000-legacy|predates this Final Goal\n")
+            self.assertEqual(check(root / "progress.md"), [])
+
+    def test_a_second_worktree_is_a_leftover(self):
+        if shutil.which("git") is None:
+            self.skipTest("git missing")
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d) / "repo"
+            root.mkdir()
+            quiet = {"cwd": root, "stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL}
+            subprocess.check_call(["git", "init"], **quiet)
+            subprocess.check_call(["git", "config", "user.email", "t@example.com"], cwd=root)
+            subprocess.check_call(["git", "config", "user.name", "t"], cwd=root)
+            (root / "README").write_text("x\n")
+            subprocess.check_call(["git", "add", "README"], **quiet)
+            subprocess.check_call(["git", "commit", "-m", "init"], **quiet)
+            extra = Path(d) / "extra"
+            subprocess.check_call(["git", "worktree", "add", "-b", "leaf", str(extra), "HEAD"], **quiet)
+            (root / "specs" / "001-todo-edit").mkdir(parents=True)
+            (root / "progress.md").write_text(GOOD)
+            problems = check(root / "progress.md")
+        self.assertTrue(any("leftover git worktree" in p for p in problems), problems)
 
     def test_blocked_review_keeps_gate_open(self):
         text = GOOD.replace("pstack:effort-medium → 2 findings", "BLOCKED: independent review")

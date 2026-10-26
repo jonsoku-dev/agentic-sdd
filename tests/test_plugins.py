@@ -130,7 +130,12 @@ class GitGuardTest(unittest.TestCase):
         root = project(PROGRESS_MET)
         deny = hook("git_guard.py", {"cwd": str(root), "session_id": "s", "tool_input": {"command": "git add -A && git push origin main"}})
         self.assertEqual(deny["hookSpecificOutput"]["permissionDecision"], "deny")
-        for ok in ("git commit -m done", "echo 'git push'", "git checkout ./todo.py", "git branch -d merged"):
+        for denied in ("git merge origin/main", "npm publish", "vercel --prod", "fly deploy", "kubectl apply -f x.yaml", "gh release create v1"):
+            out = hook("git_guard.py", {"cwd": str(root), "session_id": "s", "tool_input": {"command": denied}})
+            self.assertEqual(out["hookSpecificOutput"]["permissionDecision"], "deny", denied)
+            self.assertIn(denied.split()[0], out["hookSpecificOutput"]["permissionDecisionReason"])
+        for ok in ("git commit -m done", "echo 'git push'", "git checkout ./todo.py", "git branch -d merged",
+                   "git merge --abort", "npm test", "vercel dev", "echo npm publish"):
             self.assertEqual(hook("git_guard.py", {"cwd": str(root), "session_id": "s", "tool_input": {"command": ok}}), {}, ok)
         self.assertEqual(hook("git_guard.py", {"cwd": tempfile.mkdtemp(), "tool_input": {"command": "git push"}}), {})
 

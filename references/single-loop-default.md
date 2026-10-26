@@ -74,16 +74,18 @@ flipped, not only the total, and run more than once. Keep the fold when the
 score holds; otherwise restore the leaf or fix the skill. Change one thing per
 comparison.
 
-## Harness limits stay in the harness
+## Harness limits that actually run
 
-The single loop is open-ended inside fixed limits that agentic-sdd already has:
+The single loop is open-ended inside the limits this repository enforces. Anything not in this table is guidance for the model, not a gate.
 
-| Limit | Where |
-|-------|-------|
-| Turn budget | two unchanged attempts → [verification_guard.py](../scripts/verification_guard.py) and [recovery](recovery.md) |
-| Cost budget | [cost modes](cost-modes.md); escalation budget in [model-routing](model-routing.md) |
-| Write gates | one writer per checkout; hard boundaries in `SKILL.md`; admitted paths in the feature contract |
-| Scope | Final Goal, `tasks.md` IDs, one converge per spec |
+| Limit | Where it runs |
+|-------|----------------|
+| Completion | [progress_gate.py](../scripts/progress_gate.py), the only completion predicate. Claude Stop (`hosts/claude/hooks/stop_gate.py`) blocks while `progress.md` claims the Final Goal is met and the script is not `ok`. Cursor stop (`hosts/cursor/hooks/agentic-sdd-continue/common.py`) quotes the same script instead of accepting `delivered`. |
+| Task count, one converge, leftover worktrees | The same script. More than 12 tasks, a second `Convergence` header in `tasks.md`, or a git worktree other than the current one is a refusal the model can read. |
+| Write gates | Claude guarded `hosts/claude/hooks/git_guard.py` denies `git push`, `git merge` (not `--abort`), `reset --hard`, `clean -f`, `branch -D`, `stash`, a checkout/restore that discards the tree, and the deploy/publish commands in `why_deploy` (`npm publish`, `vercel --prod`, `fly deploy`, `kubectl apply`, `terraform apply`, `gh release create`, and the same family). Codex, Grok, Cursor, and the hook-free edition have no write hook. |
+| Turn budget | Cursor continuation only: 80 follow-ups (`BUDGET` in the Cursor hook) and a stuck latch after the same `progress.md` twice. Spending the budget does not close the gate. Claude, Codex, and Grok have no turn cap here. |
+| Repeated identical checks | [verification_guard.py](../scripts/verification_guard.py) recommends stopping after two unchanged attempts, and only when the model passes it a state file. It does not end the session. |
+| Cost | No cost gate. [cost-modes.md](cost-modes.md) and the escalation notes in [model-routing.md](model-routing.md) are guidance. |
 
 ## Progressive disclosure
 

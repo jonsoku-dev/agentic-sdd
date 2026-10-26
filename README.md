@@ -141,14 +141,16 @@ plain words, or type the skill's name (`/agentic-sdd`, `$agentic-sdd`,
    obligations run beside them: `technical-writing` + `unslop` on the spec,
    `how` for brownfield evidence, `architect` (or `arena` when shapes compete)
    when code crosses a function boundary, `principle-sequence-verifiable-units`
-   so every task ends in a check. Tasks beyond about twelve mean a smaller spec.
+   so every task ends in a check. `progress_gate.py` refuses a `tasks.md` with more than 12 tasks.
 3. **Implement.** The host's poteto agent takes one admitted task packet at a
    time, in its own worktree, with the model and effort the pstack sheet names.
    The lead reviews every diff and never claims a dispatch it did not observe.
 4. **Converge, once.** `blast-radius`, `no-comments`, then a two-to-four model
    `interrogate` panel. Act-on findings are appended to `tasks.md` and
-   implemented in one bounded fix round. There is no second converge: gaps
-   that survive become the next, smaller spec (`closed-carryover`).
+   implemented in one bounded fix round. `progress_gate.py` refuses a second
+   `Convergence` header in the same `tasks.md` and any git worktree besides
+   the one you are in. Gaps that survive become the next, smaller spec
+   (`closed-carryover`).
 5. **REA closeout.** Run the real artifact under REA and record the disposition
    in `converge.md` and `progress.md`. `scripts/progress_gate.py` is the only
    completion predicate: `rea: <feature>|pass|ev_…`, or
@@ -201,9 +203,10 @@ What the guarded hooks do, all in Python with no network access:
   by making the gate print `ok`, or by removing the claim (BLOCKED review, and
   say the Final Goal is not met).
 - **PreToolUse** denies `ScheduleWakeup` inside an agentic-sdd project, and
-  denies the git commands the skill has no authority for (`push`,
+  denies the commands the skill has no authority for (`push`, `merge` except
+  `--abort`, the deploy and publish commands in `why_deploy`,
   `reset --hard`, `clean -f`, `branch -D`, `stash`, and `checkout`/`restore .`
-  that discard the working tree), parsed per git subcommand so commits and
+  that discard the working tree), parsed per command so commits and
   ordinary checkouts pass. Adapted from mattpocock/skills
   `git-guardrails-claude-code` (MIT).
 - **PostToolUse** (async) appends each subagent spawn (type and description,

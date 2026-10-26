@@ -19,14 +19,14 @@ own words. Record one breadcrumb per row.
 | Enter, existing code touched | `O-how` | `how` | file:line evidence in `plan.md` |
 | `specify` / `clarify` | `O-specify` | `technical-writing` + `unslop` | spec prose; assumptions marked |
 | `plan`, code crosses a function boundary | `O-architect` | `architect` | plan + verification contract |
-| `tasks` | `O-sequence` | `principle-sequence-verifiable-units` | ordered `tasks.md`, each task ends in a check; one spec unless > ~12 tasks |
+| `tasks` | `O-sequence` | `principle-sequence-verifiable-units` | ordered `tasks.md`, each task ends in a check; `progress_gate.py` refuses more than 12 tasks |
 | `implement` | `O-poteto` | poteto-mode non-negotiables | admitted task IDs only; inline unless a single-loop trigger holds; a leaf's worktree is removed (`git worktree remove`) once its diff is merged |
 | Pre-converge | `O-blast`, `O-hygiene` | `blast-radius`, `no-comments` | external risk proved or task-tracked; no narrating comments |
 | `converge` | `O-interrogate` | `interrogate` | a **spawned** reviewer's findings (foreground; no `ScheduleWakeup`, not even as a heartbeat); gaps appended to `tasks.md` |
 | Post-converge | `O-rea` | REA (below) | Evidence ID bound to the current code |
 | Before `/compact` or host switch | `O-pause` | `pause-safely` | `progress.md` current |
 
-`converge` runs once per spec. Its gap tasks get one `implement` round, then
+`converge` runs once per spec. `progress_gate.py` refuses a second `Convergence` header and a leftover git worktree. Gap tasks get one `implement` round, then
 REA; still failing → `closed-carryover` and the gap becomes the next spec.
 
 ## Breadcrumbs
