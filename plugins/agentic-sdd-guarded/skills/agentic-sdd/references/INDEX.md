@@ -12,7 +12,7 @@ Load only what the current step needs.
 |------|--------------|
 | `phase-card.md` | Every feature: required phase→obligation rows, breadcrumb lines, common REA path; points to the long references |
 | `spec-kit-alignment.md` | Project/feature resolution, Spec Kit commands, non-SDD entry |
-| `phase-contract.md` | Entering or handing off a phase |
+| `phase-contract.md` | A phase's evidence class, artifact ownership, or handoff block is unclear. Not every phase |
 | `harness-layers.md` | Seven harness layers × Spec Kit × pstack × host; readiness via `scripts/harness_probe.py` |
 | `pstack-integration.md` | Phase→pstack map, per-host leaf dispatch (Cursor / Claude / Codex / Grok), hook precedence, review gate, full-autonomy grant |
 | `poteto-mode-anatomy.md` | How each host reaches pstack poteto-mode (mandate, user-only on Cursor), what the skill does when it runs, port vs Cursor plugin differences |

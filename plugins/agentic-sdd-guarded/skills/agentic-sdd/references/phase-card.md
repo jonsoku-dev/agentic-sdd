@@ -81,3 +81,4 @@ is omitted only with `gate: exclude|<feature>|<why>`.
 | REA install fails, web/SPA capture details, known REA failures | [rea-closeout.md](rea-closeout.md) |
 | A harness layer reports a gap | [harness-layers.md](harness-layers.md) |
 | Whether to spawn at all | [single-loop-default.md](single-loop-default.md) |
+| A phase's evidence class, who may write the artifact, or the handoff block is unclear | [phase-contract.md](phase-contract.md) |

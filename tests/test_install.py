@@ -48,3 +48,24 @@ class InstallTests(unittest.TestCase):
                 ["./hooks/keep.sh"],
             )
             self.assertNotIn("beforeSubmitPrompt", data["hooks"])
+
+    def test_grok_agents_links_poteto_only_and_uninstall_removes_leftover(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp) / "home"
+            agents = home / ".grok/marketplace-cache/cache/plugins/pstack/agents"
+            agents.mkdir(parents=True)
+            (agents / "poteto-agent.md").write_text("# poteto\n")
+            (agents / "comment-sicko.md").write_text("# sicko\n")
+            env = os.environ.copy()
+            env["HOME"] = str(home)
+
+            subprocess.run(["bash", str(SCRIPT), "--grok-agents"], check=True, env=env, cwd=tmp)
+            linked = home / ".grok/agents"
+            self.assertTrue((linked / "poteto-agent.md").is_symlink())
+            self.assertEqual((linked / "poteto-agent.md").resolve(), (agents / "poteto-agent.md").resolve())
+            self.assertFalse((linked / "comment-sicko.md").exists())
+
+            (linked / "comment-sicko.md").symlink_to(agents / "comment-sicko.md")
+            subprocess.run(["bash", str(SCRIPT), "--uninstall"], check=True, env=env, cwd=tmp)
+            self.assertFalse((linked / "poteto-agent.md").exists())
+            self.assertFalse((linked / "comment-sicko.md").exists())

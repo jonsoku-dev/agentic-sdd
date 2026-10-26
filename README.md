@@ -142,9 +142,11 @@ plain words, or type the skill's name (`/agentic-sdd`, `$agentic-sdd`,
    `how` for brownfield evidence, `architect` (or `arena` when shapes compete)
    when code crosses a function boundary, `principle-sequence-verifiable-units`
    so every task ends in a check. `progress_gate.py` refuses a `tasks.md` with more than 12 tasks.
-3. **Implement.** The host's poteto agent takes one admitted task packet at a
-   time, in its own worktree, with the model and effort the pstack sheet names.
-   The lead reviews every diff and never claims a dispatch it did not observe.
+3. **Implement.** The parent runs each admitted task inline. A leaf
+   (`poteto-agent`, or the host equivalent) is spawned only when a
+   [single-loop trigger](references/single-loop-default.md) holds, in its own
+   worktree, with the model and effort the pstack sheet names. The lead
+   reviews every diff and never claims a dispatch it did not observe.
 4. **Converge, once.** `blast-radius`, `no-comments`, then one independent
    `interrogate` verifier. Act-on findings are appended to `tasks.md` and
    implemented in one bounded fix round. `progress_gate.py` refuses a second
@@ -363,8 +365,8 @@ npx agentic-sdd setup --grok-mandate --grok-agents
 their stdout, so `--grok-mandate` writes the mandate plus the three Spec Kit
 handoffs as a home rule, `~/.grok/rules/pstack-mandate.md`, which Grok always
 loads. Plugin agents are not in the `spawn_subagent` enum, so `--grok-agents`
-links the port's `poteto-agent.md` and `comment-sicko.md` into
-`~/.grok/agents/`, where they are.
+links the port's `poteto-agent.md` into `~/.grok/agents/`, where it is.
+Uninstall still removes a leftover `comment-sicko.md` from an older install.
 
 **Dispatch.** `spawn_subagent` with `subagent_type: "poteto-agent"`; the
 subagent reads `poteto-mode/SKILL.md` before working. `[subagents.models]` in
@@ -420,7 +422,7 @@ rm -rf ~/.agents/skills/agentic-sdd                                           # 
 | Removed by `--uninstall` | Detail |
 |---|---|
 | Skill symlinks | `agentic-sdd` in `~/.agents/skills`, `~/.claude/skills`, `~/.codex/skills`, `~/.cursor/skills`, `~/.grok/skills` (only when they are symlinks) |
-| Grok files | `~/.grok/agents/poteto-agent.md`, `~/.grok/agents/comment-sicko.md`, `~/.grok/rules/pstack-mandate.md`, `~/.grok/hooks/pstack-session-start.json` |
+| Grok files | `~/.grok/agents/poteto-agent.md`, a leftover `~/.grok/agents/comment-sicko.md` if an older install linked one, `~/.grok/rules/pstack-mandate.md`, `~/.grok/hooks/pstack-session-start.json` |
 | Codex block | the `<!-- pstack-mandate:start … end -->` block in `~/.codex/AGENTS.md`; the rest of the file is untouched |
 | Cursor CLI links | every `~/.cursor/skills/*` symlink that points into a pstack plugin cache |
 | Cursor hooks | `~/.cursor/hooks/agentic-sdd-continue/` and the `agentic-sdd-continue` entries in `~/.cursor/hooks.json`; other hooks stay |
@@ -476,7 +478,7 @@ every Spec Kit gate, result comparisons, and the A/B against plain Spec Kit.
 | `agents/openai.yaml` | Codex skill metadata |
 | `visualizer/` | Local dashboard (flow, gates, tokens, reports) and Kanban: `python3 visualizer/server.py --project /path/to/repo` |
 | `docs/evals/` | Measured runs and their artifacts |
-| `llms.txt`, `llms-full.txt` | [llms.txt](https://llmstxt.org/) index and full inline copy of the docs for agents; regenerate with `python3 scripts/build_llms.py` (the test suite fails when they are stale) |
+| `llms.txt` | [llms.txt](https://llmstxt.org/) index of the docs. `llms-full.txt` is the generated archive of those files and is not a prompt. Regenerate with `python3 scripts/build_llms.py` (the test suite fails when they are stale) |
 
 ## Versioning and releases
 

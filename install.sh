@@ -9,7 +9,7 @@
 #   ./install.sh --link-only             # just symlink into ~/.agents, ~/.claude, ~/.codex, ~/.cursor, ~/.grok
 #   ./install.sh --project DIR           # also copy templates/playbooks/agentic-sdd.md into DIR/.agents/playbooks/
 #   ./install.sh --apply-cursor-hooks    # also install hosts/cursor/hooks into ~/.cursor (dated backup of hooks.json)
-#   ./install.sh --grok-agents           # expose pstack's poteto-agent/comment-sicko to Grok's spawn_subagent enum
+#   ./install.sh --grok-agents           # link pstack's poteto-agent into Grok's spawn_subagent enum
 #   ./install.sh --grok-mandate          # write the pstack poteto-mode mandate + Spec Kit handoffs as a Grok home rule (~/.grok/rules/pstack-mandate.md)
 #   ./install.sh --codex-mandate         # write the pstack poteto-mode mandate into ~/.codex/AGENTS.md (Codex never runs untrusted plugin hooks)
 #   ./install.sh --deps                  # install/update Spec Kit, pstack (Claude/Codex/Grok), rea-agents pins to latest, then relink (scripts/deps.py update --yes)
@@ -205,9 +205,7 @@ if [ "$GROK_AGENTS" = 1 ] && [ "$UNINSTALL" = 0 ]; then
   done
   if [ -n "$PSTACK_AGENTS" ]; then
     mkdir -p "$HOME/.grok/agents"
-    for a in poteto-agent comment-sicko; do
-      ln -sfn "$PSTACK_AGENTS/$a.md" "$HOME/.grok/agents/$a.md" && echo "linked ~/.grok/agents/$a.md"
-    done
+    ln -sfn "$PSTACK_AGENTS/poteto-agent.md" "$HOME/.grok/agents/poteto-agent.md" && echo "linked ~/.grok/agents/poteto-agent.md"
   else
     echo "skip --grok-agents: no pstack agents directory found" >&2
   fi

@@ -2,7 +2,9 @@
 
 > Spec-Driven Development that finishes: one skill that drives GitHub Spec Kit end to end on Claude Code, Codex, Cursor, and Grok Build, runs pstack inside every phase, and closes a feature only on REA runtime evidence. One converge per spec; small specs; seven harness layers probed per host.
 
-Read SKILL.md first, then references/INDEX.md for which reference the current step needs. Paths are relative to the repository root; the links below point at the raw files on the main branch.
+Read SKILL.md first, then references/INDEX.md for which reference the current step needs. llms-full.txt is a generated archive of the same files. Do not paste it into a system prompt.
+
+Paths are relative to the repository root; the links below point at the raw files on the main branch.
 
 To install on the machine you are running on: run `npx agentic-sdd --dry-run` (node 20+, python3, git), show the user the detected state and the full plan including manual items, ask once, and only on yes run `npx agentic-sdd --yes`. Then report the verify output, what must be restarted, and what must be done inside an IDE. Change nothing the plan did not list. The README's "Agent mode" section holds the same procedure as a paste-ready prompt.
 
@@ -16,7 +18,7 @@ To install on the machine you are running on: run `npx agentic-sdd --dry-run` (n
 
 - [references/phase-card.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/phase-card.md): Every feature: required phase→obligation rows, breadcrumb lines, common REA path; points to the long references
 - [references/spec-kit-alignment.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/spec-kit-alignment.md): Project/feature resolution, Spec Kit commands, non-SDD entry
-- [references/phase-contract.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/phase-contract.md): Entering or handing off a phase
+- [references/phase-contract.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/phase-contract.md): A phase's evidence class, artifact ownership, or handoff block is unclear. Not every phase
 - [references/harness-layers.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/harness-layers.md): Seven harness layers × Spec Kit × pstack × host; readiness via `scripts/harness_probe.py`
 - [references/pstack-integration.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/pstack-integration.md): Phase→pstack map, per-host leaf dispatch (Cursor / Claude / Codex / Grok), hook precedence, review gate, full-autonomy grant
 - [references/single-loop-default.md](https://raw.githubusercontent.com/jonsoku-dev/agentic-sdd/main/references/single-loop-default.md): Before spawning any subagent: the three triggers, return schema, folding leaves back, breadcrumbs
