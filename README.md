@@ -149,9 +149,13 @@ plain words, or type the skill's name (`/agentic-sdd`, `$agentic-sdd`,
    `interrogate` panel. Act-on findings are appended to `tasks.md` and
    implemented in one bounded fix round. There is no second converge: gaps
    that survive become the next, smaller spec (`closed-carryover`).
-5. **REA closeout.** Run the real artifact under REA and record the Evidence
-   id in `converge.md` and `progress.md`. Disposition is `pass`,
-   `not-applicable`, or `blocked-limitation`; only `pass` closes the feature.
+5. **REA closeout.** Run the real artifact under REA and record the disposition
+   in `converge.md` and `progress.md`. `scripts/progress_gate.py` is the only
+   completion predicate: `rea: <feature>|pass|ev_…`, or
+   `rea: <feature>|not-applicable|<why no runnable artifact>` when nothing
+   runnable exists. `blocked-limitation` does not close the feature. A spec
+   directory that predates this Final Goal is omitted only with
+   `gate: exclude|<feature>|<why>`.
 6. **Next spec or stop.** `progress.md` ends with `Final Goal status` and a
    `Next action` line a cold session can resume from.
 
@@ -193,8 +197,9 @@ What the guarded hooks do, all in Python with no network access:
 
 - **Stop** blocks a turn whose `progress.md` says "Final Goal met" while
   `progress_gate.py` fails or no reviewer subagent was spawned, and tells the
-  model what to fix. It blocks at most twice per session, then lets the turn
-  end and records the release, so a gate that cannot clear never traps you.
+  model what to fix. It keeps blocking while that claim remains. End the turn
+  by making the gate print `ok`, or by removing the claim (BLOCKED review, and
+  say the Final Goal is not met).
 - **PreToolUse** denies `ScheduleWakeup` inside an agentic-sdd project, and
   denies the git commands the skill has no authority for (`push`,
   `reset --hard`, `clean -f`, `branch -D`, `stash`, and `checkout`/`restore .`

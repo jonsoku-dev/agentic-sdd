@@ -77,11 +77,28 @@ class ContinueTests(unittest.TestCase):
         self.assertFalse(armed["budget_exhausted"])
 
     def test_delivered(self) -> None:
-        self.write_progress("# Progress\n" + "<!-- sdd-continue: " + json.dumps(
+        self.write_progress(
+            "# Progress\n"
+            "pstack: O-interrogate|cursor|poteto-agent → 0 findings\n"
+            + "<!-- sdd-continue: " + json.dumps(
+                {"status": "delivered", "stop_reason": None, "next_action": ""}
+            ) + " -->\n"
+        )
+        session = self.session(armed=True)
+        self.assertIsNone(common.decide_stop(session, {"status": "completed"}, self.record()))
+
+    def test_delivered_with_an_open_gate_is_refused(self) -> None:
+        self.write_progress("# Progress\nFinal Goal met\n" + "<!-- sdd-continue: " + json.dumps(
             {"status": "delivered", "stop_reason": None, "next_action": ""}
         ) + " -->\n")
         session = self.session(armed=True)
-        self.assertIsNone(common.decide_stop(session, {"status": "completed"}, self.record()))
+        message = common.decide_stop(session, {"status": "completed"}, self.record())
+        self.assertIsNotNone(message)
+        assert message is not None
+        self.assertIn("refused completion", message)
+        self.assertIn("O-interrogate", message)
+        self.assertIn("not met", message)
+        self.assertEqual(session["followup_count"], 1)
 
     def test_blocked(self) -> None:
         self.write_progress("# Progress\n" + "<!-- sdd-continue: " + json.dumps(

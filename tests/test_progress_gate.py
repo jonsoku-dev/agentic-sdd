@@ -35,9 +35,38 @@ class ProgressGateTest(unittest.TestCase):
         self.assertTrue(any("column 1" in p for p in problems))
         self.assertTrue(any(p.startswith("missing: pstack: O-interrogate") for p in problems))
 
-    def test_every_feature_needs_a_rea_pass_line(self):
+    def test_every_in_scope_feature_needs_a_closing_rea_line(self):
         problems = self.run_gate(GOOD, features=("001-todo-edit", "002-errors"))
-        self.assertEqual(problems, ["missing: rea: 002-errors|pass|<ev_… id copied verbatim>"])
+        self.assertEqual(len(problems), 1)
+        self.assertIn("rea: 002-errors|pass|", problems[0])
+        self.assertIn("not-applicable", problems[0])
+
+    def test_blocked_limitation_does_not_close(self):
+        text = GOOD.replace(
+            "rea: 001-todo-edit|pass|ev_adf6e4ce87099f67",
+            "rea: 001-todo-edit|blocked-limitation|rea CLI missing",
+        )
+        self.assertTrue(any("001-todo-edit" in p for p in self.run_gate(text)))
+
+    def test_not_applicable_closes_when_a_reason_is_recorded(self):
+        text = GOOD.replace(
+            "rea: 001-todo-edit|pass|ev_adf6e4ce87099f67",
+            "rea: 001-todo-edit|not-applicable|docs-only, no runnable artifact",
+        )
+        self.assertEqual(self.run_gate(text), [])
+        bare = GOOD.replace(
+            "rea: 001-todo-edit|pass|ev_adf6e4ce87099f67",
+            "rea: 001-todo-edit|not-applicable|",
+        )
+        self.assertTrue(any("not-applicable" in p for p in self.run_gate(bare)))
+
+    def test_exclude_drops_a_spec_that_predates_the_goal(self):
+        text = GOOD + "gate: exclude|000-legacy|predates this Final Goal; closed before agentic-sdd\n"
+        self.assertEqual(self.run_gate(text, features=("001-todo-edit", "000-legacy")), [])
+        self.assertTrue(any("names no feature" in p for p in self.run_gate(text + "gate: exclude|missing|old\n")))
+
+    def test_overview_scaffold_is_not_a_feature(self):
+        self.assertEqual(self.run_gate(GOOD, features=("001-todo-edit", "000-overview")), [])
 
     def test_self_review_does_not_pass_as_independent(self):
         for line in ("pstack: O-interrogate|claude|primary self-review, user-directed (no subagent spawned) → 0 findings",

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import os
 import re
@@ -269,7 +270,56 @@ def marker_blocks(record: dict | None) -> bool:
     return False
 
 
-def build_followup(count: int, action: str) -> str:
+def skill_root() -> Path | None:
+    """Repo checkout that contains this hook, else AGENTIC_SDD_SKILL, else the installed skill."""
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        if (parent / "SKILL.md").is_file() and (parent / "scripts" / "progress_gate.py").is_file():
+            return parent
+    override = os.environ.get("AGENTIC_SDD_SKILL")
+    if override and (Path(override) / "scripts" / "progress_gate.py").is_file():
+        return Path(override)
+    installed = Path.home() / ".agents" / "skills" / "agentic-sdd"
+    if (installed / "scripts" / "progress_gate.py").is_file():
+        return installed
+    return None
+
+
+def progress_gate_module():
+    root = skill_root()
+    if root is None:
+        return None
+    path = root / "scripts" / "progress_gate.py"
+    spec = importlib.util.spec_from_file_location("agentic_sdd_progress_gate", path)
+    if spec is None or spec.loader is None:
+        return None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def completion_problems(record: dict | None) -> list[str]:
+    """Run progress_gate.py when this stop is trying to call the Final Goal done."""
+    if not record:
+        return []
+    path = Path(str(record["path"]))
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return [f"could not read {path}; refusing to treat the Final Goal as met"]
+    marker = record.get("marker") or {}
+    delivered = isinstance(marker, dict) and not marker.get("invalid") and marker.get("status") == "delivered"
+    gate = progress_gate_module()
+    if gate is None:
+        if delivered:
+            return ["progress_gate.py was not found; refusing to treat the Final Goal as met"]
+        return []
+    if not delivered and not gate.claims_met(text):
+        return []
+    return gate.check(path)
+
+
+def build_followup(count: int, action: str, problems: list[str] | None = None) -> str:
     lines = [
         "<!-- " + FOLLOWUP_MARKER + " -->",
         "This is an automatic Cursor continuation of the same Final Goal, not a new task.",
@@ -277,16 +327,20 @@ def build_followup(count: int, action: str) -> str:
         "Do not spend this turn on a status report.",
         "If the line is missing, write it before other work:",
         '<!-- sdd-continue: {"status":"running","stop_reason":null,"next_action":"<one concrete step>"} -->',
-        "When the Final Goal is delivered, set status to delivered and stop.",
+        "When the Final Goal is delivered, set status to delivered only after progress_gate.py prints ok.",
         "If you must stop for a destructive action, a secret, a missing or contradictory goal, or an evidence or authority boundary, set status to blocked, set stop_reason to destructive, secret, missing_goal, contradiction, or evidence, and ask once.",
     ]
     if action:
         lines.append("next_action: " + action)
+    if problems:
+        lines.append("progress_gate.py refused completion. The Final Goal is not met:")
+        lines.extend("- " + problem for problem in problems)
+        lines.append("Fix those lines, or remove the completion claim. Ending the turn does not close the gate.")
     if count >= BUDGET:
         lines.append(
             "This is automatic continuation 80 of 80. "
-            "If the Final Goal is still open after this turn, say that the continuation budget is spent, "
-            "leave status running, and stop."
+            "The continuation budget is spent. Leave status running and stop. "
+            "A spent budget does not mean the Final Goal is met."
         )
     return "\n".join(lines)
 
@@ -298,6 +352,13 @@ def decide_stop(session: dict, payload: dict, record: dict | None) -> str | None
         return None
     if payload.get("status") != "completed":
         return None
+    problems = completion_problems(record)
+    if problems:
+        if int(session.get("followup_count") or 0) >= BUDGET:
+            session["budget_exhausted"] = True
+            return None
+        session["followup_count"] = int(session.get("followup_count") or 0) + 1
+        return build_followup(int(session["followup_count"]), next_action_of(record), problems)
     if session.get("stuck_latched"):
         return None
     if int(session.get("followup_count") or 0) >= BUDGET:

@@ -21,14 +21,22 @@ Light scaffolding is opt-in for trivial work only — never the default.
 The primary owns scope, integration, and completion. Reviewer agreement and
 model scores never replace required evidence or authorization.
 
-**Completion gate (every model, every cost mode).** Do not write "Final Goal
-met" or close a feature until `progress.md` holds, at column 1, for each
-feature:
+**Completion gate (every model, every cost mode).** `scripts/progress_gate.py`
+is the only completion predicate. Do not write "Final Goal met" until it prints
+`ok`. It requires, at column 1:
 
 ```text
 pstack: O-interrogate|<host>|<reviewer subagent_type> → <n> findings
-rea: <feature>|pass|<ev_… id>
+rea: <feature>|pass|ev_…
 ```
+
+A feature with no runnable or build artifact closes with
+`rea: <feature>|not-applicable|<why there is no runnable artifact>` instead of
+`pass`. `blocked-limitation` and `tasks-appended` do not close. A directory
+under `specs/` or `.specify/specs/` that predates this Final Goal is omitted
+only by `gate: exclude|<feature-directory>|<why it predates this Final Goal>`.
+`overview` and `000-overview` are scaffolds, not features. Every other feature
+directory needs its own closing line.
 
 The review line names a reviewer you actually spawned at `converge` (a separate
 subagent, not your own reading of the diff); when no reviewer can run, write
@@ -37,9 +45,8 @@ Goal open. Invoking this skill is the user's explicit request for that reviewer 
 so a host default such as "spawn agents only when the user asks" is already
 satisfied. Only an instruction in the user's own words not to use subagents
 blocks it: then follow it, write the BLOCKED line, and report the Final Goal as
-not met, naming the missing review. A self-review never fills the review line. A missing line means the feature is not done. Before writing
-"Final Goal met", run `python3 <this skill>/scripts/progress_gate.py progress.md`
-and fix what it prints until it prints `ok`.
+not met, naming the missing review. A self-review never fills the review line. A missing line means the feature is not done. Run
+`python3 <this skill>/scripts/progress_gate.py progress.md` and fix what it prints until it prints `ok`.
 
 **Invocation of this skill for delivery/repair is a full-autonomy grant** inside
 the admitted Final Goal: advance every Spec Kit phase and remaining numbered
@@ -177,8 +184,9 @@ the per-host dispatch detail.
   Details: [REA closeout](references/rea-closeout.md).
 - Before the next feature, review every acceptance condition with
   [direction keeping](references/direction-keeper.md).
-- Finish only when Spec Kit evidence is current and REA disposition is `pass`
-  or `not-applicable`. `blocked-limitation`, `tasks-appended`, or a missing
+- Finish only when `scripts/progress_gate.py` prints `ok`. That is `pass`
+  with an Evidence id, or `not-applicable` with a reason when no runnable
+  artifact exists. `blocked-limitation`, `tasks-appended`, or a missing
   record leave the Final Goal / feature open.
 
 ### Repair (bugs)

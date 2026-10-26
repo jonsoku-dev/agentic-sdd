@@ -40,7 +40,7 @@ def feature(d: Path, progress_text: str) -> dict:
         "tasks": bool(boxes),
         "implement": bool(boxes) and done == len(boxes),
         "converge": converged,
-        "rea": bool(rea and rea.group(1) == "pass"),
+        "rea": bool(rea and rea.group(1) in {"pass", "not-applicable"}),
     }
     phase = next((p for p in PHASES if not reached[p]), "closed")
     return {"name": d.name, "tasks_done": done, "tasks_total": len(boxes), "phase": phase,

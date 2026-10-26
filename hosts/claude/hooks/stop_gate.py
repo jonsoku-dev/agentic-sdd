@@ -2,8 +2,9 @@
 """Stop hook: refuse to end a turn that claims "Final Goal met" while the completion gate is open.
 
 Checks progress_gate.py and that a reviewer subagent was actually spawned (this session's
-transcript or the ledger). Blocks at most MAX_BLOCKS times per session, then lets the turn end
-and records the release, so a gate that cannot clear never traps the session.
+transcript or the ledger). While progress.md still claims the Final Goal is met and the
+gate is open, every Stop is blocked. The turn can end once the claim is removed or the
+gate prints ok. There is no release after a fixed number of blocks.
 """
 from __future__ import annotations
 
@@ -15,7 +16,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
 
-MAX_BLOCKS = 2
 REVIEW = re.compile(r"(?i)review|interrogat|audit|critic|thermo")
 
 
@@ -59,15 +59,12 @@ def main() -> int:
     if not problems:
         common.append(root, {"event": "gate_ok", "session": session})
         return 0
-    blocks = sum(1 for e in ledger if e.get("event") == "gate_blocked" and e.get("session") == session)
-    if blocks >= MAX_BLOCKS:
-        common.append(root, {"event": "gate_released", "session": session, "problems": len(problems)})
-        return 0
     common.append(root, {"event": "gate_blocked", "session": session, "problems": problems[:10]})
-    reason = ("agentic-sdd completion gate is open, so the Final Goal is not met yet. Fix these and rerun "
-              "scripts/progress_gate.py until it prints ok. If you cannot (for example the user forbade "
-              "subagents), write `pstack: O-interrogate|<host>|BLOCKED: independent review`, change the "
-              "status so it does not say the Final Goal is met, and tell the user what is missing:\n- "
+    reason = ("agentic-sdd completion gate is open, so the Final Goal is not met. "
+              "This stop stays blocked while progress.md still claims it is met. "
+              "Fix these and rerun scripts/progress_gate.py until it prints ok, or remove the claim "
+              "(write `pstack: O-interrogate|<host>|BLOCKED: independent review` when no reviewer can run, "
+              "say the Final Goal is not met, and tell the user what is missing):\n- "
               + "\n- ".join(problems[:10]))
     print(json.dumps({"decision": "block", "reason": reason}))
     return 0

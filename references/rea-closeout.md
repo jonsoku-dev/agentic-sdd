@@ -43,6 +43,16 @@ that violates acceptance, integrity contradiction, or user-visible wrong behavio
 `pass` requires at least one evidence id copied **verbatim** from the tool result
 (not the placeholder string `ev_…`).
 
+`scripts/progress_gate.py` is the only completion predicate. It accepts
+`rea: <feature>|pass|ev_…` or
+`rea: <feature>|not-applicable|<why there is no runnable artifact>`, and it
+rejects `blocked-limitation` and `tasks-appended`. Every feature directory
+under `specs/` or `.specify/specs/` is in scope except `overview` and
+`000-overview`. A directory that predates this Final Goal stays out of scope
+only with a column-1 line
+`gate: exclude|<feature-directory>|<why it predates this Final Goal>`.
+Do not write "Final Goal met" until the script prints `ok`.
+
 ## Ensure REA is available
 
 Prefer the host MCP server (`user-rea` / `rea` tools) when already connected.

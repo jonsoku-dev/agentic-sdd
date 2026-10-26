@@ -25,10 +25,10 @@ Update this single line in the workspace root `progress.md` before any user-visi
 Keep the JSON valid and inside one comment. `next_action` is a JSON string.
 
 - While work remains, `status` is `running` and `stop_reason` is `null`.
-- When the Final Goal is delivered, set `status` to `delivered` and stop.
+- When `scripts/progress_gate.py` prints `ok`, set `status` to `delivered` and stop. `delivered` while the gate is open is refused: the hook follow-up quotes the script's lines and the Final Goal stays unmet.
 - For a destructive action, a secret, a missing or contradictory goal, or an evidence or authority boundary, set `status` to `blocked`, set `stop_reason` to the matching value, and ask once.
 
-`delivered` or `blocked` makes the hook stay silent. A hard `stop_reason` on a `running` line does too.
+`blocked`, or `delivered` after `progress_gate.py` prints `ok`, makes the hook stay silent. A hard `stop_reason` on a `running` line does too. `delivered` with an open gate does not.
 
 ## What the hook does
 
@@ -41,7 +41,8 @@ Scripts live in `~/.cursor/hooks/agentic-sdd-continue/`. The stop script is last
 - Ask mode and background agents are never resumed. Aborted and error stops are never resumed.
 - A missing machine line still continues once. The follow-up tells the agent to write the line, then do the next action.
 - The same `next_action` and the same `progress.md` modification time on two consecutive stops latches stuck. Only a later human arm clears it.
-- Follow-up 80 tells the agent to say the continuation budget is spent if the goal is still open. Follow-up 81 is not sent. A later human `/agentic-sdd` or resume phrase resets the count.
+- A `delivered` line, or progress text that claims the Final Goal is met, is checked with `scripts/progress_gate.py`. An open gate produces a follow-up that quotes the script. The follow-up budget still ends at 80; a spent budget does not close the gate.
+- Follow-up 80 tells the agent the continuation budget is spent and that this does not mean the Final Goal is met. Follow-up 81 is not sent. A later human `/agentic-sdd` or resume phrase resets the count.
 
 The hook does not approve shell or MCP calls. Those cards still wait for the human.
 

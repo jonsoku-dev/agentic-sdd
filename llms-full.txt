@@ -160,9 +160,13 @@ plain words, or type the skill's name (`/agentic-sdd`, `$agentic-sdd`,
    `interrogate` panel. Act-on findings are appended to `tasks.md` and
    implemented in one bounded fix round. There is no second converge: gaps
    that survive become the next, smaller spec (`closed-carryover`).
-5. **REA closeout.** Run the real artifact under REA and record the Evidence
-   id in `converge.md` and `progress.md`. Disposition is `pass`,
-   `not-applicable`, or `blocked-limitation`; only `pass` closes the feature.
+5. **REA closeout.** Run the real artifact under REA and record the disposition
+   in `converge.md` and `progress.md`. `scripts/progress_gate.py` is the only
+   completion predicate: `rea: <feature>|pass|ev_…`, or
+   `rea: <feature>|not-applicable|<why no runnable artifact>` when nothing
+   runnable exists. `blocked-limitation` does not close the feature. A spec
+   directory that predates this Final Goal is omitted only with
+   `gate: exclude|<feature>|<why>`.
 6. **Next spec or stop.** `progress.md` ends with `Final Goal status` and a
    `Next action` line a cold session can resume from.
 
@@ -204,8 +208,9 @@ What the guarded hooks do, all in Python with no network access:
 
 - **Stop** blocks a turn whose `progress.md` says "Final Goal met" while
   `progress_gate.py` fails or no reviewer subagent was spawned, and tells the
-  model what to fix. It blocks at most twice per session, then lets the turn
-  end and records the release, so a gate that cannot clear never traps you.
+  model what to fix. It keeps blocking while that claim remains. End the turn
+  by making the gate print `ok`, or by removing the claim (BLOCKED review, and
+  say the Final Goal is not met).
 - **PreToolUse** denies `ScheduleWakeup` inside an agentic-sdd project, and
   denies the git commands the skill has no authority for (`push`,
   `reset --hard`, `clean -f`, `branch -D`, `stash`, and `checkout`/`restore .`
@@ -563,14 +568,22 @@ Light scaffolding is opt-in for trivial work only — never the default.
 The primary owns scope, integration, and completion. Reviewer agreement and
 model scores never replace required evidence or authorization.
 
-**Completion gate (every model, every cost mode).** Do not write "Final Goal
-met" or close a feature until `progress.md` holds, at column 1, for each
-feature:
+**Completion gate (every model, every cost mode).** `scripts/progress_gate.py`
+is the only completion predicate. Do not write "Final Goal met" until it prints
+`ok`. It requires, at column 1:
 
 ```text
 pstack: O-interrogate|<host>|<reviewer subagent_type> → <n> findings
-rea: <feature>|pass|<ev_… id>
+rea: <feature>|pass|ev_…
 ```
+
+A feature with no runnable or build artifact closes with
+`rea: <feature>|not-applicable|<why there is no runnable artifact>` instead of
+`pass`. `blocked-limitation` and `tasks-appended` do not close. A directory
+under `specs/` or `.specify/specs/` that predates this Final Goal is omitted
+only by `gate: exclude|<feature-directory>|<why it predates this Final Goal>`.
+`overview` and `000-overview` are scaffolds, not features. Every other feature
+directory needs its own closing line.
 
 The review line names a reviewer you actually spawned at `converge` (a separate
 subagent, not your own reading of the diff); when no reviewer can run, write
@@ -579,9 +592,8 @@ Goal open. Invoking this skill is the user's explicit request for that reviewer 
 so a host default such as "spawn agents only when the user asks" is already
 satisfied. Only an instruction in the user's own words not to use subagents
 blocks it: then follow it, write the BLOCKED line, and report the Final Goal as
-not met, naming the missing review. A self-review never fills the review line. A missing line means the feature is not done. Before writing
-"Final Goal met", run `python3 <this skill>/scripts/progress_gate.py progress.md`
-and fix what it prints until it prints `ok`.
+not met, naming the missing review. A self-review never fills the review line. A missing line means the feature is not done. Run
+`python3 <this skill>/scripts/progress_gate.py progress.md` and fix what it prints until it prints `ok`.
 
 **Invocation of this skill for delivery/repair is a full-autonomy grant** inside
 the admitted Final Goal: advance every Spec Kit phase and remaining numbered
@@ -719,8 +731,9 @@ the per-host dispatch detail.
   Details: [REA closeout](references/rea-closeout.md).
 - Before the next feature, review every acceptance condition with
   [direction keeping](references/direction-keeper.md).
-- Finish only when Spec Kit evidence is current and REA disposition is `pass`
-  or `not-applicable`. `blocked-limitation`, `tasks-appended`, or a missing
+- Finish only when `scripts/progress_gate.py` prints `ok`. That is `pass`
+  with an Evidence id, or `not-applicable` with a reason when no runnable
+  artifact exists. `blocked-limitation`, `tasks-appended`, or a missing
   record leave the Final Goal / feature open.
 
 ### Repair (bugs)
@@ -949,8 +962,12 @@ No reviewer can run → `pstack: O-interrogate|<host>|BLOCKED: independent revie
 and the Final Goal stays open.
 
 Before "Final Goal met": `python3 <this skill>/scripts/progress_gate.py progress.md`
-must print `ok` (it names any bulleted or backticked breadcrumb to rewrite, and
-any line that looks like a secret: write `<REDACTED>` instead).
+must print `ok`. That script is the only completion predicate. It names any
+bulleted or backticked breadcrumb to rewrite, any line that looks like a secret
+(write `<REDACTED>` instead), and any feature directory still missing a closing
+line. Close with `rea: <feature>|pass|ev_…` or, when nothing runnable exists,
+`rea: <feature>|not-applicable|<why>`. A directory that predates this Final Goal
+is omitted only with `gate: exclude|<feature>|<why>`.
 
 ## REA closeout, common path
 
@@ -966,10 +983,11 @@ any line that looks like a secret: write `<REDACTED>` instead).
      `url` + `dom` or `accessibility`; a URL-only capture is not a pass.
 3. Copy the Evidence ID verbatim into `progress.md` (`rea:` line) and
    `converge.md` if the feature has one.
-4. Disposition: `pass` (ID present, no material finding), `not-applicable` (no
-   runnable artifact, reason recorded), `tasks-appended` (material finding →
-   one fix round, then REA again), `blocked-limitation` (tooling failed after
-   an alternate path; does not finish).
+4. Disposition, which `scripts/progress_gate.py` enforces: `pass` (ID present,
+   no material finding), `not-applicable` (no runnable artifact, reason
+   recorded), `tasks-appended` (material finding → one fix round, then REA
+   again), `blocked-limitation` (tooling failed after an alternate path; does
+   not finish). Only `pass` and `not-applicable` close the feature.
 
 ## Open the long references only when
 
@@ -2072,6 +2090,16 @@ that violates acceptance, integrity contradiction, or user-visible wrong behavio
 
 `pass` requires at least one evidence id copied **verbatim** from the tool result
 (not the placeholder string `ev_…`).
+
+`scripts/progress_gate.py` is the only completion predicate. It accepts
+`rea: <feature>|pass|ev_…` or
+`rea: <feature>|not-applicable|<why there is no runnable artifact>`, and it
+rejects `blocked-limitation` and `tasks-appended`. Every feature directory
+under `specs/` or `.specify/specs/` is in scope except `overview` and
+`000-overview`. A directory that predates this Final Goal stays out of scope
+only with a column-1 line
+`gate: exclude|<feature-directory>|<why it predates this Final Goal>`.
+Do not write "Final Goal met" until the script prints `ok`.
 
 ## Ensure REA is available
 
@@ -3412,10 +3440,10 @@ Update this single line in the workspace root `progress.md` before any user-visi
 Keep the JSON valid and inside one comment. `next_action` is a JSON string.
 
 - While work remains, `status` is `running` and `stop_reason` is `null`.
-- When the Final Goal is delivered, set `status` to `delivered` and stop.
+- When `scripts/progress_gate.py` prints `ok`, set `status` to `delivered` and stop. `delivered` while the gate is open is refused: the hook follow-up quotes the script's lines and the Final Goal stays unmet.
 - For a destructive action, a secret, a missing or contradictory goal, or an evidence or authority boundary, set `status` to `blocked`, set `stop_reason` to the matching value, and ask once.
 
-`delivered` or `blocked` makes the hook stay silent. A hard `stop_reason` on a `running` line does too.
+`blocked`, or `delivered` after `progress_gate.py` prints `ok`, makes the hook stay silent. A hard `stop_reason` on a `running` line does too. `delivered` with an open gate does not.
 
 ## What the hook does
 
@@ -3428,7 +3456,8 @@ Scripts live in `~/.cursor/hooks/agentic-sdd-continue/`. The stop script is last
 - Ask mode and background agents are never resumed. Aborted and error stops are never resumed.
 - A missing machine line still continues once. The follow-up tells the agent to write the line, then do the next action.
 - The same `next_action` and the same `progress.md` modification time on two consecutive stops latches stuck. Only a later human arm clears it.
-- Follow-up 80 tells the agent to say the continuation budget is spent if the goal is still open. Follow-up 81 is not sent. A later human `/agentic-sdd` or resume phrase resets the count.
+- A `delivered` line, or progress text that claims the Final Goal is met, is checked with `scripts/progress_gate.py`. An open gate produces a follow-up that quotes the script. The follow-up budget still ends at 80; a spent budget does not close the gate.
+- Follow-up 80 tells the agent the continuation budget is spent and that this does not mean the Final Goal is met. Follow-up 81 is not sent. A later human `/agentic-sdd` or resume phrase resets the count.
 
 The hook does not approve shell or MCP calls. Those cards still wait for the human.
 

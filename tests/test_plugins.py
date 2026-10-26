@@ -84,16 +84,17 @@ class StopGateTest(unittest.TestCase):
         root = project(PROGRESS_MET)
         self.assertEqual(hook("stop_gate.py", {"cwd": str(root), "session_id": "s", "transcript_path": transcript_with_review(root)}), {})
 
-    def test_open_gate_blocks_then_releases_after_two(self):
+    def test_open_gate_keeps_blocking_while_the_claim_remains(self):
         root = project(PROGRESS_MET.replace("rea: 001-todo-edit|pass|ev_abc123def456\n", "- `rea: 001-todo-edit|pass|ev_abc`\n"))
         payload = {"cwd": str(root), "session_id": "s1", "transcript_path": transcript_with_review(root)}
         first = hook("stop_gate.py", payload)
         self.assertEqual(first["decision"], "block")
         self.assertIn("column 1", first["reason"])
+        self.assertIn("stays blocked", first["reason"])
         self.assertEqual(hook("stop_gate.py", payload)["decision"], "block")
-        self.assertEqual(hook("stop_gate.py", payload), {})
+        self.assertEqual(hook("stop_gate.py", payload)["decision"], "block")
         events = [json.loads(l)["event"] for l in (root / ".agentic-sdd" / "ledger.jsonl").read_text().splitlines()]
-        self.assertEqual(events, ["gate_blocked", "gate_blocked", "gate_released"])
+        self.assertEqual(events, ["gate_blocked", "gate_blocked", "gate_blocked"])
 
     def test_claimed_review_without_a_spawn_blocks(self):
         root = project(PROGRESS_MET)

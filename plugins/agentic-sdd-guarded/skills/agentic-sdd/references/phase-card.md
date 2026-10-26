@@ -46,8 +46,12 @@ No reviewer can run → `pstack: O-interrogate|<host>|BLOCKED: independent revie
 and the Final Goal stays open.
 
 Before "Final Goal met": `python3 <this skill>/scripts/progress_gate.py progress.md`
-must print `ok` (it names any bulleted or backticked breadcrumb to rewrite, and
-any line that looks like a secret: write `<REDACTED>` instead).
+must print `ok`. That script is the only completion predicate. It names any
+bulleted or backticked breadcrumb to rewrite, any line that looks like a secret
+(write `<REDACTED>` instead), and any feature directory still missing a closing
+line. Close with `rea: <feature>|pass|ev_…` or, when nothing runnable exists,
+`rea: <feature>|not-applicable|<why>`. A directory that predates this Final Goal
+is omitted only with `gate: exclude|<feature>|<why>`.
 
 ## REA closeout, common path
 
@@ -63,10 +67,11 @@ any line that looks like a secret: write `<REDACTED>` instead).
      `url` + `dom` or `accessibility`; a URL-only capture is not a pass.
 3. Copy the Evidence ID verbatim into `progress.md` (`rea:` line) and
    `converge.md` if the feature has one.
-4. Disposition: `pass` (ID present, no material finding), `not-applicable` (no
-   runnable artifact, reason recorded), `tasks-appended` (material finding →
-   one fix round, then REA again), `blocked-limitation` (tooling failed after
-   an alternate path; does not finish).
+4. Disposition, which `scripts/progress_gate.py` enforces: `pass` (ID present,
+   no material finding), `not-applicable` (no runnable artifact, reason
+   recorded), `tasks-appended` (material finding → one fix round, then REA
+   again), `blocked-limitation` (tooling failed after an alternate path; does
+   not finish). Only `pass` and `not-applicable` close the feature.
 
 ## Open the long references only when
 
